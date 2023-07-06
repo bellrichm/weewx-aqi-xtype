@@ -23,7 +23,7 @@ class AQITypeManager(StdService):
         if 'aqitype' not in config_dict:
             raise ValueError("[aqitype] Needs to be configured")
 
-        self.aqi = AQIType(config_dict['aqi'])
+        self.aqi = AQIType(config_dict['aqitype'])
         weewx.xtypes.xtypes.append(self.aqi)
 
     def shutDown(self):
