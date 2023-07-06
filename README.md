@@ -145,7 +145,7 @@ Now the calculated value, pm2_5_aqi can be used like any built-in WeeWX type.
 
 For example, in a Cheetah template
 |Desired display                                                   |Cheetah code |
-|------------------------------------------------------------------|--------- ----------|
+|------------------------------------------------------------------|--------------------|
 | Current value                                                    | $current.pm2_5_aqi |
 | Maximum value for the year                                       | $year.pm2_5_aqi.max |
 | A json series of maximum values for the days of the current year | $year.pm2_5_aqi.series(aggregate_type='max', aggregate_interval='day').json |
@@ -189,6 +189,7 @@ For exanmple a graph in the [weewx-jas](https://github.com/bellrichm/weewx-jas) 
                         [[[[[[[pm2_5_aqi]]]]]]]
                             yAxisIndex = 1
                         [[[[[[[pm10_0]]]]]]]
+```
 
 
 ## Getting Help
