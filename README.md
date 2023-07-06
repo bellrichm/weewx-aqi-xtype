@@ -135,7 +135,7 @@ The result should look something like this.
         # If the algorithm supports different pollutants(pm 2.5, pm 10, etc)
         # Supported values: pm2_5, pm10
         type = pm2_5          
-        ```
+```
 
 ## Using
 
