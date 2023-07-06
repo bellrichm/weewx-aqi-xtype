@@ -15,15 +15,15 @@ from weewx.engine import StdService
 from weewx.units import ValueTuple
 import weewx.xtypes
 
-class AQIService(StdService):
+class AQITypeManager(StdService):
     """ A class to manage the registration of the AQI XType"""
     def __init__(self, engine, config_dict):
-        super(AQIService, self).__init__(engine, config_dict)
+        super(AQITypeManager, self).__init__(engine, config_dict)
 
         if 'aqi' not in config_dict:
             raise ValueError("[aqi] Needs to be configured")
 
-        self.aqi = AQI(config_dict['aqi'])
+        self.aqi = AQIType(config_dict['aqi'])
         weewx.xtypes.xtypes.append(self.aqi)
 
     def shutDown(self):
@@ -161,7 +161,7 @@ class EPAAQI(object):
 
         return aqi
 
-class AQI(weewx.xtypes.XType):
+class AQIType(weewx.xtypes.XType):
     """
     AQI XType which computes the AQI (air quality index) from
     the pm2_5 value.
