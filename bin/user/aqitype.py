@@ -7,6 +7,7 @@
 WeeWX XTypes extensions that add new types of AQI.
 """
 
+import logging
 import math
 import sys
 
@@ -14,6 +15,22 @@ import weedb
 from weewx.engine import StdService
 from weewx.units import ValueTuple
 import weewx.xtypes
+
+log = logging.getLogger(__name__)
+
+def logdbg(msg):
+    """ log debug messages """
+    log.debug(msg)
+
+def loginf(msg):
+    """ log informational messages """
+    log.info(msg)
+
+def logerr(msg):
+    """ log error messages """
+    log.error(msg)
+
+VERSION = "1.0.0"
 
 class AQITypeManager(StdService):
     """ A class to manage the registration of the AQI XType"""
@@ -23,6 +40,7 @@ class AQITypeManager(StdService):
         if 'aqitype' not in config_dict:
             raise ValueError("[aqitype] Needs to be configured")
 
+        loginf("Adding AQI type to the XTypes pipeline.")
         self.aqi = AQIType(config_dict['aqitype'])
         weewx.xtypes.xtypes.append(self.aqi)
 
