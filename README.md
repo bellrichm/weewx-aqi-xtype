@@ -191,7 +191,6 @@ For exanmple a graph in the [weewx-jas](https://github.com/bellrichm/weewx-jas) 
                         [[[[[[[pm10_0]]]]]]]
 ```
 
-
 ## Getting Help
 
 Feel free to [open an issue](https://github.com/bellrichm/weewx-aqi-xtype/issues/new),
