@@ -20,8 +20,8 @@ class AQITypeManager(StdService):
     def __init__(self, engine, config_dict):
         super(AQITypeManager, self).__init__(engine, config_dict)
 
-        if 'aqi' not in config_dict:
-            raise ValueError("[aqi] Needs to be configured")
+        if 'aqitype' not in config_dict:
+            raise ValueError("[aqitype] Needs to be configured")
 
         self.aqi = AQIType(config_dict['aqi'])
         weewx.xtypes.xtypes.append(self.aqi)
