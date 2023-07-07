@@ -30,7 +30,7 @@ def logerr(msg):
     """ log error messages """
     log.error(msg)
 
-VERSION = "1.0.0"
+VERSION = "1.0.-rc01"
 
 class AQITypeManager(StdService):
     """ A class to manage the registration of the AQI XType"""
