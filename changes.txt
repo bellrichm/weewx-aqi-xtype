@@ -1,2 +1,6 @@
 V1.0.0
 - Initial Release
+
+V1.0.1
+Fixes:
+- Incorrect breakpoint in the calculation of pm 2.5 AQI

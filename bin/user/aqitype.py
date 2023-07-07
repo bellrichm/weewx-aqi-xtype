@@ -18,7 +18,7 @@ import weewx.xtypes
 
 
 
-VERSION = '1.0.-rc01'
+VERSION = '1.0.1'
 
 class Logger(object):
     '''

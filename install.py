@@ -8,7 +8,7 @@ from io import StringIO
 import configobj
 from weecfg.extension import ExtensionInstaller
 
-VERSION = "1.0.1-rc01"
+VERSION = "1.0.1"
 
 EXTENSION_CONFIG = """
 [StdWXCalculate]
