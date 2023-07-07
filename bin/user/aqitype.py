@@ -66,99 +66,39 @@ class EPAAQI(object):
         self.logger = logger
         self.readings = {
             "pm2_5": {
-              "prep_data": lambda x: math.trunc(x * 10) / 10,
-              "breakpoints": [
-            {
-                "min": 0.0,
-                'max': 12.0,
-            },
-            {
-                "min": 12.1,
-                'max': 35.4,
-            },
-            {
-                "min": 35.5,
-                'max': 55.4,
-            },
-            {
-                "min": 55.5,
-                'max': 150.4,
-            },
-            {
-                "min": 150.5,
-                'max': 250.4,
-            },
-            {
-                "min": 250.5,
-                'max': 340.4,
-            },
-            {
-                "min": 340.5,
-                'max': 500.4,
-            },
-            ]},
-            "pm10": {
-                "prep_data": lambda x: math.trunc(x),
+                "prep_data": lambda x: math.trunc(x * 10) / 10,
                 "breakpoints": [
-            {
-                "min": 0.0,
-                'max': 54,
+                    {"min": 0.0, 'max': 12.0},
+                    {"min": 12.1, 'max': 35.4},
+                    {"min": 35.5, 'max': 55.4},
+                    {"min": 55.5, 'max': 150.4},
+                    {"min": 150.5, 'max': 250.4},
+                    {"min": 250.5, 'max': 340.4},
+                    {"min": 340.5, 'max': 500.4,},
+                ]
             },
-            {
-                "min": 55,
-                'max': 154,
-            },
-            {
-                "min": 155,
-                'max': 254,
-            },
-            {
-                "min": 255,
-                'max': 354,
-            },
-            {
-                "min": 355,
-                'max': 424,
-            },
-            {
-                "min": 425,
-                'max': 504,
-            },
-            {
-                "min": 505,
-                'max': 604,
-            },
-            ]}}
+            "pm10": {
+                "prep_data": lambda x: math.trunc(x), # pylint: disable=unnecessary-lambda
+                "breakpoints": [
+                    {"min": 0.0, 'max': 54},
+                    {"min": 55, 'max': 154},
+                    {"min": 155, 'max': 254},
+                    {"min": 255, 'max': 354},
+                    {"min": 355, 'max': 424},
+                    {"min": 425, 'max': 504},
+                    {"min": 505, 'max': 604},
+                ]
+            }
+        }
 
         self.aqi_bp = [
-            {
-                "min": 0,
-                'max': 50,
-            },
-            {
-                "min": 51,
-                'max': 100,
-            },
-            {
-                "min": 101,
-                'max': 150,
-            },
-            {
-                "min": 151,
-                'max': 200,
-            },
-            {
-                "min": 201,
-                'max': 300,
-            },
-            {
-                "min": 301,
-                'max': 400,
-            },
-            {
-                "min": 401,
-                'max': 500,
-            },
+            {"min": 0, 'max': 50},
+            {"min": 51, 'max': 100},
+            {"min": 101, 'max': 150},
+            {"min": 151, 'max': 200},
+            {"min": 201, 'max': 300},
+            {"min": 301, 'max': 400},
+            {"min": 401, 'max': 500},
             ]
 
     def calculate(self, reading, aqi_type):
