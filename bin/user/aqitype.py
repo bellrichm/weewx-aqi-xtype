@@ -21,6 +21,9 @@ import weewx.xtypes
 VERSION = "1.0.-rc01"
 
 class Logger(object):
+    '''
+    Manage the logging
+    '''
     def __init__(self):
         self.log = logging.getLogger(__name__)
 
@@ -158,14 +161,13 @@ class EPAAQI(object):
             },
             ]
 
-    def calculate(self, reading, aqi_type, obs_type):
+    def calculate(self, reading, aqi_type):
         '''
         Calculate the AQI.
         '''
 
-        # ToDo: need to refactor to not need obs_type
         if aqi_type not in self.readings:
-            raise weewx.CannotCalculate(obs_type)
+            raise weewx.CannotCalculate()
 
         readings = self.readings[aqi_type]
 
@@ -236,9 +238,11 @@ class AQIType(weewx.xtypes.XType):
 
         aqi_type = self.aqi_fields[obs_type]['type']
 
-        aqi = self.aqi_fields[obs_type]["calculator"].calculate(record[dependent_field],
-                                                                aqi_type,
-                                                                obs_type)
+        try:
+            aqi = self.aqi_fields[obs_type]["calculator"].calculate(record[dependent_field],
+                                                                    aqi_type)
+        except weewx.CannotCalculate as exception:
+            raise weewx.CannotCalculate(obs_type) from exception
 
         unit_type, group = weewx.units.getStandardUnitType(record['usUnits'], obs_type)
         return weewx.units.ValueTuple(aqi, unit_type, group)
@@ -276,9 +280,11 @@ class AQIType(weewx.xtypes.XType):
                 else:
                     std_unit_system = unit_system
 
-                    aqi = self.aqi_fields[obs_type]["calculator"].calculate(input_value,
-                                                            aqi_type,
-                                                            obs_type)
+                    try:
+                        aqi = self.aqi_fields[obs_type]["calculator"].calculate(input_value,
+                                                 aqi_type)
+                    except weewx.CannotCalculate as exception:
+                        raise weewx.CannotCalculate(obs_type) from exception
 
                 start_vec.append(timestamp - interval * 60)
                 stop_vec.append(timestamp)
@@ -321,9 +327,12 @@ class AQIType(weewx.xtypes.XType):
             input_value = row[0]
 
         if input_value is not None:
-            aqi = self.aqi_fields[obs_type]["calculator"].calculate(input_value,
-                                                    aqi_type,
-                                                    obs_type)
+            try:
+                aqi = self.aqi_fields[obs_type]["calculator"].calculate(input_value,
+                                                 aqi_type)
+            except weewx.CannotCalculate as exception:
+                raise weewx.CannotCalculate(obs_type) from exception
+
         else:
             aqi = None
 

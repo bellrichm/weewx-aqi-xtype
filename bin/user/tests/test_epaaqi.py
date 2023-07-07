@@ -12,7 +12,7 @@ class EPAAQITests(unittest.TestCase):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
         calculator = user.aqitype.EPAAQI(mock_logger)
 
-        self.assertEqual(calculator.calculate(5.0, 'pm2_5', 'foo'), 21)
+        self.assertEqual(calculator.calculate(5.0, 'pm2_5'), 21)
 
 if __name__ == '__main__':
     unittest.main(exit=False)
