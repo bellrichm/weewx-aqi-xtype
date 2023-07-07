@@ -106,6 +106,9 @@ class EPAAQI(object):
         Calculate the AQI.
         '''
 
+        self.logger.logdbg("The input value is %f." % reading)
+        self.logger.logdbg("The type is '%s'" % aqi_type)
+
         if aqi_type not in self.readings:
             raise weewx.CannotCalculate()
 
@@ -121,11 +124,20 @@ class EPAAQI(object):
         if index >= breakpoint_count:
             index =  len(readings['breakpoints']) - 1
 
-        reading_bp = readings['breakpoints'][index]
-        aqi_bp = self.aqi_bp[index]
+        reading_bp_max = readings['breakpoints'][index]['max']
+        reading_bp_min = readings['breakpoints'][index]['min']
 
-        aqi = round(((aqi_bp['max'] - aqi_bp['min'])/(reading_bp['max'] - reading_bp['min']) * \
-              (reading - reading_bp['min'])) + aqi_bp['min'])
+        aqi_bp_max = self.aqi_bp[index]['max']
+        aqi_bp_min = self.aqi_bp[index]['min']
+
+        self.logger.logdbg("The breakpoint index is %i" % index)
+        self.logger.logdbg("The AQI breakpoint max is %i and the min is %i." % (aqi_bp_max, aqi_bp_min))
+        self.logger.logdbg("The readubg breakpoint max is %f and the min is %f." % (reading_bp_max, reading_bp_min))
+
+        aqi = round(((aqi_bp_max - aqi_bp_min)/(reading_bp_max - reading_bp_min) * \
+              (reading - reading_bp_min)) + aqi_bp_min)
+
+        self.logger.logdbg("The computed AQI is %s" % aqi)
 
         return aqi
 
