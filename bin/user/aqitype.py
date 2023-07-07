@@ -18,7 +18,7 @@ import weewx.xtypes
 
 
 
-VERSION = "1.0.-rc01"
+VERSION = '1.0.-rc01'
 
 class Logger(object):
     '''
@@ -65,40 +65,40 @@ class EPAAQI(object):
     def __init__(self, logger):
         self.logger = logger
         self.readings = {
-            "pm2_5": {
-                "prep_data": lambda x: math.trunc(x * 10) / 10,
-                "breakpoints": [
-                    {"min": 0.0, 'max': 12.0},
-                    {"min": 12.1, 'max': 35.4},
-                    {"min": 35.5, 'max': 55.4},
-                    {"min": 55.5, 'max': 150.4},
-                    {"min": 150.5, 'max': 250.4},
-                    {"min": 250.5, 'max': 340.4},
-                    {"min": 340.5, 'max': 500.4,},
+            'pm2_5': {
+                'prep_data': lambda x: math.trunc(x * 10) / 10,
+                'breakpoints': [
+                    {'min': 0.0, 'max': 12.0},
+                    {'min': 12.1, 'max': 35.4},
+                    {'min': 35.5, 'max': 55.4},
+                    {'min': 55.5, 'max': 150.4},
+                    {'min': 150.5, 'max': 250.4},
+                    {'min': 250.5, 'max': 340.4},
+                    {'min': 340.5, 'max': 500.4,},
                 ]
             },
-            "pm10": {
-                "prep_data": lambda x: math.trunc(x), # pylint: disable=unnecessary-lambda
-                "breakpoints": [
-                    {"min": 0.0, 'max': 54},
-                    {"min": 55, 'max': 154},
-                    {"min": 155, 'max': 254},
-                    {"min": 255, 'max': 354},
-                    {"min": 355, 'max': 424},
-                    {"min": 425, 'max': 504},
-                    {"min": 505, 'max': 604},
+            'pm10': {
+                'prep_data': lambda x: math.trunc(x), # pylint: disable=unnecessary-lambda
+                'breakpoints': [
+                    {'min': 0.0, 'max': 54},
+                    {'min': 55, 'max': 154},
+                    {'min': 155, 'max': 254},
+                    {'min': 255, 'max': 354},
+                    {'min': 355, 'max': 424},
+                    {'min': 425, 'max': 504},
+                    {'min': 505, 'max': 604},
                 ]
             }
         }
 
         self.aqi_bp = [
-            {"min": 0, 'max': 50},
-            {"min": 51, 'max': 100},
-            {"min": 101, 'max': 150},
-            {"min": 151, 'max': 200},
-            {"min": 201, 'max': 300},
-            {"min": 301, 'max': 400},
-            {"min": 401, 'max': 500},
+            {'min': 0, 'max': 50},
+            {'min': 51, 'max': 100},
+            {'min': 101, 'max': 150},
+            {'min': 151, 'max': 200},
+            {'min': 201, 'max': 300},
+            {'min': 301, 'max': 400},
+            {'min': 401, 'max': 500},
             ]
 
     def calculate(self, reading, aqi_type):
@@ -140,7 +140,7 @@ class AQIType(weewx.xtypes.XType):
         self.aqi_fields = config_dict
 
         for field in self.aqi_fields:
-            self.aqi_fields[field]["calculator"]  = \
+            self.aqi_fields[field]['calculator']  = \
                   getattr(sys.modules[__name__], self.aqi_fields[field]['algorithm'])(self.logger)
 
         self.sql_stmts = {
@@ -179,7 +179,7 @@ class AQIType(weewx.xtypes.XType):
         aqi_type = self.aqi_fields[obs_type]['type']
 
         try:
-            aqi = self.aqi_fields[obs_type]["calculator"].calculate(record[dependent_field],
+            aqi = self.aqi_fields[obs_type]['calculator'].calculate(record[dependent_field],
                                                                     aqi_type)
         except weewx.CannotCalculate as exception:
             raise weewx.CannotCalculate(obs_type) from exception
@@ -196,7 +196,7 @@ class AQIType(weewx.xtypes.XType):
 
         aqi_type = self.aqi_fields[obs_type]['type']
 
-        dependent_field = self.aqi_fields[obs_type]["input"]
+        dependent_field = self.aqi_fields[obs_type]['input']
 
         start_vec = list()
         stop_vec = list()
@@ -221,7 +221,7 @@ class AQIType(weewx.xtypes.XType):
                     std_unit_system = unit_system
 
                     try:
-                        aqi = self.aqi_fields[obs_type]["calculator"].calculate(input_value,
+                        aqi = self.aqi_fields[obs_type]['calculator'].calculate(input_value,
                                                  aqi_type)
                     except weewx.CannotCalculate as exception:
                         raise weewx.CannotCalculate(obs_type) from exception
@@ -244,7 +244,7 @@ class AQIType(weewx.xtypes.XType):
         if aggregate_type not in self.sql_stmts:
             raise weewx.UnknownAggregation(aggregate_type)
 
-        dependent_field = self.aqi_fields[obs_type]["input"]
+        dependent_field = self.aqi_fields[obs_type]['input']
         aqi_type = self.aqi_fields[obs_type]['type']
 
         interpolation_dict = {
@@ -268,7 +268,7 @@ class AQIType(weewx.xtypes.XType):
 
         if input_value is not None:
             try:
-                aqi = self.aqi_fields[obs_type]["calculator"].calculate(input_value,
+                aqi = self.aqi_fields[obs_type]['calculator'].calculate(input_value,
                                                  aqi_type)
             except weewx.CannotCalculate as exception:
                 raise weewx.CannotCalculate(obs_type) from exception
