@@ -16,32 +16,38 @@ from weewx.engine import StdService
 from weewx.units import ValueTuple
 import weewx.xtypes
 
-log = logging.getLogger(__name__)
 
-def logdbg(msg):
-    """ log debug messages """
-    log.debug(msg)
-
-def loginf(msg):
-    """ log informational messages """
-    log.info(msg)
-
-def logerr(msg):
-    """ log error messages """
-    log.error(msg)
 
 VERSION = "1.0.-rc01"
+
+class Logger(object):
+    def __init__(self):
+        self.log = logging.getLogger(__name__)
+
+    def logdbg(self, msg):
+        """ log debug messages """
+        self.log.debug(msg)
+
+    def loginf(self, msg):
+        """ log informational messages """
+        self.log.info(msg)
+
+    def logerr(self, msg):
+        """ log error messages """
+        self.log.error(msg)
 
 class AQITypeManager(StdService):
     """ A class to manage the registration of the AQI XType"""
     def __init__(self, engine, config_dict):
         super(AQITypeManager, self).__init__(engine, config_dict)
 
+        self.logger = Logger()
+
         if 'aqitype' not in config_dict:
             raise ValueError("[aqitype] Needs to be configured")
 
-        loginf("Adding AQI type to the XTypes pipeline.")
-        self.aqi = AQIType(config_dict['aqitype'])
+        self.logger.loginf("Adding AQI type to the XTypes pipeline.")
+        self.aqi = AQIType(self.logger, config_dict['aqitype'])
         weewx.xtypes.xtypes.append(self.aqi)
 
     def shutDown(self):
@@ -53,7 +59,8 @@ class EPAAQI(object):
     Class for calculating the EPA'S AQI.
     """
 
-    def __init__(self):
+    def __init__(self, logger):
+        self.logger = logger
         self.readings = {
             "pm2_5": {
               "prep_data": lambda x: math.trunc(x * 10) / 10,
@@ -185,12 +192,13 @@ class AQIType(weewx.xtypes.XType):
     the pm2_5 value.
     """
 
-    def __init__(self, config_dict):
+    def __init__(self, logger, config_dict):
+        self.logger = logger
         self.aqi_fields = config_dict
 
         for field in self.aqi_fields:
             self.aqi_fields[field]["calculator"]  = \
-                  getattr(sys.modules[__name__], self.aqi_fields[field]['algorithm'])()
+                  getattr(sys.modules[__name__], self.aqi_fields[field]['algorithm'])(self.logger)
 
         self.sql_stmts = {
         'avg': "SELECT AVG({input}) FROM {table_name} "
