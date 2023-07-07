@@ -163,6 +163,7 @@ class EPAAQI(object):
         Calculate the AQI.
         '''
 
+        # ToDo: need to refactor to not need obs_type
         if aqi_type not in self.readings:
             raise weewx.CannotCalculate(obs_type)
 
