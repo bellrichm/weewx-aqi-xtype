@@ -62,44 +62,45 @@ class EPAAQI(object):
     Class for calculating the EPA'S AQI.
     """
 
+    aqi_bp = [
+        {'min': 0, 'max': 50, 'color': '00e400'},
+        {'min': 51, 'max': 100, 'color': 'ffff00'},
+        {'min': 101, 'max': 150, 'color': 'ff7e00'},
+        {'min': 151, 'max': 200, 'color': 'ff0000'},
+        {'min': 201, 'max': 300, 'color': '8f3f97'},
+        {'min': 301, 'max': 400, 'color': '7e0023'},
+        {'min': 401, 'max': 500, 'color': '7e0023'},
+    ]
+
+    readings = {
+        'pm2_5': {
+            'prep_data': lambda x: math.trunc(x * 10) / 10,
+            'breakpoints': [
+                {'min': 0.0, 'max': 12.0},
+                {'min': 12.1, 'max': 35.4},
+                {'min': 35.5, 'max': 55.4},
+                {'min': 55.5, 'max': 150.4},
+                {'min': 150.5, 'max': 250.4},
+                {'min': 250.5, 'max': 350.4},
+                {'min': 350.5, 'max': 500.4,},
+            ]
+        },
+        'pm10': {
+            'prep_data': lambda x: math.trunc(x), # pylint: disable=unnecessary-lambda
+            'breakpoints': [
+                {'min': 0.0, 'max': 54},
+                {'min': 55, 'max': 154},
+                {'min': 155, 'max': 254},
+                {'min': 255, 'max': 354},
+                {'min': 355, 'max': 424},
+                {'min': 425, 'max': 504},
+                {'min': 505, 'max': 604},
+            ]
+        }
+    }    
+
     def __init__(self, logger):
         self.logger = logger
-        self.readings = {
-            'pm2_5': {
-                'prep_data': lambda x: math.trunc(x * 10) / 10,
-                'breakpoints': [
-                    {'min': 0.0, 'max': 12.0},
-                    {'min': 12.1, 'max': 35.4},
-                    {'min': 35.5, 'max': 55.4},
-                    {'min': 55.5, 'max': 150.4},
-                    {'min': 150.5, 'max': 250.4},
-                    {'min': 250.5, 'max': 350.4},
-                    {'min': 350.5, 'max': 500.4,},
-                ]
-            },
-            'pm10': {
-                'prep_data': lambda x: math.trunc(x), # pylint: disable=unnecessary-lambda
-                'breakpoints': [
-                    {'min': 0.0, 'max': 54},
-                    {'min': 55, 'max': 154},
-                    {'min': 155, 'max': 254},
-                    {'min': 255, 'max': 354},
-                    {'min': 355, 'max': 424},
-                    {'min': 425, 'max': 504},
-                    {'min': 505, 'max': 604},
-                ]
-            }
-        }
-
-        self.aqi_bp = [
-            {'min': 0, 'max': 50, 'color': '00e400'},
-            {'min': 51, 'max': 100, 'color': 'ffff00'},
-            {'min': 101, 'max': 150, 'color': 'ff7e00'},
-            {'min': 151, 'max': 200, 'color': 'ff0000'},
-            {'min': 201, 'max': 300, 'color': '8f3f97'},
-            {'min': 301, 'max': 400, 'color': '7e0023'},
-            {'min': 401, 'max': 500, 'color': '7e0023'},
-            ]
 
     def calculate(self, reading, aqi_type):
         '''
@@ -109,10 +110,10 @@ class EPAAQI(object):
         self.logger.logdbg("The input value is %f." % reading)
         self.logger.logdbg("The type is '%s'" % aqi_type)
 
-        if aqi_type not in self.readings:
+        if aqi_type not in EPAAQI.readings:
             raise weewx.CannotCalculate()
 
-        readings = self.readings[aqi_type]
+        readings = EPAAQI.readings[aqi_type]
 
         breakpoint_count = len(readings['breakpoints'])
         index = 0
@@ -127,8 +128,8 @@ class EPAAQI(object):
         reading_bp_max = readings['breakpoints'][index]['max']
         reading_bp_min = readings['breakpoints'][index]['min']
 
-        aqi_bp_max = self.aqi_bp[index]['max']
-        aqi_bp_min = self.aqi_bp[index]['min']
+        aqi_bp_max = EPAAQI.aqi_bp[index]['max']
+        aqi_bp_min = EPAAQI.aqi_bp[index]['min']
 
         self.logger.logdbg("The breakpoint index is %i" % index)
         self.logger.logdbg("The AQI breakpoint max is %i and the min is %i." % (aqi_bp_max, aqi_bp_min))
