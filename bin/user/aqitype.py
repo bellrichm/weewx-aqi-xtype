@@ -92,13 +92,13 @@ class EPAAQI(object):
         }
 
         self.aqi_bp = [
-            {'min': 0, 'max': 50},
-            {'min': 51, 'max': 100},
-            {'min': 101, 'max': 150},
-            {'min': 151, 'max': 200},
-            {'min': 201, 'max': 300},
-            {'min': 301, 'max': 400},
-            {'min': 401, 'max': 500},
+            {'min': 0, 'max': 50, 'color': '00e400'},
+            {'min': 51, 'max': 100, 'color': 'ffff00'},
+            {'min': 101, 'max': 150, 'color': 'ff7e00'},
+            {'min': 151, 'max': 200, 'color': 'ff0000'},
+            {'min': 201, 'max': 300, 'color': '8f3f97'},
+            {'min': 301, 'max': 400, 'color': '7e0023'},
+            {'min': 401, 'max': 500, 'color': '7e0023'},
             ]
 
     def calculate(self, reading, aqi_type):
