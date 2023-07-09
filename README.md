@@ -191,6 +191,18 @@ For exanmple a graph in the [weewx-jas](https://github.com/bellrichm/weewx-jas) 
                         [[[[[[[pm10_0]]]]]]]
 ```
 
+### Additional Cheetah Tags
+
+In addition to the XTtype to calculate the AQI, WeeWX-aqi-xtype has a WeeWX SearchList extension which given an AQI value and standard/algorithm will return the associated color hex value. It also can look up the AQI label for a given AQI value and standard/algorithm.
+
+#### $AQIColor
+
+This is called like, `$AQIColor(value, standard)`.
+
+#### $AQILabel
+
+This is called like, `$AQILabel(value, standard)`.
+
 ## Getting Help
 
 Feel free to [open an issue](https://github.com/bellrichm/weewx-aqi-xtype/issues/new),

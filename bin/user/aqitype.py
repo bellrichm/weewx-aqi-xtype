@@ -12,6 +12,7 @@ import math
 import sys
 
 import weedb
+import weewx.cheetahgenerator
 from weewx.engine import StdService
 from weewx.units import ValueTuple
 import weewx.xtypes
@@ -97,7 +98,7 @@ class EPAAQI(object):
                 {'min': 505, 'max': 604},
             ]
         }
-    }    
+    }
 
     def __init__(self, logger):
         self.logger = logger
@@ -293,3 +294,43 @@ class AQIType(weewx.xtypes.XType):
                                                aggregate_type)
 
         return weewx.units.ValueTuple(aqi, unit_type, group)
+
+class AQISearchList(weewx.cheetahgenerator.SearchList):
+    """ Implement tags used by templates in the skin. """
+    def __init__(self, generator):
+        weewx.cheetahgenerator.SearchList.__init__(self, generator)
+
+    def get_extension_list(self, timespan, db_lookup):
+        search_list_extension = {'AQIColor': self.get_aqi_color,
+                                 'AQILabel': self.get_aqi_label
+                                }
+
+        return [search_list_extension]
+
+    def get_aqi_color(self, value, standard):
+        """ Given an AQI value and standard, return the corresponding color"""
+        aqi_bp = getattr(sys.modules[__name__], standard).aqi_bp
+        index = self._get_index(aqi_bp, value)
+
+        return aqi_bp[index]['color']
+
+    def get_aqi_label(self, value, standard):
+        """ Given an AQI value and standard, return the corresponding label"""
+        aqi_bp = getattr(sys.modules[__name__], standard).aqi_bp
+        level = self._get_index(aqi_bp, value) + 1
+
+        return "aqi_%s_label%i"  % (standard, level)
+
+    def _get_index(self, breakpoints, value):
+        breakpoint_count = len(breakpoints)
+        index = 0
+        while index < breakpoint_count:
+            if value < breakpoints[index]['max']:
+                break
+            index += 1
+
+        if index >= breakpoint_count:
+            index =  len(breakpoints) - 1
+
+        return index
+    
