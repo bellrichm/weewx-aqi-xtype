@@ -178,7 +178,7 @@ class AQIType(weewx.xtypes.XType):
                "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL)",
         'not_null': "SELECT 1 FROM {table_name} "
                     "WHERE dateTime > {start} AND dateTime <= {stop} "
-                    "AND {input} IS NOT NULL LIMIT 1",               
+                    "AND {input} IS NOT NULL LIMIT 1",
     }
 
     def get_scalar(self, obs_type, record, db_manager=None, **option_dict):
@@ -305,7 +305,7 @@ class AQISearchList(weewx.cheetahgenerator.SearchList):
 
     def get_extension_list(self, timespan, db_lookup):
         search_list_extension = {'AQIColor': self.get_aqi_color,
-                                 'AQILabel': self.get_aqi_label
+                                 'AQIDescription': self.get_aqi_description
                                 }
 
         return [search_list_extension]
@@ -317,12 +317,12 @@ class AQISearchList(weewx.cheetahgenerator.SearchList):
 
         return aqi_bp[index]['color']
 
-    def get_aqi_label(self, value, standard):
-        """ Given an AQI value and standard, return the corresponding label"""
+    def get_aqi_description(self, value, standard):
+        """ Given an AQI value and standard, return the corresponding description"""
         aqi_bp = getattr(sys.modules[__name__], standard).aqi_bp
         level = self._get_index(aqi_bp, value) + 1
 
-        return "aqi_%s_label%i"  % (standard, level)
+        return "aqi_%s_description%i"  % (standard, level)
 
     def _get_index(self, breakpoints, value):
         breakpoint_count = len(breakpoints)
