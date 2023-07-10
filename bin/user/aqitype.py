@@ -303,7 +303,8 @@ class AQISearchList(weewx.cheetahgenerator.SearchList):
 
     def get_extension_list(self, timespan, db_lookup):
         search_list_extension = {'AQIColor': self.get_aqi_color,
-                                 'AQIDescription': self.get_aqi_description
+                                 'AQIDescription': self.get_aqi_description,
+                                 'version': VERSION,
                                 }
 
         return [search_list_extension]
