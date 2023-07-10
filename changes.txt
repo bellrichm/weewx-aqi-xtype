@@ -4,3 +4,10 @@ V1.0.0
 V1.0.1
 Fixes:
 - Incorrect breakpoint in the calculation of pm 2.5 AQI
+
+V1.0.2
+Enhancements:
+- Added the 'not_null' 'aggregate_type'
+  This is used by the 'skip_if_empty' ImageGenerator option.
+  The 'skip_if_empty' option is used in the Seasons skin.
+- Added $AQIColor, AQIDescription and $version tags.
