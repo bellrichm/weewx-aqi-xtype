@@ -8,7 +8,11 @@
   <head>
   </head>
   <body>
-    ##$year.pm2_5_aqi.has_data
+    #* Debugging the has_data 'aggregation' with XTypes
+    $year.appTemp.has_data
+    $current.appTemp.raw
+    $year.pm2_5_aqi.has_data
+    *#
     #if $current.pm2_5_aqi.has_data
       #set aqi = $current.pm2_5_aqi.raw
       #set description = $gettext($AQIDescription($aqi, 'EPAAQI'))
