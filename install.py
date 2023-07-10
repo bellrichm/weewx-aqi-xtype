@@ -11,6 +11,11 @@ from weecfg.extension import ExtensionInstaller
 VERSION = "1.0.2-rc01"
 
 EXTENSION_CONFIG = """
+[StdReport]
+    [[Labels]]
+        [[[Generic]]]
+            pm2_5_aqi = AQI
+
 [StdWXCalculate]
     [[Calculations]]
         pm2_5_aqi = prefer_hardware

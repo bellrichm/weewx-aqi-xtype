@@ -67,8 +67,21 @@ Prior to making any updates/changes, always make a backup.
 
 The installation of weewx-aqi-xtype configures it so that will work with the WeeWX 'extended schema.'
 It will calculate the AQI for the value of pm 2.5.
-To do this two sections of weewx configuration are updated.
-The first is the `[[Calculations]]` section of `[StdWXCalculate]`.
+To do this three sections of weewx configuration are updated.
+The first is `[[[Generic]]]` section of `[StdReport][[Labels]]`.
+Here the default label is added.
+
+```text
+[StdReport]
+    [[Labels]]
+        [[[Generic]]]
+            .
+            .
+            .
+            pm2_5_aqi = AQI
+```
+
+The second is the `[[Calculations]]` section of `[StdWXCalculate]`.
 Here, the calculated AQI field is added.
 Doing this adds it to the WeeWX loop packets and archive records.
 
@@ -81,7 +94,7 @@ Doing this adds it to the WeeWX loop packets and archive records.
         pm2_5_aqi = prefer_hardware
 ```
 
-The second update is an additional section, `[aqitype]`.
+The third update is an additional section, `[aqitype]`.
 This is where the information needed to calculate the AQI is configured.
 
 ```text
@@ -104,6 +117,17 @@ To calculate the AQI value for this sensor, both the `[[Calculations]]` section 
 The result should look something like this.
 
 ```text
+[StdReport]
+    [[Labels]]
+        [[[Generic]]]
+            .
+            .
+            .
+            pm2_5_aqi = Inside AQI
+            pm2_5_aqi = Outside AQI
+```
+
+```Text
 [StdWXCalculate]
     [[Calculations]]
     .
