@@ -1,0 +1,41 @@
+##    Copyright (c) 2023 Rich Bell <bellrichm@gmail.com>
+##    See the file LICENSE.txt for your full rights.
+
+#errorCatcher Echo
+
+<!DOCTYPE html>
+<html>
+  <head>
+  </head>
+  <body>
+    ##$year.pm2_5_aqi.has_data
+    #if $current.pm2_5_aqi.has_data
+      #set aqi = $current.pm2_5_aqi.raw
+      #set description = $gettext($AQIDescription($aqi, 'EPAAQI'))
+      #set color = $AQIColor($aqi, 'EPAAQI')
+      <div>$obs.label.pm2_5_aqi: <span style='color:#$color;'>$current.pm2_5_aqi ($description)</span></div>
+    #else
+      No current aqi reading
+    #end if
+    <div>$obs.label.pm2_5: $current.pm2_5_aqi</div>
+    <div>Day</div>
+    <div>
+      <img src="daypm2_5.png">
+      <img src="daypm2_5_aqi.png">
+    </div>
+    <Div>Week</div>
+    <div>
+      <img src="weekpm2_5.png">
+      <img src="weekpm2_5_aqi.png">
+    </div>
+    <div>Month</div>
+    <div>
+      <img src="monthpm2_5.png">
+      <img src="monthpm2_5_aqi.png">
+    </div>
+    <div>Year</div>  
+    <div>
+      <img src="yearpm2_5.png">
+      <img src="yearpm2_5_aqi.png">
+    </div>                
+</body>
