@@ -176,6 +176,9 @@ class AQIType(weewx.xtypes.XType):
                "ORDER BY {input} DESC LIMIT 1;",
         'sum': "SELECT SUM({input}) FROM {table_name} "
                "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL)",
+        'not_null': "SELECT 1 FROM {table_name} "
+                    "WHERE dateTime > {start} AND dateTime <= {stop} "
+                    "AND {input} IS NOT NULL LIMIT 1",               
     }
 
     def get_scalar(self, obs_type, record, db_manager=None, **option_dict):
