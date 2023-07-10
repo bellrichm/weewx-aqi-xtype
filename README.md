@@ -199,9 +199,9 @@ In addition to the XTtype to calculate the AQI, WeeWX-aqi-xtype has a WeeWX Sear
 
 This is called like, `$AQIColor(value, standard)`.
 
-#### $AQILabel
+#### $AQIDescription
 
-This is called like, `$AQILabel(value, standard)`.
+This is called like, `$AQIDescription(value, standard)`.
 
 ## Getting Help
 
