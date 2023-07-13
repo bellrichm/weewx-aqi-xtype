@@ -46,9 +46,25 @@ class AQITypeManager(StdService):
         if 'aqitype' not in config_dict:
             raise ValueError("[aqitype] Needs to be configured")
 
+        self._setup(config_dict['aqitype'])
+
         self.logger.loginf("Adding AQI type to the XTypes pipeline.")
         self.aqi = AQIType(self.logger, config_dict['aqitype'])
         weewx.xtypes.xtypes.append(self.aqi)
+
+    def _setup(self, config_dict):
+        unit_group = config_dict.get('unit_group', 'group_aqi')
+        unit = config_dict.get('unit', 'aqi')
+
+        weewx.units.USUnits[unit_group] = unit
+        weewx.units.MetricUnits[unit_group] = unit
+        weewx.units.MetricWXUnits[unit_group] = unit
+
+        weewx.units.default_unit_format_dict[unit]  = '%d'
+        weewx.units.default_unit_label_dict[unit]  = ''
+
+        for xtype in config_dict.sections:
+            weewx.units.obs_group_dict[xtype] = unit_group
 
     def shutDown(self):
         """Run when an engine shutdown is requested."""
@@ -299,13 +315,27 @@ class AQISearchList(weewx.cheetahgenerator.SearchList):
     def __init__(self, generator):
         weewx.cheetahgenerator.SearchList.__init__(self, generator)
 
+        self.logger = Logger()
+
     def get_extension_list(self, timespan, db_lookup):
         search_list_extension = {'AQIColor': self.get_aqi_color,
                                  'AQIDescription': self.get_aqi_description,
+                                 'logdbg': self._logdbg,
+                                 'loginf': self._loginf,
+                                 'logerr': self._logerr,
                                  'version': VERSION,
                                 }
 
         return [search_list_extension]
+
+    def _logdbg(self, msg):
+        self.logger.logdbg("(SLE) %s" % msg)
+
+    def _loginf(self, msg):
+        self.logger.loginf("(SLE) %s" % msg)
+
+    def _logerr(self, msg):
+        self.logger.logerr("(SLE) %s" % msg)
 
     def get_aqi_color(self, value, standard):
         """ Given an AQI value and standard, return the corresponding color"""
