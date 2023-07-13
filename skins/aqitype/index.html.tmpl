@@ -13,6 +13,7 @@
     $current.appTemp.raw
     $year.pm2_5_aqi.has_data
     *#
+    $current.dateTime
     #if $current.pm2_5_aqi.has_data
       #set aqi = $current.pm2_5_aqi.raw
       #set description = $gettext($AQIDescription($aqi, 'EPAAQI'))
