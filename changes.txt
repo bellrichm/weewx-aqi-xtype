@@ -11,3 +11,7 @@ Enhancements:
   This is used by the 'skip_if_empty' ImageGenerator option.
   The 'skip_if_empty' option is used in the Seasons skin.
 - Added $AQIColor, AQIDescription and $version tags.
+
+V1.0.3
+Fixes:
+- Add default formatter and label. (Issue #2)
