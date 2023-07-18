@@ -71,7 +71,7 @@ class AQITypeManager(StdService):
         """Run when an engine shutdown is requested."""
         weewx.xtypes.xtypes.remove(self.aqi)
 
-class AbstractCalculator(object):
+class AbstractCalculator():
     """
     Abstract Calculator class.
     """
@@ -113,7 +113,8 @@ class NOWCAST(AbstractCalculator):
 
         start_vec, stop_vec, data = xtype.get_series(self.sub_field_name, # Need to match signature pylint: disable=unused-variable
                                                     weeutil.weeutil.TimeSpan((current_hour - 43200), current_hour),
-                                                    db_manager, aggregate_type='avg', aggregate_interval=3600)
+                                                    db_manager, aggregate_type='avg',
+                                                    aggregate_interval=3600)
         data_count = len(start_vec[0])
 
         if data_count < 2:
@@ -234,8 +235,7 @@ class EPAAQI(AbstractCalculator):
         self._logdbg("The AQI breakpoint index is %i,  max is %i, and the min is %i." % (index, aqi_bp_max, aqi_bp_min))
         self._logdbg("The reading breakpoint max is %f and the min is %f." % (reading_bp_max, reading_bp_min))
 
-        aqi = round(((aqi_bp_max - aqi_bp_min)/(reading_bp_max - reading_bp_min) * \
-              (reading - reading_bp_min)) + aqi_bp_min)
+        aqi = round(((aqi_bp_max - aqi_bp_min)/(reading_bp_max - reading_bp_min) * (reading - reading_bp_min)) + aqi_bp_min)
 
         self._logdbg("The computed AQI is %s" % aqi)
 
@@ -320,9 +320,7 @@ class AQIType(weewx.xtypes.XType):
         unit_type, group = weewx.units.getStandardUnitType(record['usUnits'], obs_type)
         return weewx.units.ValueTuple(aqi, unit_type, group)
 
-    def get_series(self, obs_type, timespan, db_manager, aggregate_type=None,
-                   aggregate_interval=None,
-                   **option_dict):
+    def get_series(self, obs_type, timespan, db_manager, aggregate_type=None, aggregate_interval=None, **option_dict):
 
         if obs_type not in self.aqi_fields:
             raise weewx.UnknownType(obs_type)
@@ -336,8 +334,7 @@ class AQIType(weewx.xtypes.XType):
         data_vec = list()
 
         if aggregate_type:
-            return weewx.xtypes.ArchiveTable.get_series(obs_type, timespan, db_manager,
-                                           aggregate_type, aggregate_interval, **option_dict)
+            return weewx.xtypes.ArchiveTable.get_series(obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict)
         else:
             sql_str = 'SELECT dateTime, usUnits, `interval`, %s FROM %s ' \
                       'WHERE dateTime >= ? AND dateTime <= ? AND %s IS NOT NULL' \
@@ -348,8 +345,7 @@ class AQIType(weewx.xtypes.XType):
                 timestamp, unit_system, interval, input_value = record
                 if std_unit_system:
                     if std_unit_system != unit_system:
-                        raise weewx.UnsupportedFeature(
-                            "Unit type cannot change within a time interval.")
+                        raise weewx.UnsupportedFeature("Unit type cannot change within a time interval.")
                 else:
                     std_unit_system = unit_system
 
@@ -362,12 +358,11 @@ class AQIType(weewx.xtypes.XType):
                 stop_vec.append(timestamp)
                 data_vec.append(aqi)
 
-            unit, unit_group = weewx.units.getStandardUnitType(std_unit_system, obs_type,
-                                                               aggregate_type)
+            unit, unit_group = weewx.units.getStandardUnitType(std_unit_system, obs_type, aggregate_type)
 
         return (ValueTuple(start_vec, 'unix_epoch', 'group_time'),
-                    ValueTuple(stop_vec, 'unix_epoch', 'group_time'),
-                    ValueTuple(data_vec, unit, unit_group))
+                ValueTuple(stop_vec, 'unix_epoch', 'group_time'),
+                ValueTuple(data_vec, unit, unit_group))
 
     def get_aggregate(self, obs_type, timespan, aggregate_type, db_manager, **option_dict):
         if obs_type not in self.aqi_fields:
@@ -407,8 +402,7 @@ class AQIType(weewx.xtypes.XType):
         else:
             aqi = None
 
-        unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type,
-                                               aggregate_type)
+        unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
 
         return weewx.units.ValueTuple(aqi, unit_type, group)
 
