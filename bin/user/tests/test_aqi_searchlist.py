@@ -23,15 +23,15 @@ class AQISearchListTests(unittest.TestCase):
 
     def test_get_aqi_description_epa(self):
         searchlist = user.aqitype.AQISearchList({})
-        self.assertEqual(searchlist.get_aqi_description(0.0, 'EPAAQI'), 'aqi_EPAaqi_description1')
-        self.assertEqual(searchlist.get_aqi_description(25.0, 'EPAAQI'), 'aqi_EPAaqi_description1')
-        self.assertEqual(searchlist.get_aqi_description(75.0, 'EPAAQI'), 'aqi_EPAaqi_description2')
-        self.assertEqual(searchlist.get_aqi_description(125.0, 'EPAAQI'), 'aqi_EPAaqi_description3')
-        self.assertEqual(searchlist.get_aqi_description(175.0, 'EPAAQI'), 'aqi_EPAaqi_description4')
-        self.assertEqual(searchlist.get_aqi_description(250.0, 'EPAAQI'), 'aqi_EPAaqi_description5')
-        self.assertEqual(searchlist.get_aqi_description(350.0, 'EPAAQI'), 'aqi_EPAaqi_description6')
-        self.assertEqual(searchlist.get_aqi_description(450.0, 'EPAAQI'), 'aqi_EPAaqi_description7')
-        self.assertEqual(searchlist.get_aqi_description(6050.0, 'EPAAQI'), 'aqi_EPAaqi_description7')
+        self.assertEqual(searchlist.get_aqi_description(0.0, 'EPAAQI'), 'aqi_EPAAQI_description1')
+        self.assertEqual(searchlist.get_aqi_description(25.0, 'EPAAQI'), 'aqi_EPAAQI_description1')
+        self.assertEqual(searchlist.get_aqi_description(75.0, 'EPAAQI'), 'aqi_EPAAQI_description2')
+        self.assertEqual(searchlist.get_aqi_description(125.0, 'EPAAQI'), 'aqi_EPAAQI_description3')
+        self.assertEqual(searchlist.get_aqi_description(175.0, 'EPAAQI'), 'aqi_EPAAQI_description4')
+        self.assertEqual(searchlist.get_aqi_description(250.0, 'EPAAQI'), 'aqi_EPAAQI_description5')
+        self.assertEqual(searchlist.get_aqi_description(350.0, 'EPAAQI'), 'aqi_EPAAQI_description6')
+        self.assertEqual(searchlist.get_aqi_description(450.0, 'EPAAQI'), 'aqi_EPAAQI_description7')
+        self.assertEqual(searchlist.get_aqi_description(6050.0, 'EPAAQI'), 'aqi_EPAAQI_description7')
 
 if __name__ == '__main__':
     unittest.main(exit=False)
