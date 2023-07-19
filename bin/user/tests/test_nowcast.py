@@ -18,7 +18,7 @@ import user.aqitype
 def random_string(length=32):
     return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
 
-class EPAAQITests(unittest.TestCase):
+class NowCastTests(unittest.TestCase):
     def _populate_time_stamps(self, current_hour, count):
         time_stamps = []
         index = 0
@@ -27,6 +27,14 @@ class EPAAQITests(unittest.TestCase):
             index += 1
 
         return time_stamps
+    
+    def test_invalid_type(self):
+        mock_logger = mock.Mock(spec=user.aqitype.Logger)
+
+        with self.assertRaises(weewx.CannotCalculate):
+            calculator = user.aqitype.NOWCAST(mock_logger, None, None)
+
+            calculator.calculate_concentration(None, time.time(), random_string())    
 
     def test_incomplete_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
