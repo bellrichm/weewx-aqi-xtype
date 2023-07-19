@@ -126,7 +126,7 @@ class NOWCAST(AbstractCalculator):
         if data_count < 2:
             raise weewx.CannotCalculate
 
-        if data_count == 2 and stop_vec[0][1] < two_hours_ago:
+        if data_count == 2 and stop_vec[0][0] < two_hours_ago:
             raise weewx.CannotCalculate
 
         if stop_vec[0][data_count - 3] < two_hours_ago:
