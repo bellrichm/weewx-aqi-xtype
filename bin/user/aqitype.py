@@ -86,6 +86,8 @@ class NOWCAST(AbstractCalculator):
     Class for calculating the Nowcast AQI.
     """
 
+    readings = {'pm2_5', 'pm10'}
+
     def __init__(self, logger, sub_calculator, sub_field_name):
         self.logger = logger
         self.sub_calculator = sub_calculator
@@ -107,6 +109,10 @@ class NOWCAST(AbstractCalculator):
 
         self._logdbg("The time stamp is %f." % time_stamp)
         self._logdbg("The type is '%s'" % aqi_type)
+
+        if aqi_type not in NOWCAST.readings:
+            raise weewx.CannotCalculate()
+
         current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
         two_hours_ago = current_hour - 7200
         xtype = weewx.xtypes.ArchiveTable()
