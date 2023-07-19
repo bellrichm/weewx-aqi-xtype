@@ -14,6 +14,7 @@ import weeutil
 import weewx.cheetahgenerator
 from weewx.engine import StdService
 from weewx.units import ValueTuple
+from weeutil.weeutil import to_int
 import weewx
 
 VERSION = '1.0.4-rc01'
@@ -88,19 +89,23 @@ class NOWCAST(AbstractCalculator):
 
     readings = {'pm2_5', 'pm10'}
 
-    def __init__(self, logger, sub_calculator, sub_field_name):
+    def __init__(self, logger, log_level,  sub_calculator, sub_field_name):
         self.logger = logger
+        self.log_level = log_level
         self.sub_calculator = sub_calculator
         self.sub_field_name = sub_field_name
 
     def  _logdbg(self, msg):
-        self.logger.logdbg("(NOWCAST) %s" % msg)
+        if self.log_level <= 10:
+            self.logger.logdbg("(NOWCAST) %s" % msg)
 
     def _loginf(self, msg):
-        self.logger.loginf("(NOWCAST) %s" % msg)
+        if self.log_level <= 20:
+            self.logger.loginf("(NOWCAST) %s" % msg)
 
     def _logerr(self, msg):
-        self.logger.logerr("(NOWCAST) %s" % msg)
+        if self.log_level <= 40:
+            self.logger.logerr("(NOWCAST) %s" % msg)
 
     def calculate_concentration(self, db_manager, time_stamp, aqi_type):
         '''
@@ -203,17 +208,21 @@ class EPAAQI(AbstractCalculator):
         }
     }
 
-    def __init__(self, logger, sub_calculator, sub_field_name): # Need to match signature pylint: disable=unused-argument
+    def __init__(self, logger, log_level, sub_calculator, sub_field_name): # Need to match signature pylint: disable=unused-argument
         self.logger = logger
+        self.log_level = log_level
 
     def  _logdbg(self, msg):
-        self.logger.logdbg("(EPAAQI) %s" % msg)
+        if self.log_level <= 10:
+            self.logger.logdbg("(EPAAQI) %s" % msg)
 
     def _loginf(self, msg):
-        self.logger.loginf("(EPAAQI) %s" % msg)
+        if self.log_level <= 20:
+            self.logger.loginf("(EPAAQI) %s" % msg)
 
     def _logerr(self, msg):
-        self.logger.logerr("(EPAAQI) %s" % msg)
+        if self.log_level <= 40:
+            self.logger.logerr("(EPAAQI) %s" % msg)
 
     def calculate(self, db_manager, time_stamp, reading, aqi_type):
         '''
@@ -266,16 +275,17 @@ class AQIType(weewx.xtypes.XType):
         for field in self.aqi_fields:
             sub_calculator = None
             sub_field_name = None
+            log_level = to_int(self.aqi_fields[field].get('log_level', 20))
             if self.aqi_fields[field]['algorithm'] == 'NOWCAST':
                 self.aqi_fields[field]['support_aggregation'] = False
                 self.aqi_fields[field]['support_series'] = False
-                sub_calculator = getattr(sys.modules[__name__], 'EPAAQI')(self.logger, None, None)
+                sub_calculator = getattr(sys.modules[__name__], 'EPAAQI')(self.logger, log_level, None, None)
                 sub_field_name = self.aqi_fields[field]['input']
             else:
                 self.aqi_fields[field]['support_aggregation'] = True
                 self.aqi_fields[field]['support_series'] = True
             self.aqi_fields[field]['calculator']  = \
-                  getattr(sys.modules[__name__], self.aqi_fields[field]['algorithm'])(self.logger, sub_calculator, sub_field_name)
+                  getattr(sys.modules[__name__], self.aqi_fields[field]['algorithm'])(self.logger, log_level, sub_calculator, sub_field_name)
 
         self.sql_stmts = {
         'avg': "SELECT AVG({input}) FROM {table_name} "

@@ -19,14 +19,14 @@ class EPAAQITests(unittest.TestCase):
 
     def test_invalid_type(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
-        calculator = user.aqitype.EPAAQI(mock_logger, None, None)
+        calculator = user.aqitype.EPAAQI(mock_logger, 0, None, None)
 
         with self.assertRaises(weewx.CannotCalculate):
             calculator.calculate(None, None, random.uniform(0, 700), random_string())
 
     def test_pm2_5_calculation(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
-        calculator = user.aqitype.EPAAQI(mock_logger, None, None)
+        calculator = user.aqitype.EPAAQI(mock_logger, 0, None, None)
 
         self.assertEqual(calculator.calculate(None, None, 0.0, 'pm2_5'), 0)
         self.assertEqual(calculator.calculate(None, None, 5.0, 'pm2_5'), 21)
@@ -40,7 +40,7 @@ class EPAAQITests(unittest.TestCase):
 
     def test_pm10_calculation(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
-        calculator = user.aqitype.EPAAQI(mock_logger, None, None)
+        calculator = user.aqitype.EPAAQI(mock_logger, 0, None, None)
 
         self.assertEqual(calculator.calculate(None, None, 0.0, 'pm10'), 0)
         self.assertEqual(calculator.calculate(None, None, 25.0, 'pm10'), 23)

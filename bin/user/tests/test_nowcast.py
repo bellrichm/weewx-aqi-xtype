@@ -27,14 +27,14 @@ class NowCastTests(unittest.TestCase):
             index += 1
 
         return time_stamps
-    
+
     def test_invalid_type(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
         with self.assertRaises(weewx.CannotCalculate):
-            calculator = user.aqitype.NOWCAST(mock_logger, None, None)
+            calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-            calculator.calculate_concentration(None, time.time(), random_string())    
+            calculator.calculate_concentration(None, time.time(), random_string())
 
     def test_incomplete_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
@@ -52,7 +52,7 @@ class NowCastTests(unittest.TestCase):
                         stop_vec = [self._populate_time_stamps(current_hour, len(data[0]))]
                         mock_xtype.return_value.get_series.return_value = start_vec, stop_vec, data
 
-                        calculator = user.aqitype.NOWCAST(mock_logger, None, None)
+                        calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
                         calculator.calculate_concentration(None, current_hour, 'pm2_5')
 
@@ -76,7 +76,7 @@ class NowCastTests(unittest.TestCase):
                         del stop_vec[0][1:3]
                         mock_xtype.return_value.get_series.return_value = start_vec, stop_vec, data
 
-                        calculator = user.aqitype.NOWCAST(mock_logger, None, None)
+                        calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
                         calculator.calculate_concentration(None, current_hour, 'pm2_5')
 
@@ -91,7 +91,8 @@ class NowCastTests(unittest.TestCase):
                         current_hour =  int(now / 3600) * 3600
                         mock_start_of_interval.return_value = current_hour
 
-                        data = [[random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700)]]
+                        data = [[random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700),
+                                 random.uniform(0, 700), random.uniform(0, 700)]]
                         start_vec = None
                         stop_vec = [self._populate_time_stamps(current_hour, len(data[0]))]
                         # remove  1 and 2 hours ago data
@@ -99,9 +100,9 @@ class NowCastTests(unittest.TestCase):
                         del stop_vec[0][len(stop_vec[0])-3:len(stop_vec[0])-1]
                         mock_xtype.return_value.get_series.return_value = start_vec, stop_vec, data
 
-                        calculator = user.aqitype.NOWCAST(mock_logger, None, None)
+                        calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                        calculator.calculate_concentration(None, current_hour, 'pm2_5')                     
+                        calculator.calculate_concentration(None, current_hour, 'pm2_5')
 
     def test_calculate_concentration(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
@@ -118,7 +119,7 @@ class NowCastTests(unittest.TestCase):
                     stop_vec = [self._populate_time_stamps(current_hour, len(data[0]))]
                     mock_xtype.return_value.get_series.return_value = start_vec, stop_vec, data
 
-                    calculator = user.aqitype.NOWCAST(mock_logger, None, None)
+                    calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
                     concentration = calculator.calculate_concentration(None, current_hour, 'pm2_5')
                     self.assertEqual(concentration, 54.8)
