@@ -271,11 +271,12 @@ class AQIType(weewx.xtypes.XType):
     def __init__(self, logger, config_dict):
         self.logger = logger
         self.aqi_fields = config_dict
+        default_log_level = config_dict.get('log_level', 20)
 
         for field in self.aqi_fields:
             sub_calculator = None
             sub_field_name = None
-            log_level = to_int(self.aqi_fields[field].get('log_level', 20))
+            log_level = to_int(self.aqi_fields[field].get('log_level', default_log_level))
             if self.aqi_fields[field]['algorithm'] == 'NOWCAST':
                 self.aqi_fields[field]['support_aggregation'] = False
                 self.aqi_fields[field]['support_series'] = False
