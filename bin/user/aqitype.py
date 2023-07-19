@@ -122,14 +122,17 @@ class NOWCAST(AbstractCalculator):
                                                     db_manager, aggregate_type='avg',
                                                     aggregate_interval=3600)
         data_count = len(stop_vec[0])
+        self._logdbg("Number of readings are: %s" % data_count)
 
         if data_count < 2:
             raise weewx.CannotCalculate
 
         if data_count == 2 and stop_vec[0][0] < two_hours_ago:
+            self._logdbg("Not enough recent readings.")
             raise weewx.CannotCalculate
 
         if stop_vec[0][data_count - 3] < two_hours_ago:
+            self._logdbg("Not enough recent readings.")
             raise weewx.CannotCalculate
 
         min_value = min(data[0])
