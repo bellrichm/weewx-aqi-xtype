@@ -14,7 +14,7 @@ import weeutil
 import weewx.cheetahgenerator
 from weewx.engine import StdService
 from weewx.units import ValueTuple
-import weewx.xtypes
+import weewx
 
 VERSION = '1.0.4-rc01'
 
@@ -108,19 +108,22 @@ class NOWCAST(AbstractCalculator):
         self._logdbg("The time stamp is %f." % time_stamp)
         self._logdbg("The type is '%s'" % aqi_type)
         current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
-        three_hours_ago = current_hour - 9800
+        two_hours_ago = current_hour - 7200
         xtype = weewx.xtypes.ArchiveTable()
 
         start_vec, stop_vec, data = xtype.get_series(self.sub_field_name, # Need to match signature pylint: disable=unused-variable
                                                     weeutil.weeutil.TimeSpan((current_hour - 43200), current_hour),
                                                     db_manager, aggregate_type='avg',
                                                     aggregate_interval=3600)
-        data_count = len(start_vec[0])
+        data_count = len(stop_vec[0])
 
         if data_count < 2:
             raise weewx.CannotCalculate
 
-        if start_vec[0][2] > three_hours_ago:
+        if data_count == 2 and stop_vec[0][1] < two_hours_ago:
+            raise weewx.CannotCalculate
+
+        if stop_vec[0][data_count - 3] < two_hours_ago:
             raise weewx.CannotCalculate
 
         min_value = min(data[0])
@@ -132,13 +135,13 @@ class NOWCAST(AbstractCalculator):
         denominator = 0
         i = 0
         while i < data_count:
-            hours_ago = ((current_hour - start_vec[0][i]) / 3600) - 1
+            hours_ago = ((current_hour - stop_vec[0][i]) / 3600)
             self._logdbg("Hours ago: %s pm was: %s" % (hours_ago, data[0][i]))
             numerator += data[0][i] * (weight_factor ** hours_ago)
             denominator += weight_factor ** hours_ago
             i += 1
 
-        concentration = numerator / denominator
+        concentration = math.trunc((numerator / denominator) * 10) / 10
         self._logdbg("The computed concentration is %s" % concentration)
         return concentration
 
