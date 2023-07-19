@@ -11,11 +11,11 @@ import sys
 
 import weedb
 import weeutil
+import weewx
 import weewx.cheetahgenerator
 from weewx.engine import StdService
 from weewx.units import ValueTuple
 from weeutil.weeutil import to_int
-import weewx
 
 VERSION = '1.0.4-rc01'
 
@@ -85,6 +85,9 @@ class AbstractCalculator():
 class NOWCAST(AbstractCalculator):
     """
     Class for calculating the Nowcast AQI.
+    Additional information:
+    https://usepa.servicenowservices.com/airnow?id=kb_article_view&sys_id=bb8b65ef1b06bc10028420eae54bcb98&spa=1
+    https://www3.epa.gov/airnow/aqicalctest/nowcast.htm
     """
 
     readings = {'pm2_5', 'pm10'}
@@ -227,6 +230,9 @@ class EPAAQI(AbstractCalculator):
     def calculate(self, db_manager, time_stamp, reading, aqi_type):
         '''
         Calculate the AQI.
+        Additional information:
+        https://www.airnow.gov/publications/air-quality-index/technical-assistance-document-for-reporting-the-daily-aqi/
+        https://www.airnow.gov/aqi/aqi-calculator-concentration/
         '''
 
         self._logdbg("The input value is %f." % reading)
