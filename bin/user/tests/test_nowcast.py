@@ -27,6 +27,14 @@ class NowCastTests(unittest.TestCase):
             index += 1
 
         return time_stamps
+    
+    def test_invalid_time_stamp(self):
+        mock_logger = mock.Mock(spec=user.aqitype.Logger)
+
+        with self.assertRaises(weewx.CannotCalculate):
+            calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
+
+            calculator.calculate(None, None, None, random_string())    
 
     def test_invalid_type(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
@@ -34,7 +42,7 @@ class NowCastTests(unittest.TestCase):
         with self.assertRaises(weewx.CannotCalculate):
             calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-            calculator.calculate_concentration(None, time.time(), random_string())
+            calculator.calculate(None, time.time(), None, random_string())
 
     def test_incomplete_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)

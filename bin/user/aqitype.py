@@ -114,13 +114,6 @@ class NOWCAST(AbstractCalculator):
         '''
         Calculate the nowcast concentration.
         '''
-
-        self._logdbg("The time stamp is %f." % time_stamp)
-        self._logdbg("The type is '%s'" % aqi_type)
-
-        if aqi_type not in NOWCAST.readings:
-            raise weewx.CannotCalculate()
-
         current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
         two_hours_ago = current_hour - 7200
         xtype = weewx.xtypes.ArchiveTable()
@@ -163,6 +156,15 @@ class NOWCAST(AbstractCalculator):
         return concentration
 
     def calculate(self, db_manager, time_stamp, reading, aqi_type):
+        self._logdbg("The time stamp is %s." % time_stamp)
+        self._logdbg("The type is '%s'" % aqi_type)
+
+        if time_stamp is None:
+            raise weewx.CannotCalculate()
+
+        if aqi_type not in NOWCAST.readings:
+            raise weewx.CannotCalculate()
+
         concentration = self.calculate_concentration(db_manager, time_stamp, aqi_type)
         aqi = self.sub_calculator.calculate(None, None, concentration, aqi_type)
         self._logdbg("The computed AQI is %s" % aqi)
