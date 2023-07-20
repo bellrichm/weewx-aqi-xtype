@@ -66,7 +66,7 @@ Prior to making any updates/changes, always make a backup.
 ## Customizing
 
 The installation of weewx-aqi-xtype configures it so that will work with the WeeWX 'extended schema.'
-It will calculate the AQI for the value of pm 2.5.
+It will calculate the Instacast AQI and Nowcast AQI for the value of pm 2.5.
 To do this three sections of weewx configuration are updated.
 The first is `[[[Generic]]]` section of `[StdReport][[Labels]]`.
 Here the default label is added.
@@ -79,6 +79,7 @@ Here the default label is added.
             .
             .
             pm2_5_aqi = AQI
+            pm2_5_aqi_nowcast = AQI (Nowcast)
 ```
 
 The second is the `[[Calculations]]` section of `[StdWXCalculate]`.
@@ -92,6 +93,8 @@ Doing this adds it to the WeeWX loop packets and archive records.
     .
     .
         pm2_5_aqi = prefer_hardware
+        # Since this requires a database look up, by default do not populate loop packets
+        pm2_5_aqi_nowcast = prefer_hardware, archive        
 ```
 
 The third update is an additional section, `[aqitype]`.
@@ -109,7 +112,16 @@ This is where the information needed to calculate the AQI is configured.
         algorithm = EPAAQI
         # If the algorithm supports different pollutants(pm 2.5, pm 10, etc)
         # Supported values: pm2_5, pm10
-        type = pm2_5       
+        type = pm2_5
+    [[pm2_5_aqi_nowcast]]
+        # The name of the WeeWX observation to be used in the calculation.
+        input = pm2_5
+        # The name of the algorithm.
+        # Supported values: EPAAQI, NOWCAST
+        algorithm = NOWCAST
+        # If the algorithm supports different pollutants(pm 2.5, pm 10, etc)
+        # Supported values: pm2_5, pm10
+        type = pm2_5                
 ```
 
 Suppose one has a second air quality sensor and WeeWX has been configured to store it in `pm2_51`.
@@ -125,6 +137,8 @@ The result should look something like this.
             .
             pm2_5_aqi = Inside AQI
             pm2_5_aqi = Outside AQI
+            pm2_5_aqi_nowcast = Inside AQI (Nowcast)
+            pm2_51_aqi_nowcast = Outside AQI (Nowcast)
 ```
 
 ```Text
@@ -135,6 +149,9 @@ The result should look something like this.
     .
         pm2_5_aqi = prefer_hardware
         pm2_51_aqi = prefer_hardware
+        # Since this requires a database look up, by default do not populate loop packets
+        pm2_5_aqi_nowcast = prefer_hardware, archive     
+        pm2_51_aqi_nowcast = prefer_hardware, archive                     
 ```
 
 ```text
@@ -158,12 +175,24 @@ The result should look something like this.
         algorithm = EPAAQI
         # If the algorithm supports different pollutants(pm 2.5, pm 10, etc)
         # Supported values: pm2_5, pm10
-        type = pm2_5          
+        type = pm2_5         
+    [[pm2_51_aqi_nowcast]]
+        # The name of the WeeWX observation to be used in the calculation.
+        input = pm2_51
+        # The name of the algorithm.
+        # Supported values: EPAAQI, NOWCAST
+        algorithm = NOWCAST
+        # If the algorithm supports different pollutants(pm 2.5, pm 10, etc)
+        # Supported values: pm2_5, pm10
+        type = pm2_5                 
 ```
 
 ## Using
 
 Now the calculated value, pm2_5_aqi can be used like any built-in WeeWX type.
+
+Note: Nowcast values are only available with the $current and $latest tags.
+It does not support aggregation nor series.
 
 ### Display values
 

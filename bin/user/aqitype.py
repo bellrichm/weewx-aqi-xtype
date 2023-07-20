@@ -10,10 +10,12 @@ import math
 import sys
 
 import weedb
+import weeutil
+import weewx
 import weewx.cheetahgenerator
 from weewx.engine import StdService
 from weewx.units import ValueTuple
-import weewx.xtypes
+from weeutil.weeutil import to_int
 
 VERSION = '1.0.4-rc01'
 
@@ -70,7 +72,106 @@ class AQITypeManager(StdService):
         """Run when an engine shutdown is requested."""
         weewx.xtypes.xtypes.remove(self.aqi)
 
-class EPAAQI(object):
+class AbstractCalculator():
+    """
+    Abstract Calculator class.
+    """
+    def calculate(self, db_manager, time_stamp, reading, aqi_type):
+        """
+        Perform the calculation.
+        """
+        raise NotImplementedError
+
+class NOWCAST(AbstractCalculator):
+    """
+    Class for calculating the Nowcast AQI.
+    Additional information:
+    https://usepa.servicenowservices.com/airnow?id=kb_article_view&sys_id=bb8b65ef1b06bc10028420eae54bcb98&spa=1
+    https://www3.epa.gov/airnow/aqicalctest/nowcast.htm
+    """
+
+    readings = {'pm2_5', 'pm10'}
+
+    def __init__(self, logger, log_level,  sub_calculator, sub_field_name):
+        self.logger = logger
+        self.log_level = log_level
+        self.sub_calculator = sub_calculator
+        self.sub_field_name = sub_field_name
+
+    def  _logdbg(self, msg):
+        if self.log_level <= 10:
+            self.logger.logdbg("(NOWCAST) %s" % msg)
+
+    def _loginf(self, msg):
+        if self.log_level <= 20:
+            self.logger.loginf("(NOWCAST) %s" % msg)
+
+    def _logerr(self, msg):
+        if self.log_level <= 40:
+            self.logger.logerr("(NOWCAST) %s" % msg)
+
+    def calculate_concentration(self, db_manager, time_stamp, aqi_type):
+        '''
+        Calculate the nowcast concentration.
+        '''
+        current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
+        two_hours_ago = current_hour - 7200
+        xtype = weewx.xtypes.ArchiveTable()
+
+        start_vec, stop_vec, data = xtype.get_series(self.sub_field_name, # Need to match signature pylint: disable=unused-variable
+                                                    weeutil.weeutil.TimeSpan((current_hour - 43200), current_hour),
+                                                    db_manager, aggregate_type='avg',
+                                                    aggregate_interval=3600)
+        data_count = len(stop_vec[0])
+        self._logdbg("Number of readings are: %s" % data_count)
+
+        if data_count < 2:
+            raise weewx.CannotCalculate
+
+        if data_count == 2 and stop_vec[0][0] < two_hours_ago:
+            self._logdbg("Not enough recent readings.")
+            raise weewx.CannotCalculate
+
+        if stop_vec[0][data_count - 3] < two_hours_ago:
+            self._logdbg("Not enough recent readings.")
+            raise weewx.CannotCalculate
+
+        min_value = min(data[0])
+        max_value = max(data[0])
+        data_range = max_value - min_value
+        scaled_rate_change = data_range/max_value
+        weight_factor = max((1-scaled_rate_change), .5)
+        numerator = 0
+        denominator = 0
+        i = 0
+        while i < data_count:
+            hours_ago = ((current_hour - stop_vec[0][i]) / 3600)
+            self._logdbg("Hours ago: %s pm was: %s" % (hours_ago, data[0][i]))
+            numerator += data[0][i] * (weight_factor ** hours_ago)
+            denominator += weight_factor ** hours_ago
+            i += 1
+
+        concentration = math.trunc((numerator / denominator) * 10) / 10
+        self._logdbg("The computed concentration is %s" % concentration)
+        return concentration
+
+    def calculate(self, db_manager, time_stamp, reading, aqi_type):
+        self._logdbg("The time stamp is %s." % time_stamp)
+        self._logdbg("The type is '%s'" % aqi_type)
+
+        if time_stamp is None:
+            raise weewx.CannotCalculate()
+
+        if aqi_type not in NOWCAST.readings:
+            raise weewx.CannotCalculate()
+
+        concentration = self.calculate_concentration(db_manager, time_stamp, aqi_type)
+        aqi = self.sub_calculator.calculate(None, None, concentration, aqi_type)
+        self._logdbg("The computed AQI is %s" % aqi)
+
+        return aqi
+
+class EPAAQI(AbstractCalculator):
     """
     Class for calculating the EPA'S AQI.
     """
@@ -112,16 +213,32 @@ class EPAAQI(object):
         }
     }
 
-    def __init__(self, logger):
+    def __init__(self, logger, log_level, sub_calculator, sub_field_name): # Need to match signature pylint: disable=unused-argument
         self.logger = logger
+        self.log_level = log_level
 
-    def calculate(self, reading, aqi_type):
+    def  _logdbg(self, msg):
+        if self.log_level <= 10:
+            self.logger.logdbg("(EPAAQI) %s" % msg)
+
+    def _loginf(self, msg):
+        if self.log_level <= 20:
+            self.logger.loginf("(EPAAQI) %s" % msg)
+
+    def _logerr(self, msg):
+        if self.log_level <= 40:
+            self.logger.logerr("(EPAAQI) %s" % msg)
+
+    def calculate(self, db_manager, time_stamp, reading, aqi_type):
         '''
         Calculate the AQI.
+        Additional information:
+        https://www.airnow.gov/publications/air-quality-index/technical-assistance-document-for-reporting-the-daily-aqi/
+        https://www.airnow.gov/aqi/aqi-calculator-concentration/
         '''
 
-        self.logger.logdbg("The input value is %f." % reading)
-        self.logger.logdbg("The type is '%s'" % aqi_type)
+        self._logdbg("The input value is %f." % reading)
+        self._logdbg("The type is '%s'" % aqi_type)
 
         if aqi_type not in EPAAQI.readings:
             raise weewx.CannotCalculate()
@@ -144,14 +261,12 @@ class EPAAQI(object):
         aqi_bp_max = EPAAQI.aqi_bp[index]['max']
         aqi_bp_min = EPAAQI.aqi_bp[index]['min']
 
-        self.logger.logdbg("The breakpoint index is %i" % index)
-        self.logger.logdbg("The AQI breakpoint max is %i and the min is %i." % (aqi_bp_max, aqi_bp_min))
-        self.logger.logdbg("The readubg breakpoint max is %f and the min is %f." % (reading_bp_max, reading_bp_min))
+        self._logdbg("The AQI breakpoint index is %i,  max is %i, and the min is %i." % (index, aqi_bp_max, aqi_bp_min))
+        self._logdbg("The reading breakpoint max is %f and the min is %f." % (reading_bp_max, reading_bp_min))
 
-        aqi = round(((aqi_bp_max - aqi_bp_min)/(reading_bp_max - reading_bp_min) * \
-              (reading - reading_bp_min)) + aqi_bp_min)
+        aqi = round(((aqi_bp_max - aqi_bp_min)/(reading_bp_max - reading_bp_min) * (reading - reading_bp_min)) + aqi_bp_min)
 
-        self.logger.logdbg("The computed AQI is %s" % aqi)
+        self._logdbg("The computed AQI is %s" % aqi)
 
         return aqi
 
@@ -164,10 +279,22 @@ class AQIType(weewx.xtypes.XType):
     def __init__(self, logger, config_dict):
         self.logger = logger
         self.aqi_fields = config_dict
+        default_log_level = config_dict.get('log_level', 20)
 
         for field in self.aqi_fields:
+            sub_calculator = None
+            sub_field_name = None
+            log_level = to_int(self.aqi_fields[field].get('log_level', default_log_level))
+            if self.aqi_fields[field]['algorithm'] == 'NOWCAST':
+                self.aqi_fields[field]['support_aggregation'] = False
+                self.aqi_fields[field]['support_series'] = False
+                sub_calculator = getattr(sys.modules[__name__], 'EPAAQI')(self.logger, log_level, None, None)
+                sub_field_name = self.aqi_fields[field]['input']
+            else:
+                self.aqi_fields[field]['support_aggregation'] = True
+                self.aqi_fields[field]['support_series'] = True
             self.aqi_fields[field]['calculator']  = \
-                  getattr(sys.modules[__name__], self.aqi_fields[field]['algorithm'])(self.logger)
+                  getattr(sys.modules[__name__], self.aqi_fields[field]['algorithm'])(self.logger, log_level, sub_calculator, sub_field_name)
 
         self.sql_stmts = {
         'avg': "SELECT AVG({input}) FROM {table_name} "
@@ -193,6 +320,15 @@ class AQIType(weewx.xtypes.XType):
                     "AND {input} IS NOT NULL LIMIT 1",
     }
 
+    def _logdbg(self, msg):
+        self.logger.logdbg("(XTYPE) %s" % msg)
+
+    def _loginf(self, msg):
+        self.logger.loginf("(XTYPE) %s" % msg)
+
+    def _logerr(self, msg):
+        self.logger.logerr("(XTYPE) %s" % msg)
+
     def get_scalar(self, obs_type, record, db_manager=None, **option_dict):
         if obs_type not in self.aqi_fields:
             raise weewx.UnknownType(obs_type)
@@ -208,17 +344,14 @@ class AQIType(weewx.xtypes.XType):
         aqi_type = self.aqi_fields[obs_type]['type']
 
         try:
-            aqi = self.aqi_fields[obs_type]['calculator'].calculate(record[dependent_field],
-                                                                    aqi_type)
+            aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, record['dateTime'], record[dependent_field], aqi_type)
         except weewx.CannotCalculate as exception:
             raise weewx.CannotCalculate(obs_type) from exception
 
         unit_type, group = weewx.units.getStandardUnitType(record['usUnits'], obs_type)
         return weewx.units.ValueTuple(aqi, unit_type, group)
 
-    def get_series(self, obs_type, timespan, db_manager, aggregate_type=None,
-                   aggregate_interval=None,
-                   **option_dict):
+    def get_series(self, obs_type, timespan, db_manager, aggregate_type=None, aggregate_interval=None, **option_dict):
 
         if obs_type not in self.aqi_fields:
             raise weewx.UnknownType(obs_type)
@@ -232,8 +365,7 @@ class AQIType(weewx.xtypes.XType):
         data_vec = list()
 
         if aggregate_type:
-            return weewx.xtypes.ArchiveTable.get_series(obs_type, timespan, db_manager,
-                                           aggregate_type, aggregate_interval, **option_dict)
+            return weewx.xtypes.ArchiveTable.get_series(obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict)
         else:
             sql_str = 'SELECT dateTime, usUnits, `interval`, %s FROM %s ' \
                       'WHERE dateTime >= ? AND dateTime <= ? AND %s IS NOT NULL' \
@@ -244,14 +376,12 @@ class AQIType(weewx.xtypes.XType):
                 timestamp, unit_system, interval, input_value = record
                 if std_unit_system:
                     if std_unit_system != unit_system:
-                        raise weewx.UnsupportedFeature(
-                            "Unit type cannot change within a time interval.")
+                        raise weewx.UnsupportedFeature("Unit type cannot change within a time interval.")
                 else:
                     std_unit_system = unit_system
 
                     try:
-                        aqi = self.aqi_fields[obs_type]['calculator'].calculate(input_value,
-                                                 aqi_type)
+                        aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
                     except weewx.CannotCalculate as exception:
                         raise weewx.CannotCalculate(obs_type) from exception
 
@@ -259,12 +389,11 @@ class AQIType(weewx.xtypes.XType):
                 stop_vec.append(timestamp)
                 data_vec.append(aqi)
 
-            unit, unit_group = weewx.units.getStandardUnitType(std_unit_system, obs_type,
-                                                               aggregate_type)
+            unit, unit_group = weewx.units.getStandardUnitType(std_unit_system, obs_type, aggregate_type)
 
         return (ValueTuple(start_vec, 'unix_epoch', 'group_time'),
-                    ValueTuple(stop_vec, 'unix_epoch', 'group_time'),
-                    ValueTuple(data_vec, unit, unit_group))
+                ValueTuple(stop_vec, 'unix_epoch', 'group_time'),
+                ValueTuple(data_vec, unit, unit_group))
 
     def get_aggregate(self, obs_type, timespan, aggregate_type, db_manager, **option_dict):
         if obs_type not in self.aqi_fields:
@@ -297,16 +426,14 @@ class AQIType(weewx.xtypes.XType):
 
         if input_value is not None:
             try:
-                aqi = self.aqi_fields[obs_type]['calculator'].calculate(input_value,
-                                                 aqi_type)
+                aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
             except weewx.CannotCalculate as exception:
                 raise weewx.CannotCalculate(obs_type) from exception
 
         else:
             aqi = None
 
-        unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type,
-                                               aggregate_type)
+        unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
 
         return weewx.units.ValueTuple(aqi, unit_type, group)
 

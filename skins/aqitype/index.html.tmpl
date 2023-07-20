@@ -13,7 +13,16 @@
     $current.appTemp.raw
     $year.pm2_5_aqi.has_data
     *#
-    $current.dateTime
+    $day.pm2_5_aqi.series(time_series='start', aggregate_type='avg', aggregate_interval='hour') <br>
+    $current.dateTime <br>
+    #if $current.pm2_5_aqi_nowcast.has_data
+      #set aqi = $current.pm2_5_aqi_nowcast.raw
+      #set description = $gettext($AQIDescription($aqi, 'EPAAQI'))
+      #set color = $AQIColor($aqi, 'EPAAQI')
+      <div>$obs.label.pm2_5_aqi_nowcast: <span style='color:#$color;'>$current.pm2_5_aqi_nowcast ($description)</span></div>
+    #else
+      No current aqi reading
+    #end if    
     #if $current.pm2_5_aqi.has_data
       #set aqi = $current.pm2_5_aqi.raw
       #set description = $gettext($AQIDescription($aqi, 'EPAAQI'))
