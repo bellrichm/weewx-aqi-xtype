@@ -20,7 +20,7 @@ EXTENSION_CONFIG = """
 [StdWXCalculate]
     [[Calculations]]
         pm2_5_aqi = prefer_hardware
-        # Since this requires a database look up, by defaultbdo not populate loop packets
+        # Since this requires a database look up, by default do not populate loop packets
         pm2_5_aqi_nowcast = prefer_hardware, archive
 
 [aqitype]
