@@ -191,6 +191,9 @@ The result should look something like this.
 
 Now the calculated value, pm2_5_aqi can be used like any built-in WeeWX type.
 
+Note: Nowcast values are only available with the $current and $latest tags.
+It does not support aggregation nor series.
+
 ### Display values
 
 For example, in a Cheetah template
