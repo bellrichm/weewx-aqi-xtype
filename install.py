@@ -15,10 +15,13 @@ EXTENSION_CONFIG = """
     [[Labels]]
         [[[Generic]]]
             pm2_5_aqi = AQI
+            pm2_5_aqi_nowcast = AQI (Nowcast)
 
 [StdWXCalculate]
     [[Calculations]]
         pm2_5_aqi = prefer_hardware
+        # Since this requires a database look up, by defaultbdo not populate loop packets
+        pm2_5_aqi_nowcast = prefer_hardware, archive
 
 [aqitype]
     # The name of AQI field.
@@ -27,11 +30,20 @@ EXTENSION_CONFIG = """
         # The name of the WeeWX observation to be used in the calculation.
         input = pm2_5
         # The name of the algorithm.
-        # Supported values: EPAAQI
+        # Supported values: EPAAQI, NOWCAST
         algorithm = EPAAQI
         # If the algorithm supports different pollutants(pm 2.5, pm 10, etc)
         # Supported values: pm2_5, pm10
-        type = pm2_5               
+        type = pm2_5      
+    [[pm2_5_aqi_nowcast]]
+        # The name of the WeeWX observation to be used in the calculation.
+        input = pm2_5
+        # The name of the algorithm.
+        # Supported values: EPAAQI, NOWCAST
+        algorithm = NOWCAST
+        # If the algorithm supports different pollutants(pm 2.5, pm 10, etc)
+        # Supported values: pm2_5, pm10
+        type = pm2_5                          
 """
 
 EXTENSION_DICT = configobj.ConfigObj(StringIO(EXTENSION_CONFIG))
