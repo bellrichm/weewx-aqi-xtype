@@ -17,7 +17,7 @@ from weewx.engine import StdService
 from weewx.units import ValueTuple
 from weeutil.weeutil import to_int
 
-VERSION = '1.0.4-rc01'
+VERSION = '1.1.0'
 
 class Logger(object):
     '''

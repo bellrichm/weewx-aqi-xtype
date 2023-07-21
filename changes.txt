@@ -15,3 +15,7 @@ Enhancements:
 V1.0.3
 Fixes:
 - Add default formatter and label. (Issue #2)
+
+V1.1.0
+Enhancements:
+- Add support for Nowcast calculation.
