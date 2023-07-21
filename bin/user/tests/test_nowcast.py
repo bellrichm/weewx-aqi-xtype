@@ -62,7 +62,7 @@ class NowCastTests(unittest.TestCase):
 
                         calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                        calculator.calculate_concentration(None, current_hour, 'pm2_5')
+                        calculator.calculate_concentration(None, current_hour)
 
 
     def test_old_minimum_data(self):
@@ -86,7 +86,7 @@ class NowCastTests(unittest.TestCase):
 
                         calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                        calculator.calculate_concentration(None, current_hour, 'pm2_5')
+                        calculator.calculate_concentration(None, current_hour)
 
     def test_old_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
@@ -110,7 +110,7 @@ class NowCastTests(unittest.TestCase):
 
                         calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                        calculator.calculate_concentration(None, current_hour, 'pm2_5')
+                        calculator.calculate_concentration(None, current_hour)
 
     def test_missing_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
@@ -136,7 +136,7 @@ class NowCastTests(unittest.TestCase):
 
                     calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                    concentration = calculator.calculate_concentration(None, current_hour, 'pm2_5')
+                    concentration = calculator.calculate_concentration(None, current_hour)
                     self.assertEqual(concentration, 164.7)
 
     def test_calculate_concentration(self):
@@ -156,7 +156,7 @@ class NowCastTests(unittest.TestCase):
 
                     calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                    concentration = calculator.calculate_concentration(None, current_hour, 'pm2_5')
+                    concentration = calculator.calculate_concentration(None, current_hour)
                     self.assertEqual(concentration, 54.8)
 
 if __name__ == '__main__':

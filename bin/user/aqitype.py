@@ -110,7 +110,7 @@ class NOWCAST(AbstractCalculator):
         if self.log_level <= 40:
             self.logger.logerr("(NOWCAST) %s" % msg)
 
-    def calculate_concentration(self, db_manager, time_stamp, aqi_type):
+    def calculate_concentration(self, db_manager, time_stamp):
         '''
         Calculate the nowcast concentration.
         '''
@@ -165,7 +165,7 @@ class NOWCAST(AbstractCalculator):
         if aqi_type not in NOWCAST.readings:
             raise weewx.CannotCalculate()
 
-        concentration = self.calculate_concentration(db_manager, time_stamp, aqi_type)
+        concentration = self.calculate_concentration(db_manager, time_stamp)
         aqi = self.sub_calculator.calculate(None, None, concentration, aqi_type)
         self._logdbg("The computed AQI is %s" % aqi)
 
