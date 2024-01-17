@@ -17,7 +17,7 @@ from weewx.engine import StdService
 from weewx.units import ValueTuple
 from weeutil.weeutil import to_int
 
-VERSION = '1.1.0'
+VERSION = '1.1.1-rc01'
 
 class Logger(object):
     '''
@@ -118,10 +118,26 @@ class NOWCAST(AbstractCalculator):
         two_hours_ago = current_hour - 7200
         xtype = weewx.xtypes.ArchiveTable()
 
-        start_vec, stop_vec, data = xtype.get_series(self.sub_field_name, # Need to match signature pylint: disable=unused-variable
+        _, stop_vec, data = xtype.get_series(self.sub_field_name,
                                                     weeutil.weeutil.TimeSpan((current_hour - 43200), current_hour),
                                                     db_manager, aggregate_type='avg',
                                                     aggregate_interval=3600)
+        
+        min_value = None
+        max_value = None
+        index = len(data[0]) - 1
+        while index >= 0 :
+            if data[0][index] is None:
+                del data[0][index]
+                del stop_vec[0][index]
+            else:
+                if min_value is None or data[0][index] < min_value:
+                    min_value = data[0][index]
+
+                if max_value is None or data[0][index] > max_value:
+                    max_value = data[0][index]
+            index -= 1
+
         data_count = len(stop_vec[0])
         self._logdbg("Number of readings are: %s" % data_count)
 
@@ -136,8 +152,6 @@ class NOWCAST(AbstractCalculator):
             self._logdbg("Not enough recent readings.")
             raise weewx.CannotCalculate
 
-        min_value = min(data[0])
-        max_value = max(data[0])
         data_range = max_value - min_value
         scaled_rate_change = data_range/max_value
         weight_factor = max((1-scaled_rate_change), .5)

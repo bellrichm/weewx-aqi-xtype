@@ -19,3 +19,7 @@ Fixes:
 V1.1.0
 Enhancements:
 - Add support for Nowcast calculation.
+
+V1.1.1
+Fixes:
+- Handle values of 'None' when calculating the NowCast AQI (#7).
