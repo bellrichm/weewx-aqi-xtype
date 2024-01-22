@@ -1,4 +1,4 @@
-#    Copyright (c) 2023 Rich Bell <bellrichm@gmail.com>
+#    Copyright (c) 2023-2024 Rich Bell <bellrichm@gmail.com>
 #    See the file LICENSE.txt for your rights.
 
 """ Installer for the AQI XType. """
@@ -8,7 +8,7 @@ from io import StringIO
 import configobj
 from weecfg.extension import ExtensionInstaller
 
-VERSION = "1.1.1-rc01"
+VERSION = "1.1.1-rc02"
 
 EXTENSION_CONFIG = """
 [StdReport]

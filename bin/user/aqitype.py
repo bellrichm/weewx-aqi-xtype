@@ -1,4 +1,4 @@
-#    Copyright (c) 2023 Rich Bell <bellrichm@gmail.com>
+#    Copyright (c) 2023-2024 Rich Bell <bellrichm@gmail.com>
 #    See the file LICENSE.txt for your full rights.
 
 """
@@ -17,7 +17,7 @@ from weewx.engine import StdService
 from weewx.units import ValueTuple
 from weeutil.weeutil import to_int
 
-VERSION = '1.1.1-rc01'
+VERSION = '1.1.1-rc02'
 
 class Logger(object):
     '''
@@ -123,6 +123,9 @@ class NOWCAST(AbstractCalculator):
                                                     db_manager, aggregate_type='avg',
                                                     aggregate_interval=3600)
         
+        self._logdbg(f"The data returned is {data[0]}.")
+        self._logdbg(f"The timestamps returned is {stop_vec[0]}.")
+
         min_value = None
         max_value = None
         index = len(data[0]) - 1
@@ -140,6 +143,9 @@ class NOWCAST(AbstractCalculator):
 
         data_count = len(stop_vec[0])
         self._logdbg("Number of readings are: %s" % data_count)
+
+        self._logdbg(f"The data after filtering is {data[0]}.")
+        self._logdbg(f"The timestamps after filtering is {stop_vec[0]}.")
 
         if data_count < 2:
             raise weewx.CannotCalculate
