@@ -187,6 +187,16 @@ The result should look something like this.
         type = pm2_5                 
 ```
 
+By default `aqi_xtype` is added to the beginning of the list of xtypes.
+This has the effect of overriding other xtypes (except for any added to the beginning after `aqi-xtype`).
+If for some reason it is desired to add it to the end, set `prepend = False`
+
+```text
+[aqitype]
+    # Add aqi-xtype to the end of the list of xtypes.
+    prepend = False
+```
+
 ## Using
 
 Now the calculated value, pm2_5_aqi can be used like any built-in WeeWX type.

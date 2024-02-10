@@ -20,6 +20,14 @@ V1.1.0
 Enhancements:
 - Add support for Nowcast calculation.
 
-V1.1.1
+V1.2.0
+Breaking change in behavior:
+- The ability to configure if the aqi-xtype is added to the beginning or end of the xtype list.
+  The default is the beginning of the list.
+  Prior to this, it was added to the end.
+
 Fixes:
 - Handle values of 'None' when calculating the NowCast AQI (#7).
+
+Enhancements:
+- Log (debug) values used to calculate NowCast AQI.
