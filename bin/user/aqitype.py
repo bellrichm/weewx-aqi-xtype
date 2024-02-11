@@ -15,7 +15,7 @@ import weewx
 import weewx.cheetahgenerator
 from weewx.engine import StdService
 from weewx.units import ValueTuple
-from weeutil.weeutil import to_int
+from weeutil.weeutil import to_bool, to_int
 
 VERSION = '1.2.0-rc01'
 
@@ -52,7 +52,7 @@ class AQITypeManager(StdService):
 
         self.logger.loginf("Adding AQI type to the XTypes pipeline.")
         self.aqi = AQIType(self.logger, config_dict['aqitype'])
-        if config_dict['aqitype'].get('prepend', True):
+        if to_bool(config_dict['aqitype'].get('prepend', True)):
             weewx.xtypes.xtypes.insert(0, self.aqi)
         else:
             weewx.xtypes.xtypes.append(self.aqi)
@@ -301,13 +301,15 @@ class AQIType(weewx.xtypes.XType):
 
     def __init__(self, logger, config_dict):
         self.logger = logger
-        self.aqi_fields = config_dict
+        self.aqi_fields = {}
+        for field in config_dict.sections:
+            self.aqi_fields[field] = config_dict[field]
         default_log_level = config_dict.get('log_level', 20)
 
         for field in self.aqi_fields:
             sub_calculator = None
             sub_field_name = None
-            log_level = to_int(self.aqi_fields[field].get('log_level', default_log_level))
+            log_level = to_int(config_dict[field].get('log_level', default_log_level))
             if self.aqi_fields[field]['algorithm'] == 'NOWCAST':
                 self.aqi_fields[field]['support_aggregation'] = False
                 self.aqi_fields[field]['support_series'] = False
