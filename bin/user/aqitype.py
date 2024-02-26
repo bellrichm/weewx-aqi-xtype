@@ -284,7 +284,7 @@ class EPAAQI(AbstractCalculator):
         aqi_bp_max = EPAAQI.aqi_bp[index]['max']
         aqi_bp_min = EPAAQI.aqi_bp[index]['min']
 
-        self._logdbg("The AQI breakpoint index is %i,  max is %i, and the min is %i." % (index, aqi_bp_max, aqi_bp_min))
+        self._logdbg(f"The AQI breakpoint index is {index:i},  max is {aqi_bp_max:i}, and the min is {aqi_bp_min:i}.")
         self._logdbg(f"The reading breakpoint max is {reading_bp_max:f} and the min is {reading_bp_min:f}.")
 
         aqi = round(((aqi_bp_max - aqi_bp_min)/(reading_bp_max - reading_bp_min) * (reading - reading_bp_min)) + aqi_bp_min)
@@ -392,9 +392,8 @@ class AQIType(weewx.xtypes.XType):
         if aggregate_type:
             return weewx.xtypes.ArchiveTable.get_series(obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict)
         else:
-            sql_str = 'SELECT dateTime, usUnits, `interval`, %s FROM %s ' \
-                      'WHERE dateTime >= ? AND dateTime <= ? AND %s IS NOT NULL' \
-                      % (dependent_field, db_manager.table_name, dependent_field)
+            sql_str = f'SELECT dateTime, usUnits, `interval`, {dependent_field} FROM {db_manager.table_name} ' \
+                      'WHERE dateTime >= ? AND dateTime <= ? AND {dependent_field} IS NOT NULL'
             std_unit_system = None
 
             for record in db_manager.genSql(sql_str, timespan):
@@ -501,7 +500,7 @@ class AQISearchList(weewx.cheetahgenerator.SearchList):
         aqi_bp = getattr(sys.modules[__name__], standard).aqi_bp
         level = self._get_index(aqi_bp, value) + 1
 
-        return "aqi_%s_description%i"  % (standard, level)
+        return f"aqi_{standard}_description {level:i}"
 
     def _get_index(self, breakpoints, value):
         breakpoint_count = len(breakpoints)
