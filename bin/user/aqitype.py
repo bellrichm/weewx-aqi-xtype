@@ -9,6 +9,8 @@ import logging
 import math
 import sys
 
+from collections import ChainMap
+
 import weedb
 import weeutil
 import weewx
@@ -449,7 +451,8 @@ class AQIType(weewx.xtypes.XType):
         if obs_type not in self.aqi_fields:
             raise weewx.UnknownType(obs_type)
 
-        if aggregate_type not in self.sql_stmts:
+        sql_stmts = ChainMap(self.agg_sql_stmts, self.simple_sql_stmts, self.sql_stmts)
+        if aggregate_type not in sql_stmts:
             raise weewx.UnknownAggregation(aggregate_type)
 
         dependent_field = self.aqi_fields[obs_type]['input']
@@ -462,30 +465,33 @@ class AQIType(weewx.xtypes.XType):
             'input': dependent_field
         }
 
-        sql_stmt = self.sql_stmts[aggregate_type].format(**interpolation_dict)
+        sql_stmt = sql_stmts[aggregate_type].format(**interpolation_dict)
 
-        try:
-            row = db_manager.getSql(sql_stmt)
-        except weedb.NoColumnError:
-            raise weewx.UnknownType(obs_type) from weedb.NoColumnError
-
-        if not row or None in row:
-            input_value = None
+        if aggregate_type in self.agg_sql_stmts:
+            # ToDo - loop through results to calculate aggregate_value
+            pass
         else:
-            input_value = row[0]
-
-        if input_value is not None:
             try:
-                aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
-            except weewx.CannotCalculate as exception:
-                raise weewx.CannotCalculate(obs_type) from exception
+                row = db_manager.getSql(sql_stmt)
+            except weedb.NoColumnError:
+                raise weewx.UnknownType(obs_type) from weedb.NoColumnError
 
-        else:
-            aqi = None
+            if not row or None in row:
+                input_value = None
+            else:
+                input_value = row[0]
+
+            if aggregate_type in self.simple_sql_stmts:
+                aggregate_value = input_value
+            else:
+                try:
+                    aggregate_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
+                except weewx.CannotCalculate as exception:
+                    raise weewx.CannotCalculate(obs_type) from exception
 
         unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
 
-        return weewx.units.ValueTuple(aqi, unit_type, group)
+        return weewx.units.ValueTuple(aggregate_value, unit_type, group)
 
 class AQISearchList(weewx.cheetahgenerator.SearchList):
     """ Implement tags used by templates in the skin. """
