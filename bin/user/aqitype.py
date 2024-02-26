@@ -19,7 +19,7 @@ from weeutil.weeutil import to_bool, to_int
 
 VERSION = '1.2.0-rc01'
 
-class Logger(object):
+class Logger:
     '''
     Manage the logging
     '''
@@ -41,7 +41,7 @@ class Logger(object):
 class AQITypeManager(StdService):
     """ A class to manage the registration of the AQI XType"""
     def __init__(self, engine, config_dict):
-        super(AQITypeManager, self).__init__(engine, config_dict)
+        super().__init__(engine, config_dict)
 
         self.logger = Logger()
 
@@ -355,6 +355,7 @@ class AQIType(weewx.xtypes.XType):
         self.logger.logerr(f"(XTYPE) {msg}")
 
     def get_scalar(self, obs_type, record, db_manager=None, **option_dict):
+        """ Calculate the scalar value."""
         if obs_type not in self.aqi_fields:
             raise weewx.UnknownType(obs_type)
         if record is None:
@@ -377,7 +378,7 @@ class AQIType(weewx.xtypes.XType):
         return weewx.units.ValueTuple(aqi, unit_type, group)
 
     def get_series(self, obs_type, timespan, db_manager, aggregate_type=None, aggregate_interval=None, **option_dict):
-
+        """ Calculate the series. """
         if obs_type not in self.aqi_fields:
             raise weewx.UnknownType(obs_type)
 
@@ -385,41 +386,43 @@ class AQIType(weewx.xtypes.XType):
 
         dependent_field = self.aqi_fields[obs_type]['input']
 
-        start_vec = list()
-        stop_vec = list()
-        data_vec = list()
+        start_vec = []
+        stop_vec = []
+        data_vec = []
 
         if aggregate_type:
             return weewx.xtypes.ArchiveTable.get_series(obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict)
-        else:
-            sql_str = f'SELECT dateTime, usUnits, `interval`, {dependent_field} FROM {db_manager.table_name} ' \
-                      'WHERE dateTime >= ? AND dateTime <= ? AND {dependent_field} IS NOT NULL'
-            std_unit_system = None
 
-            for record in db_manager.genSql(sql_str, timespan):
-                timestamp, unit_system, interval, input_value = record
-                if std_unit_system:
-                    if std_unit_system != unit_system:
-                        raise weewx.UnsupportedFeature("Unit type cannot change within a time interval.")
-                else:
-                    std_unit_system = unit_system
+        sql_str = f'SELECT dateTime, usUnits, `interval`, {dependent_field} FROM {db_manager.table_name} ' \
+                    'WHERE dateTime >= ? AND dateTime <= ? AND {dependent_field} IS NOT NULL'
+        std_unit_system = None
 
-                    try:
-                        aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
-                    except weewx.CannotCalculate as exception:
-                        raise weewx.CannotCalculate(obs_type) from exception
+        for record in db_manager.genSql(sql_str, timespan):
+            aqi = None
+            timestamp, unit_system, interval, input_value = record
+            if std_unit_system:
+                if std_unit_system != unit_system:
+                    raise weewx.UnsupportedFeature("Unit type cannot change within a time interval.")
+            else:
+                std_unit_system = unit_system
 
-                start_vec.append(timestamp - interval * 60)
-                stop_vec.append(timestamp)
-                data_vec.append(aqi)
+                try:
+                    aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
+                except weewx.CannotCalculate as exception:
+                    raise weewx.CannotCalculate(obs_type) from exception
 
-            unit, unit_group = weewx.units.getStandardUnitType(std_unit_system, obs_type, aggregate_type)
+            start_vec.append(timestamp - interval * 60)
+            stop_vec.append(timestamp)
+            data_vec.append(aqi)
+
+        unit, unit_group = weewx.units.getStandardUnitType(std_unit_system, obs_type, aggregate_type)
 
         return (ValueTuple(start_vec, 'unix_epoch', 'group_time'),
                 ValueTuple(stop_vec, 'unix_epoch', 'group_time'),
                 ValueTuple(data_vec, unit, unit_group))
 
     def get_aggregate(self, obs_type, timespan, aggregate_type, db_manager, **option_dict):
+        """ Compute the aggregate. """
         if obs_type not in self.aqi_fields:
             raise weewx.UnknownType(obs_type)
 
@@ -468,7 +471,8 @@ class AQISearchList(weewx.cheetahgenerator.SearchList):
 
         self.logger = Logger()
 
-    def get_extension_list(self, timespan, db_lookup):
+    def get_extension_list(self, _timespan, _db_lookup):
+        """ Get the extension list. """
         search_list_extension = {'AQIColor': self.get_aqi_color,
                                  'AQIDescription': self.get_aqi_description,
                                  'logdbg': self._logdbg,
