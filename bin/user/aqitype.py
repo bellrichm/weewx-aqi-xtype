@@ -103,15 +103,15 @@ class NOWCAST(AbstractCalculator):
 
     def  _logdbg(self, msg):
         if self.log_level <= 10:
-            self.logger.logdbg("(NOWCAST) %s" % msg)
+            self.logger.logdbg(f"(NOWCAST) {msg}")
 
     def _loginf(self, msg):
         if self.log_level <= 20:
-            self.logger.loginf("(NOWCAST) %s" % msg)
+            self.logger.loginf(f"(NOWCAST) {msg}")
 
     def _logerr(self, msg):
         if self.log_level <= 40:
-            self.logger.logerr("(NOWCAST) %s" % msg)
+            self.logger.logerr(f"(NOWCAST) {msg}")
 
     def calculate_concentration(self, db_manager, time_stamp):
         '''
@@ -145,7 +145,7 @@ class NOWCAST(AbstractCalculator):
             index -= 1
 
         data_count = len(stop_vec[0])
-        self._logdbg("Number of readings are: %s" % data_count)
+        self._logdbg(f"Number of readings are: {data_count}")
 
         self._logdbg(f"The data after filtering is {data[0]}.")
         self._logdbg(f"The timestamps after filtering is {stop_vec[0]}.")
@@ -169,18 +169,18 @@ class NOWCAST(AbstractCalculator):
         i = 0
         while i < data_count:
             hours_ago = (current_hour - stop_vec[0][i]) / 3600
-            self._logdbg("Hours ago: %s pm was: %s" % (hours_ago, data[0][i]))
+            self._logdbg(f"Hours ago: {hours_ago} pm was: {data[0][i]}")
             numerator += data[0][i] * (weight_factor ** hours_ago)
             denominator += weight_factor ** hours_ago
             i += 1
 
         concentration = math.trunc((numerator / denominator) * 10) / 10
-        self._logdbg("The computed concentration is %s" % concentration)
+        self._logdbg(f"The computed concentration is {concentration}")
         return concentration
 
     def calculate(self, db_manager, time_stamp, reading, aqi_type):
-        self._logdbg("The time stamp is %s." % time_stamp)
-        self._logdbg("The type is '%s'" % aqi_type)
+        self._logdbg(f"The time stamp is {time_stamp}.")
+        self._logdbg(f"The type is '{aqi_type}'")
 
         if time_stamp is None:
             raise weewx.CannotCalculate()
@@ -190,7 +190,7 @@ class NOWCAST(AbstractCalculator):
 
         concentration = self.calculate_concentration(db_manager, time_stamp)
         aqi = self.sub_calculator.calculate(None, None, concentration, aqi_type)
-        self._logdbg("The computed AQI is %s" % aqi)
+        self._logdbg(f"The computed AQI is {aqi}")
 
         return aqi
 
@@ -242,15 +242,15 @@ class EPAAQI(AbstractCalculator):
 
     def  _logdbg(self, msg):
         if self.log_level <= 10:
-            self.logger.logdbg("(EPAAQI) %s" % msg)
+            self.logger.logdbg(f"(EPAAQI) {msg}")
 
     def _loginf(self, msg):
         if self.log_level <= 20:
-            self.logger.loginf("(EPAAQI) %s" % msg)
+            self.logger.loginf(f"(EPAAQI) {msg}")
 
     def _logerr(self, msg):
         if self.log_level <= 40:
-            self.logger.logerr("(EPAAQI) %s" % msg)
+            self.logger.logerr(f"(EPAAQI) {msg}")
 
     def calculate(self, db_manager, time_stamp, reading, aqi_type):
         '''
@@ -260,8 +260,8 @@ class EPAAQI(AbstractCalculator):
         https://www.airnow.gov/aqi/aqi-calculator-concentration/
         '''
 
-        self._logdbg("The input value is %f." % reading)
-        self._logdbg("The type is '%s'" % aqi_type)
+        self._logdbg(f"The input value is {reading:f}.")
+        self._logdbg(f"The type is '{aqi_type}'")
 
         if aqi_type not in EPAAQI.readings:
             raise weewx.CannotCalculate()
@@ -285,11 +285,11 @@ class EPAAQI(AbstractCalculator):
         aqi_bp_min = EPAAQI.aqi_bp[index]['min']
 
         self._logdbg("The AQI breakpoint index is %i,  max is %i, and the min is %i." % (index, aqi_bp_max, aqi_bp_min))
-        self._logdbg("The reading breakpoint max is %f and the min is %f." % (reading_bp_max, reading_bp_min))
+        self._logdbg(f"The reading breakpoint max is {reading_bp_max:f} and the min is {reading_bp_min:f}.")
 
         aqi = round(((aqi_bp_max - aqi_bp_min)/(reading_bp_max - reading_bp_min) * (reading - reading_bp_min)) + aqi_bp_min)
 
-        self._logdbg("The computed AQI is %s" % aqi)
+        self._logdbg(f"The computed AQI is {aqi}")
 
         return aqi
 
@@ -346,13 +346,13 @@ class AQIType(weewx.xtypes.XType):
     }
 
     def _logdbg(self, msg):
-        self.logger.logdbg("(XTYPE) %s" % msg)
+        self.logger.logdbg(f"(XTYPE) {msg}")
 
     def _loginf(self, msg):
-        self.logger.loginf("(XTYPE) %s" % msg)
+        self.logger.loginf(f"(XTYPE) {msg}")
 
     def _logerr(self, msg):
-        self.logger.logerr("(XTYPE) %s" % msg)
+        self.logger.logerr(f"(XTYPE) {msg}")
 
     def get_scalar(self, obs_type, record, db_manager=None, **option_dict):
         if obs_type not in self.aqi_fields:
@@ -481,13 +481,13 @@ class AQISearchList(weewx.cheetahgenerator.SearchList):
         return [search_list_extension]
 
     def _logdbg(self, msg):
-        self.logger.logdbg("(SLE) %s" % msg)
+        self.logger.logdbg(f"(SLE) {msg}")
 
     def _loginf(self, msg):
-        self.logger.loginf("(SLE) %s" % msg)
+        self.logger.loginf(f"(SLE) {msg}")
 
     def _logerr(self, msg):
-        self.logger.logerr("(SLE) %s" % msg)
+        self.logger.logerr(f"(SLE) {msg}")
 
     def get_aqi_color(self, value, standard):
         """ Given an AQI value and standard, return the corresponding color"""
