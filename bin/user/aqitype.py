@@ -441,7 +441,7 @@ class AQIType(weewx.xtypes.XType):
         try:
             row = db_manager.getSql(sql_stmt)
         except weedb.NoColumnError:
-            raise weewx.UnknownType(obs_type)
+            raise weewx.UnknownType(obs_type) from weedb.NoColumnError
 
         if not row or None in row:
             input_value = None
