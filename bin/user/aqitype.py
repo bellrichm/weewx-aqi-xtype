@@ -325,10 +325,12 @@ class AQIType(weewx.xtypes.XType):
                   getattr(sys.modules[__name__], field_option['algorithm'])(self.logger, log_level, sub_calculator, sub_field_name)
 
         self.sql_stmts = {
-        'avg': "SELECT AVG({input}) FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
-        'count': "SELECT COUNT(dateTime) FROM {table_name} "
-                 "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
+        # Need to compute avg of computed AQI
+        #'avg': "SELECT AVG({input}) FROM {table_name} "
+        #       "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
+        # do not need any calculation
+        #'count': "SELECT COUNT(dateTime) FROM {table_name} "
+        #         "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
         'first': "SELECT {input} FROM {table_name} "
                  "WHERE dateTime = (SELECT MIN(dateTime) FROM {table_name} "
                  "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
@@ -341,8 +343,9 @@ class AQIType(weewx.xtypes.XType):
         'max': "SELECT {input} FROM {table_name} "
                "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
                "ORDER BY {input} DESC LIMIT 1;",
-        'sum': "SELECT SUM({input}) FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL)",
+        # Need to compute avg of computed AQI - if sum should even be supported
+        #'sum': "SELECT SUM({input}) FROM {table_name} "
+        #       "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL)",
         'not_null': "SELECT 1 FROM {table_name} "
                     "WHERE dateTime > {start} AND dateTime <= {stop} "
                     "AND {input} IS NOT NULL LIMIT 1",
