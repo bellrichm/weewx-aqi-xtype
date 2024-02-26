@@ -324,31 +324,48 @@ class AQIType(weewx.xtypes.XType):
             field_option['calculator']  = \
                   getattr(sys.modules[__name__], field_option['algorithm'])(self.logger, log_level, sub_calculator, sub_field_name)
 
-        self.sql_stmts = {
-        # Need to compute avg of computed AQI
-        #'avg': "SELECT AVG({input}) FROM {table_name} "
-        #       "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
-        # do not need any calculation
-        #'count': "SELECT COUNT(dateTime) FROM {table_name} "
-        #         "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
-        'first': "SELECT {input} FROM {table_name} "
-                 "WHERE dateTime = (SELECT MIN(dateTime) FROM {table_name} "
+        self.simple_sql_stmts = {
+        'count': "SELECT COUNT(dateTime) FROM {table_name} "
                  "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
+        'firsttime': "SELECT MIN(dateTime) FROM {table_name} "
+               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+               "ORDER BY dateTime ASC LIMIT 1;",
+        'lasttime': "SELECT MAX(dateTime) FROM {table_name} "
+               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+               "ORDER BY dateTime DESC LIMIT 1;",                 
+        'maxtime': "SELECT dateTime FROM {table_name} "
+                   "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL"
+                   "ORDER BY {input} DESC LIMIT 1", 
+        'mintime': "SELECT dateTime FROM {table_name} "
+                   "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL"
+                   "ORDER BY {input} ASC LIMIT 1",
+        'not_null': "SELECT 1 FROM {table_name} "
+                    "WHERE dateTime > {start} AND dateTime <= {stop} "
+                    "AND {input} IS NOT NULL LIMIT 1",                   
+        }
+
+        self.agg_sql_stmts = {
+        # Need to compute avg of computed AQI
+        'avg': "SELECT AVG({input}) FROM {table_name} "
+               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
+        # Need to compute avg of computed AQI - if sum should even be supported
+        'sum': "SELECT SUM({input}) FROM {table_name} "
+               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL)",
+        }
+
+        self.sql_stmts = {
+        'first': "SELECT {input} FROM {table_name} "
+               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+               "ORDER BY dateTime ASC LIMIT 1;",
         'last': "SELECT {input} FROM {table_name} "
-                "WHERE dateTime = (SELECT MAX(dateTime) FROM {table_name} "
-                "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
+               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+               "ORDER BY dateTime DESC LIMIT 1;",
         'min': "SELECT {input} FROM {table_name} "
                "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
                "ORDER BY {input} ASC LIMIT 1;",
         'max': "SELECT {input} FROM {table_name} "
                "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
                "ORDER BY {input} DESC LIMIT 1;",
-        # Need to compute avg of computed AQI - if sum should even be supported
-        #'sum': "SELECT SUM({input}) FROM {table_name} "
-        #       "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL)",
-        'not_null': "SELECT 1 FROM {table_name} "
-                    "WHERE dateTime > {start} AND dateTime <= {stop} "
-                    "AND {input} IS NOT NULL LIMIT 1",
     }
 
     def _logdbg(self, msg):
