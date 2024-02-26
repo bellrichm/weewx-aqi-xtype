@@ -336,10 +336,10 @@ class AQIType(weewx.xtypes.XType):
                "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
                "ORDER BY dateTime DESC LIMIT 1;",                 
         'maxtime': "SELECT dateTime FROM {table_name} "
-                   "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL"
+                   "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
                    "ORDER BY {input} DESC LIMIT 1", 
         'mintime': "SELECT dateTime FROM {table_name} "
-                   "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL"
+                   "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
                    "ORDER BY {input} ASC LIMIT 1",
         'not_null': "SELECT 1 FROM {table_name} "
                     "WHERE dateTime > {start} AND dateTime <= {stop} "
@@ -347,12 +347,10 @@ class AQIType(weewx.xtypes.XType):
         }
 
         self.agg_sql_stmts = {
-        # Need to compute avg of computed AQI
-        'avg': "SELECT AVG({input}) FROM {table_name} "
+        'avg': "SELECT {input} FROM {table_name} "
                "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
-        # Need to compute avg of computed AQI - if sum should even be supported
-        'sum': "SELECT SUM({input}) FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL)",
+        'sum': "SELECT {input} FROM {table_name} "
+               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
         }
 
         self.sql_stmts = {
@@ -468,8 +466,20 @@ class AQIType(weewx.xtypes.XType):
         sql_stmt = sql_stmts[aggregate_type].format(**interpolation_dict)
 
         if aggregate_type in self.agg_sql_stmts:
-            # ToDo - loop through results to calculate aggregate_value
-            pass
+            input_values = []
+            aggregate_value = None
+            for row in db_manager.genSql(sql_stmt):
+
+                try:
+                    input_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, row[0], aqi_type)
+                except weewx.CannotCalculate as exception:
+                    raise weewx.CannotCalculate(obs_type) from exception
+
+                input_values.append(input_value)
+            if input_values:
+                aggregate_value = sum(input_values)
+                if aggregate_type == 'avg':
+                    aggregate_value = round(aggregate_value / len(input_values))
         else:
             try:
                 row = db_manager.getSql(sql_stmt)
