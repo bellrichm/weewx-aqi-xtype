@@ -260,11 +260,14 @@ class EPAAQI(AbstractCalculator):
         https://www.airnow.gov/aqi/aqi-calculator-concentration/
         '''
 
-        self._logdbg(f"The input value is {reading:f}.")
+        self._logdbg(f"The input value is {reading}.")
         self._logdbg(f"The type is '{aqi_type}'")
 
         if aqi_type not in EPAAQI.readings:
             raise weewx.CannotCalculate()
+            
+        if reading is None:
+            return reading
 
         readings = EPAAQI.readings[aqi_type]
 
@@ -284,7 +287,7 @@ class EPAAQI(AbstractCalculator):
         aqi_bp_max = EPAAQI.aqi_bp[index]['max']
         aqi_bp_min = EPAAQI.aqi_bp[index]['min']
 
-        self._logdbg(f"The AQI breakpoint index is {index:i},  max is {aqi_bp_max:i}, and the min is {aqi_bp_min:i}.")
+        self._logdbg(f"The AQI breakpoint index is {index},  max is {aqi_bp_max}, and the min is {aqi_bp_min}.")
         self._logdbg(f"The reading breakpoint max is {reading_bp_max:f} and the min is {reading_bp_min:f}.")
 
         aqi = round(((aqi_bp_max - aqi_bp_min)/(reading_bp_max - reading_bp_min) * (reading - reading_bp_min)) + aqi_bp_min)
@@ -394,7 +397,7 @@ class AQIType(weewx.xtypes.XType):
             return weewx.xtypes.ArchiveTable.get_series(obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict)
 
         sql_str = f'SELECT dateTime, usUnits, `interval`, {dependent_field} FROM {db_manager.table_name} ' \
-                    'WHERE dateTime >= ? AND dateTime <= ? AND {dependent_field} IS NOT NULL'
+                    'WHERE dateTime >= ? AND dateTime <= ?'
         std_unit_system = None
 
         for record in db_manager.genSql(sql_str, timespan):
@@ -406,10 +409,10 @@ class AQIType(weewx.xtypes.XType):
             else:
                 std_unit_system = unit_system
 
-                try:
-                    aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
-                except weewx.CannotCalculate as exception:
-                    raise weewx.CannotCalculate(obs_type) from exception
+            try:
+                aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
+            except weewx.CannotCalculate as exception:
+                raise weewx.CannotCalculate(obs_type) from exception
 
             start_vec.append(timestamp - interval * 60)
             stop_vec.append(timestamp)
@@ -504,7 +507,7 @@ class AQISearchList(weewx.cheetahgenerator.SearchList):
         aqi_bp = getattr(sys.modules[__name__], standard).aqi_bp
         level = self._get_index(aqi_bp, value) + 1
 
-        return f"aqi_{standard}_description {level:i}"
+        return f"aqi_{standard}_description {level}"
 
     def _get_index(self, breakpoints, value):
         breakpoint_count = len(breakpoints)
