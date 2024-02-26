@@ -125,7 +125,7 @@ class NOWCAST(AbstractCalculator):
                                                     weeutil.weeutil.TimeSpan((current_hour - 43200), current_hour),
                                                     db_manager, aggregate_type='avg',
                                                     aggregate_interval=3600)
-        
+
         self._logdbg(f"The data returned is {data[0]}.")
         self._logdbg(f"The timestamps returned is {stop_vec[0]}.")
 
@@ -168,7 +168,7 @@ class NOWCAST(AbstractCalculator):
         denominator = 0
         i = 0
         while i < data_count:
-            hours_ago = ((current_hour - stop_vec[0][i]) / 3600)
+            hours_ago = (current_hour - stop_vec[0][i]) / 3600
             self._logdbg("Hours ago: %s pm was: %s" % (hours_ago, data[0][i]))
             numerator += data[0][i] * (weight_factor ** hours_ago)
             denominator += weight_factor ** hours_ago
@@ -306,20 +306,20 @@ class AQIType(weewx.xtypes.XType):
             self.aqi_fields[field] = config_dict[field]
         default_log_level = config_dict.get('log_level', 20)
 
-        for field in self.aqi_fields:
+        for field, field_option in self.aqi_fields.items():
             sub_calculator = None
             sub_field_name = None
             log_level = to_int(config_dict[field].get('log_level', default_log_level))
-            if self.aqi_fields[field]['algorithm'] == 'NOWCAST':
-                self.aqi_fields[field]['support_aggregation'] = False
-                self.aqi_fields[field]['support_series'] = False
+            if field_option['algorithm'] == 'NOWCAST':
+                field_option['support_aggregation'] = False
+                field_option['support_series'] = False
                 sub_calculator = getattr(sys.modules[__name__], 'EPAAQI')(self.logger, log_level, None, None)
-                sub_field_name = self.aqi_fields[field]['input']
+                sub_field_name = field_option['input']
             else:
-                self.aqi_fields[field]['support_aggregation'] = True
-                self.aqi_fields[field]['support_series'] = True
-            self.aqi_fields[field]['calculator']  = \
-                  getattr(sys.modules[__name__], self.aqi_fields[field]['algorithm'])(self.logger, log_level, sub_calculator, sub_field_name)
+                field_option['support_aggregation'] = True
+                field_option['support_series'] = True
+            field_option['calculator']  = \
+                  getattr(sys.modules[__name__], field_option['algorithm'])(self.logger, log_level, sub_calculator, sub_field_name)
 
         self.sql_stmts = {
         'avg': "SELECT AVG({input}) FROM {table_name} "
