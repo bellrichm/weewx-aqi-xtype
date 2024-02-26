@@ -265,7 +265,7 @@ class EPAAQI(AbstractCalculator):
 
         if aqi_type not in EPAAQI.readings:
             raise weewx.CannotCalculate()
-            
+
         if reading is None:
             return reading
 
@@ -394,7 +394,7 @@ class AQIType(weewx.xtypes.XType):
         data_vec = []
 
         if aggregate_type:
-            return weewx.xtypes.ArchiveTable.get_series(obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict)
+            raise weewx.UnknownAggregation(aggregate_type)
 
         sql_str = f'SELECT dateTime, usUnits, `interval`, {dependent_field} FROM {db_manager.table_name} ' \
                     'WHERE dateTime >= ? AND dateTime <= ?'
