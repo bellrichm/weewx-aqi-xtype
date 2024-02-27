@@ -414,31 +414,52 @@ class AQIType(weewx.xtypes.XType):
         data_vec = []
 
         if aggregate_type:
-            raise weewx.UnknownAggregation(aggregate_type)
+            unit = None
+            startstamp, stopstamp = timespan
+            for stamp in weeutil.weeutil.intervalgen(startstamp, stopstamp, aggregate_interval):
+                if db_manager.first_timestamp is None or stamp.stop <= db_manager.first_timestamp:
+                    continue
+                if db_manager.last_timestamp is None or stamp.start >= db_manager.last_timestamp:
+                    break
 
-        sql_str = f'SELECT dateTime, usUnits, `interval`, {dependent_field} FROM {db_manager.table_name} ' \
-                    'WHERE dateTime >= ? AND dateTime <= ?'
-        std_unit_system = None
+                try:
+                    agg_vt = self.get_aggregate(obs_type, stamp, aggregate_type, db_manager, **option_dict)
+                except weewx.CannotCalculate:
+                    agg_vt = ValueTuple(None, unit, unit_group)
 
-        for record in db_manager.genSql(sql_str, timespan):
-            aqi = None
-            timestamp, unit_system, interval, input_value = record
-            if std_unit_system:
-                if std_unit_system != unit_system:
-                    raise weewx.UnsupportedFeature("Unit type cannot change within a time interval.")
-            else:
-                std_unit_system = unit_system
+                if unit:
+                    if agg_vt[1] is not None and (unit != agg_vt[1] or unit_group != agg_vt[2]):
+                        raise weewx.UnsupportedFeature("Cannot change units within a series.")
+                else:
+                    unit, unit_group = agg_vt[1], agg_vt[2]
 
-            try:
-                aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
-            except weewx.CannotCalculate as exception:
-                raise weewx.CannotCalculate(obs_type) from exception
+                start_vec.append(stamp.start)
+                stop_vec.append(stamp.stop)
+                data_vec.append(agg_vt[0])
+        else:
+            std_unit_system = None
+            sql_str = f'SELECT dateTime, usUnits, `interval`, {dependent_field} FROM {db_manager.table_name} ' \
+                        'WHERE dateTime >= ? AND dateTime <= ?'
 
-            start_vec.append(timestamp - interval * 60)
-            stop_vec.append(timestamp)
-            data_vec.append(aqi)
+            for record in db_manager.genSql(sql_str, timespan):
+                aqi = None
+                timestamp, unit_system, interval, input_value = record
+                if std_unit_system:
+                    if std_unit_system != unit_system:
+                        raise weewx.UnsupportedFeature("Unit type cannot change within a time interval.")
+                else:
+                    std_unit_system = unit_system
 
-        unit, unit_group = weewx.units.getStandardUnitType(std_unit_system, obs_type, aggregate_type)
+                try:
+                    aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
+                except weewx.CannotCalculate as exception:
+                    raise weewx.CannotCalculate(obs_type) from exception
+
+                start_vec.append(timestamp - interval * 60)
+                stop_vec.append(timestamp)
+                data_vec.append(aqi)
+
+            unit, unit_group = weewx.units.getStandardUnitType(std_unit_system, obs_type, aggregate_type)
 
         return (ValueTuple(start_vec, 'unix_epoch', 'group_time'),
                 ValueTuple(stop_vec, 'unix_epoch', 'group_time'),
