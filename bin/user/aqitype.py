@@ -185,9 +185,6 @@ class NOWCAST(AbstractCalculator):
         if time_stamp is None:
             raise weewx.CannotCalculate()
 
-        if aqi_type not in NOWCAST.readings:
-            raise weewx.CannotCalculate()
-
         concentration = self.calculate_concentration(db_manager, time_stamp)
         aqi = self.sub_calculator.calculate(None, None, concentration, aqi_type)
         self._logdbg(f"The computed AQI is {aqi}")
