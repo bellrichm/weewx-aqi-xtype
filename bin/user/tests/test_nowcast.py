@@ -88,7 +88,6 @@ class NowCastTests(unittest.TestCase):
 
                         calculator.calculate_concentration(None, current_hour)
 
-    @unittest.skip("Todo: fix")
     def test_old_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
@@ -105,8 +104,8 @@ class NowCastTests(unittest.TestCase):
                         start_vec = None
                         stop_vec = [self._populate_time_stamps(current_hour, len(data[0]))]
                         # remove  1 and 2 hours ago data
-                        del data[0][len(data[0])-3:len(data[0])-1]
-                        del stop_vec[0][len(stop_vec[0])-3:len(stop_vec[0])-1]
+                        del data[0][1:2]
+                        del stop_vec[0][1:2]
                         mock_xtype.return_value.get_series.return_value = start_vec, stop_vec, data
 
                         calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
@@ -115,7 +114,6 @@ class NowCastTests(unittest.TestCase):
 
     def test_missing_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
-
         with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval)as mock_start_of_interval:
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
                 with mock.patch('weewx.xtypes.ArchiveTable', spec=weewx.xtypes.ArchiveTable) as mock_xtype:

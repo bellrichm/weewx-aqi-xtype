@@ -157,7 +157,7 @@ class NOWCAST(AbstractCalculator):
             self._logdbg(f"Less than 3 readings ({data_count}).")
             raise weewx.CannotCalculate()
 
-        if stop_vec[0][1] > two_hours_ago:
+        if stop_vec[0][1] >= two_hours_ago:
             self._logdbg(f"Of {data_count} readings, at least need to be within the last 2 hours ")
             raise weewx.CannotCalculate()
 
