@@ -411,9 +411,14 @@ class AQIType(weewx.xtypes.XType):
         start_vec = []
         stop_vec = []
         data_vec = []
+        unit = None
+        unit_group = None
 
-        if aggregate_type:
-            unit = None
+        # For now the NOWCAST algorithm does not support 'series'
+        # Because XTypeTable will also try, an empty 'set' of data is returned.
+        if self.aqi_fields[obs_type]['algorithm'] == 'NOWCAST':
+            pass
+        elif aggregate_type:
             startstamp, stopstamp = timespan
             for stamp in weeutil.weeutil.intervalgen(startstamp, stopstamp, aggregate_interval):
                 if db_manager.first_timestamp is None or stamp.stop <= db_manager.first_timestamp:
@@ -485,7 +490,12 @@ class AQIType(weewx.xtypes.XType):
 
         sql_stmt = sql_stmts[aggregate_type].format(**interpolation_dict)
 
-        if aggregate_type in self.agg_sql_stmts:
+        # For now the NOWCAST algorithm does not support 'series'
+        # Because XTypeTable will also try, 'None' is returned.
+        if self.aqi_fields[obs_type]['algorithm'] == 'NOWCAST' \
+            and aggregate_type in sql_stmts and aggregate_type != 'not_null':
+            aggregate_value = None
+        elif aggregate_type in self.agg_sql_stmts:
             input_values = []
             aggregate_value = None
             for row in db_manager.genSql(sql_stmt):
