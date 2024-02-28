@@ -12,10 +12,11 @@ VERSION = "1.2.0-rc01"
 
 EXTENSION_CONFIG = """
 [StdReport]
-    [[Labels]]
-        [[[Generic]]]
-            pm2_5_aqi = AQI
-            pm2_5_aqi_nowcast = AQI (Nowcast)
+    [[Defaults]]
+        [[[Labels]]]
+            [[[[Generic]]]]
+                pm2_5_aqi = AQI
+                pm2_5_aqi_nowcast = AQI (Nowcast)
 
 [StdWXCalculate]
     [[Calculations]]
