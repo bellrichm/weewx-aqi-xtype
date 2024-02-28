@@ -155,11 +155,11 @@ class NOWCAST(AbstractCalculator):
         # Missing data: 2 of the last 3 hours of data must be valid for a NowCast calculation.
         if data_count < 3:
             self._logdbg(f"Less than 3 readings ({data_count}).")
-            raise weewx.CannotCalculate
+            raise weewx.CannotCalculate()
 
         if stop_vec[0][1] > two_hours_ago:
             self._logdbg(f"Of {data_count} readings, at least need to be within the last 2 hours ")
-            raise weewx.CannotCalculate
+            raise weewx.CannotCalculate()
 
         data_range = max_value - min_value
         scaled_rate_change = data_range/max_value
