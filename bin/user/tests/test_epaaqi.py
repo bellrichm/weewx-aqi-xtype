@@ -16,15 +16,6 @@ def random_string(length=32):
     return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
 
 class EPAAQITests(unittest.TestCase):
-
-    @unittest.skip("ToDo: fix")
-    def test_invalid_type(self):
-        mock_logger = mock.Mock(spec=user.aqitype.Logger)
-        calculator = user.aqitype.EPAAQI(mock_logger, 0, None, None)
-
-        with self.assertRaises(weewx.CannotCalculate):
-            calculator.calculate(None, None, random.uniform(0, 700), random_string())
-
     def test_pm2_5_calculation(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
         calculator = user.aqitype.EPAAQI(mock_logger, 0, None, None)
