@@ -451,8 +451,8 @@ class AQIType(weewx.xtypes.XType):
 
                 try:
                     aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
-                except weewx.CannotCalculate as exception:
-                    raise weewx.CannotCalculate(obs_type) from exception
+                except weewx.CannotCalculate:
+                    aqi = None
 
                 start_vec.append(timestamp - interval * 60)
                 stop_vec.append(timestamp)
@@ -492,10 +492,17 @@ class AQIType(weewx.xtypes.XType):
 
                 try:
                     input_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, row[0], aqi_type)
-                except weewx.CannotCalculate as exception:
-                    raise weewx.CannotCalculate(obs_type) from exception
+                except weewx.CannotCalculate:
+                    input_value = None
 
                 input_values.append(input_value)
+
+            index = len(input_values) - 1
+            while index >= 0:
+                if input_values[index] is None:
+                    del input_values[index]
+                index -= 1
+
             if input_values:
                 aggregate_value = sum(input_values)
                 if aggregate_type == 'avg':
@@ -516,8 +523,8 @@ class AQIType(weewx.xtypes.XType):
             else:
                 try:
                     aggregate_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
-                except weewx.CannotCalculate as exception:
-                    raise weewx.CannotCalculate(obs_type) from exception
+                except weewx.CannotCalculate:
+                    aggregate_value = None
 
         unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
 
