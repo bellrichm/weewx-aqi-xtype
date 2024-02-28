@@ -263,9 +263,6 @@ class EPAAQI(AbstractCalculator):
         self._logdbg(f"The input value is {reading}.")
         self._logdbg(f"The type is '{aqi_type}'")
 
-        if aqi_type not in EPAAQI.readings:
-            raise weewx.CannotCalculate()
-
         if reading is None:
             return reading
 
