@@ -562,7 +562,7 @@ class AQISearchList(weewx.cheetahgenerator.SearchList):
         aqi_bp = getattr(sys.modules[__name__], standard).aqi_bp
         level = self._get_index(aqi_bp, value) + 1
 
-        return f"aqi_{standard}_description {level}"
+        return f"aqi_{standard}_description{level}"
 
     def _get_index(self, breakpoints, value):
         breakpoint_count = len(breakpoints)
