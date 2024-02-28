@@ -314,11 +314,15 @@ class AQIType(weewx.xtypes.XType):
             sub_field_name = None
             log_level = to_int(config_dict[field].get('log_level', default_log_level))
             if field_option['algorithm'] == 'NOWCAST':
+                if field_option['type'] not in NOWCAST.readings:
+                    raise ValueError(f"Algorithm 'NOWCAST' is not supported for pollutant '{field_option['type']}'")
                 field_option['support_aggregation'] = False
                 field_option['support_series'] = False
                 sub_calculator = getattr(sys.modules[__name__], 'EPAAQI')(self.logger, log_level, None, None)
                 sub_field_name = field_option['input']
             else:
+                if field_option['type'] not in EPAAQI.readings:
+                    raise ValueError(f"Algorithm 'EPAAQI' is not supported for pollutant '{field_option['type']}'")
                 field_option['support_aggregation'] = True
                 field_option['support_series'] = True
             field_option['calculator']  = \
