@@ -315,12 +315,14 @@ class AQIType(weewx.xtypes.XType):
                 sub_calculator = getattr(sys.modules[__name__], 'EPAAQI')(self.logger, log_level, None, None)
                 sub_field_name = field_option['input']
                 field_option['get_aggregate'] = self._get_aggregate_nowcast
+                field_option['get_series'] = self._get_series_nowcast
             else:
                 if field_option['type'] not in EPAAQI.readings:
                     raise ValueError(f"Algorithm 'EPAAQI' is not supported for pollutant '{field_option['type']}'")
                 field_option['support_aggregation'] = True
                 field_option['support_series'] = True
                 field_option['get_aggregate'] = self._get_aggregate_epaaqi
+                field_option['get_series'] = self._get_series_epaaqi
             field_option['calculator']  = \
                   getattr(sys.modules[__name__], field_option['algorithm'])(self.logger, log_level, sub_calculator, sub_field_name)
 
@@ -402,7 +404,18 @@ class AQIType(weewx.xtypes.XType):
         """ Calculate the series. """
         if obs_type not in self.aqi_fields:
             raise weewx.UnknownType(obs_type)
+        return self.aqi_fields[obs_type]['get_series'](obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict)
 
+    def _get_series_nowcast(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict):
+        # For now the NOWCAST algorithm does not support 'series'
+        # Because XTypeTable will also try, an empty 'set' of data is returned.
+        unit, unit_group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
+
+        return (ValueTuple([], 'unix_epoch', 'group_time'),
+                ValueTuple([], 'unix_epoch', 'group_time'),
+                ValueTuple([], unit, unit_group))
+
+    def _get_series_epaaqi(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict):
         aqi_type = self.aqi_fields[obs_type]['type']
 
         dependent_field = self.aqi_fields[obs_type]['input']
@@ -413,12 +426,7 @@ class AQIType(weewx.xtypes.XType):
         unit = None
         unit_group = None
 
-        # For now the NOWCAST algorithm does not support 'series'
-        # Because XTypeTable will also try, an empty 'set' of data is returned.
-        if self.aqi_fields[obs_type]['algorithm'] == 'NOWCAST':
-            pass
-            # raise weewx.UnknownType(obs_type)
-        elif aggregate_type:
+        if aggregate_type:
             startstamp, stopstamp = timespan
             for stamp in weeutil.weeutil.intervalgen(startstamp, stopstamp, aggregate_interval):
                 if db_manager.first_timestamp is None or stamp.stop <= db_manager.first_timestamp:
