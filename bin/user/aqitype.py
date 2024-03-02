@@ -415,6 +415,7 @@ class AQIType(weewx.xtypes.XType):
         # Because XTypeTable will also try, an empty 'set' of data is returned.
         if self.aqi_fields[obs_type]['algorithm'] == 'NOWCAST':
             pass
+            # raise weewx.UnknownType(obs_type)
         elif aggregate_type:
             startstamp, stopstamp = timespan
             for stamp in weeutil.weeutil.intervalgen(startstamp, stopstamp, aggregate_interval):
@@ -468,6 +469,7 @@ class AQIType(weewx.xtypes.XType):
 
     def get_aggregate(self, obs_type, timespan, aggregate_type, db_manager, **option_dict):
         """ Compute the aggregate. """
+        # ToDo: split into sepearate routines for the two algorithms
         if obs_type not in self.aqi_fields:
             raise weewx.UnknownType(obs_type)
 
@@ -492,9 +494,11 @@ class AQIType(weewx.xtypes.XType):
         if self.aqi_fields[obs_type]['algorithm'] == 'NOWCAST' \
             and aggregate_type in sql_stmts and aggregate_type != 'not_null':
             aggregate_value = None
+            # raise weewx.UnknownAggregation(aggregate_type)
         elif aggregate_type in self.agg_sql_stmts:
             input_values = []
             aggregate_value = None
+            # ToDo: Need a try, in case the column/dependent field is not in the DB
             for row in db_manager.genSql(sql_stmt):
 
                 try:
