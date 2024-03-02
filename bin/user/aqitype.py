@@ -314,11 +314,13 @@ class AQIType(weewx.xtypes.XType):
                 field_option['support_series'] = False
                 sub_calculator = getattr(sys.modules[__name__], 'EPAAQI')(self.logger, log_level, None, None)
                 sub_field_name = field_option['input']
+                field_option['get_aggregate'] = self._get_aggregate_nowcast
             else:
                 if field_option['type'] not in EPAAQI.readings:
                     raise ValueError(f"Algorithm 'EPAAQI' is not supported for pollutant '{field_option['type']}'")
                 field_option['support_aggregation'] = True
                 field_option['support_series'] = True
+                field_option['get_aggregate'] = self._get_aggregate_epaaqi
             field_option['calculator']  = \
                   getattr(sys.modules[__name__], field_option['algorithm'])(self.logger, log_level, sub_calculator, sub_field_name)
 
@@ -469,10 +471,45 @@ class AQIType(weewx.xtypes.XType):
 
     def get_aggregate(self, obs_type, timespan, aggregate_type, db_manager, **option_dict):
         """ Compute the aggregate. """
-        # ToDo: split into sepearate routines for the two algorithms
         if obs_type not in self.aqi_fields:
             raise weewx.UnknownType(obs_type)
+        return self.aqi_fields[obs_type]['get_aggregate'](obs_type, timespan, aggregate_type, db_manager, **option_dict)
 
+    def _get_aggregate_nowcast(self, obs_type, timespan, aggregate_type, db_manager, **option_dict):
+       # For now the NOWCAST algorithm does not support 'aggregation'
+        # Because XTypeTable will also try, 'None' is returned.
+        if aggregate_type != 'not_null':
+            aggregate_value = None
+            # raise weewx.UnknownAggregation(aggregate_type)
+
+        else:
+            dependent_field = self.aqi_fields[obs_type]['input']
+
+            interpolation_dict = {
+                'start': timespan.start,
+                'stop': timespan.stop,
+                'table_name': db_manager.table_name,
+                'input': dependent_field
+            }
+
+            # This is not accurate
+            # Just because there is one concentration reading does not mean NOWCAST can be computed
+            sql_stmt = self.simple_sql_stmts[aggregate_type].format(**interpolation_dict)
+
+            try:
+                row = db_manager.getSql(sql_stmt)
+            except weedb.NoColumnError:
+                raise weewx.UnknownType(obs_type) from weedb.NoColumnError
+
+            if not row or None in row:
+                aggregate_value = None
+            else:
+                aggregate_value = row[0]
+
+        unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
+        return weewx.units.ValueTuple(aggregate_value, unit_type, group)
+
+    def _get_aggregate_epaaqi(self, obs_type, timespan, aggregate_type, db_manager, **option_dict):
         sql_stmts = ChainMap(self.agg_sql_stmts, self.simple_sql_stmts, self.sql_stmts)
         if aggregate_type not in sql_stmts:
             raise weewx.UnknownAggregation(aggregate_type)
@@ -489,13 +526,7 @@ class AQIType(weewx.xtypes.XType):
 
         sql_stmt = sql_stmts[aggregate_type].format(**interpolation_dict)
 
-        # For now the NOWCAST algorithm does not support 'series'
-        # Because XTypeTable will also try, 'None' is returned.
-        if self.aqi_fields[obs_type]['algorithm'] == 'NOWCAST' \
-            and aggregate_type in sql_stmts and aggregate_type != 'not_null':
-            aggregate_value = None
-            # raise weewx.UnknownAggregation(aggregate_type)
-        elif aggregate_type in self.agg_sql_stmts:
+        if aggregate_type in self.agg_sql_stmts:
             input_values = []
             aggregate_value = None
             # ToDo: Need a try, in case the column/dependent field is not in the DB
