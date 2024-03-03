@@ -169,13 +169,14 @@ class NOWCAST(AbstractCalculator):
         weight_factor = max((1-scaled_rate_change), .5)
         numerator = 0
         denominator = 0
-        i = 0
-        while i < data_count:
+        i = data_count - 1
+        while i > 0:
             hours_ago = (current_hour - stop_vec[0][i]) / 3600
             self._logdbg(f"Hours ago: {hours_ago} pm was: {data[0][i]}")
             numerator += data[0][i] * (weight_factor ** hours_ago)
             denominator += weight_factor ** hours_ago
-            i += 1
+            #print(f"{i} {stop_vec[0][i]} {data[0][i]} {hours_ago}")
+            i -= 1
 
         concentration = math.trunc((numerator / denominator) * 10) / 10
         self._logdbg(f"The computed concentration is {concentration}")
