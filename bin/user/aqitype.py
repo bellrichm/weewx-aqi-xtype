@@ -552,15 +552,10 @@ class AQIType(weewx.xtypes.XType):
                     except weewx.CannotCalculate:
                         input_value = None
 
-                    input_values.append(input_value)
+                    if input_value is not None:
+                        input_values.append(input_value)
             except weedb.NoColumnError:
                 raise weewx.UnknownType(obs_type) from weedb.NoColumnError
-
-            index = len(input_values) - 1
-            while index >= 0:
-                if input_values[index] is None:
-                    del input_values[index]
-                index -= 1
 
             if input_values:
                 aggregate_value = sum(input_values)
