@@ -118,16 +118,11 @@ class NOWCAST(AbstractCalculator):
         if self.log_level <= 40:
             self.logger.logerr(f"(NOWCAST) {msg}")
 
-    def calculate_concentration(self, db_manager, time_stamp):
-        '''
-        Calculate the nowcast concentration.
-        '''
-        current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
-        two_hours_ago = current_hour - 7200
+    def _get_concentration_data(self, db_manager, start, stop):
         xtype = weewx.xtypes.ArchiveTable()
 
         _, stop_vec, data = xtype.get_series(self.sub_field_name,
-                                                    weeutil.weeutil.TimeSpan((current_hour - 43200), current_hour),
+                                                    weeutil.weeutil.TimeSpan(start, stop),
                                                     db_manager, aggregate_type='avg',
                                                     aggregate_interval=3600)
 
@@ -154,6 +149,17 @@ class NOWCAST(AbstractCalculator):
 
         self._logdbg(f"The data after filtering is {data[0]}.")
         self._logdbg(f"The timestamps after filtering is {stop_vec[0]}.")
+        return min_value, max_value, stop_vec, data
+
+    def calculate_concentration(self, db_manager, time_stamp):
+        '''
+        Calculate the nowcast concentration.
+        '''
+        current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
+        min_value, max_value, stop_vec, data = self._get_concentration_data(db_manager, current_hour - 43200, current_hour)
+        two_hours_ago = current_hour - 7200
+
+        data_count = len(stop_vec[0])
 
         # Missing data: 2 of the last 3 hours of data must be valid for a NowCast calculation.
         if data_count < 3:
