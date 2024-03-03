@@ -45,6 +45,9 @@ class AQITypeManager(StdService):
     def __init__(self, engine, config_dict):
         super().__init__(engine, config_dict)
 
+        # ToDo: Capture the archive_interval
+        # https://groups.google.com/g/weewx-user/c/W0jG1kElJ1k/m/9tjnkrzfAwAJ?utm_medium=email&utm_source=footer
+
         self.logger = Logger()
 
         if 'aqitype' not in config_dict:
@@ -453,23 +456,27 @@ class AQIType(weewx.xtypes.XType):
             sql_str = f'SELECT dateTime, usUnits, `interval`, {dependent_field} FROM {db_manager.table_name} ' \
                         'WHERE dateTime >= ? AND dateTime <= ?'
 
-            for record in db_manager.genSql(sql_str, timespan):
-                aqi = None
-                timestamp, unit_system, interval, input_value = record
-                if std_unit_system:
-                    if std_unit_system != unit_system:
-                        raise weewx.UnsupportedFeature("Unit type cannot change within a time interval.")
-                else:
-                    std_unit_system = unit_system
-
-                try:
-                    aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
-                except weewx.CannotCalculate:
+            try:
+                for record in db_manager.genSql(sql_str, timespan):
                     aqi = None
+                    timestamp, unit_system, interval, input_value = record
+                    if std_unit_system:
+                        if std_unit_system != unit_system:
+                            raise weewx.UnsupportedFeature("Unit type cannot change within a time interval.")
+                    else:
+                        std_unit_system = unit_system
 
-                start_vec.append(timestamp - interval * 60)
-                stop_vec.append(timestamp)
-                data_vec.append(aqi)
+                    try:
+                        aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
+                    except weewx.CannotCalculate:
+                        aqi = None
+
+                    start_vec.append(timestamp - interval * 60)
+                    stop_vec.append(timestamp)
+                    data_vec.append(aqi)
+
+            except weedb.NoColumnError:
+                raise weewx.UnknownType(obs_type) from weedb.NoColumnError
 
             unit, unit_group = weewx.units.getStandardUnitType(std_unit_system, obs_type, aggregate_type)
 
@@ -537,15 +544,17 @@ class AQIType(weewx.xtypes.XType):
         if aggregate_type in self.agg_sql_stmts:
             input_values = []
             aggregate_value = None
-            # ToDo: Need a try, in case the column/dependent field is not in the DB
-            for row in db_manager.genSql(sql_stmt):
+            try:
+                for row in db_manager.genSql(sql_stmt):
 
-                try:
-                    input_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, row[0], aqi_type)
-                except weewx.CannotCalculate:
-                    input_value = None
+                    try:
+                        input_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, row[0], aqi_type)
+                    except weewx.CannotCalculate:
+                        input_value = None
 
-                input_values.append(input_value)
+                    input_values.append(input_value)
+            except weedb.NoColumnError:
+                raise weewx.UnknownType(obs_type) from weedb.NoColumnError
 
             index = len(input_values) - 1
             while index >= 0:
