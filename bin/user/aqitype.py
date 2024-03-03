@@ -149,7 +149,7 @@ class NOWCAST(AbstractCalculator):
 
         self._logdbg(f"The data after filtering is {data[0]}.")
         self._logdbg(f"The timestamps after filtering is {stop_vec[0]}.")
-        return min_value, max_value, stop_vec, data
+        return min_value, max_value, stop_vec[0], data[0]
 
     def calculate_concentration(self, db_manager, time_stamp):
         '''
@@ -159,14 +159,14 @@ class NOWCAST(AbstractCalculator):
         min_value, max_value, stop_vec, data = self._get_concentration_data(db_manager, current_hour - 43200, current_hour)
         two_hours_ago = current_hour - 7200
 
-        data_count = len(stop_vec[0])
+        data_count = len(stop_vec)
 
         # Missing data: 2 of the last 3 hours of data must be valid for a NowCast calculation.
         if data_count < 3:
             self._logdbg(f"Less than 3 readings ({data_count}).")
             raise weewx.CannotCalculate()
 
-        if stop_vec[0][data_count - 2] >= two_hours_ago:
+        if stop_vec[data_count - 2] >= two_hours_ago:
             self._logdbg(f"Of {data_count} readings, at least need to be within the last 2 hours ")
             raise weewx.CannotCalculate()
 
@@ -177,11 +177,11 @@ class NOWCAST(AbstractCalculator):
         denominator = 0
         i = data_count - 1
         while i > 0:
-            hours_ago = (current_hour - stop_vec[0][i]) / 3600
-            self._logdbg(f"Hours ago: {hours_ago} pm was: {data[0][i]}")
-            numerator += data[0][i] * (weight_factor ** hours_ago)
+            hours_ago = (current_hour - stop_vec[i]) / 3600
+            self._logdbg(f"Hours ago: {hours_ago} pm was: {data[i]}")
+            numerator += data[i] * (weight_factor ** hours_ago)
             denominator += weight_factor ** hours_ago
-            #print(f"{i} {stop_vec[0][i]} {data[0][i]} {hours_ago}")
+            #print(f"{i} {stop_vec[i]} {data[i]} {hours_ago}")
             i -= 1
 
         concentration = math.trunc((numerator / denominator) * 10) / 10
