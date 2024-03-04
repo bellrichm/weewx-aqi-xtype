@@ -51,8 +51,6 @@ class NowCastTests(unittest.TestCase):
                         start_vec = None
                         stop_vec = [self._populate_time_stamps(current_hour, len(data[0]))]
 
-                        data[0].reverse()
-                        stop_vec[0].reverse()
                         mock_xtype.return_value.get_series.return_value = start_vec, stop_vec, data
 
                         calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
@@ -77,8 +75,6 @@ class NowCastTests(unittest.TestCase):
                         del data[0][1:3]
                         del stop_vec[0][1:3]
 
-                        data[0].reverse()
-                        stop_vec[0].reverse()
                         mock_xtype.return_value.get_series.return_value = start_vec, stop_vec, data
 
                         calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
@@ -101,11 +97,9 @@ class NowCastTests(unittest.TestCase):
                         start_vec = None
                         stop_vec = [self._populate_time_stamps(current_hour, len(data[0]))]
                         # remove  1 and 2 hours ago data
-                        del data[0][1:2]
-                        del stop_vec[0][1:2]
+                        del data[0][len(stop_vec[0]) - 2:]
+                        del stop_vec[0][len(stop_vec[0]) - 2:]
 
-                        data[0].reverse()
-                        stop_vec[0].reverse()
                         mock_xtype.return_value.get_series.return_value = start_vec, stop_vec, data
 
                         calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
@@ -131,14 +125,12 @@ class NowCastTests(unittest.TestCase):
                             del stop_vec[0][i]
                         i -= 1
 
-                    data[0].reverse()
-                    stop_vec[0].reverse()
                     mock_xtype.return_value.get_series.return_value = start_vec, stop_vec, data
 
                     calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
                     concentration = calculator.calculate_concentration(None, current_hour)
-                    self.assertEqual(concentration, 184.9)
+                    self.assertEqual(concentration, 164.7)
 
     def test_none_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
@@ -154,14 +146,11 @@ class NowCastTests(unittest.TestCase):
                     start_vec = None
                     stop_vec = [self._populate_time_stamps(current_hour, len(data[0]))]
 
-                    data[0].reverse()
-                    stop_vec[0].reverse()
                     mock_xtype.return_value.get_series.return_value = start_vec, stop_vec, data
 
                     calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
-
                     concentration = calculator.calculate_concentration(None, current_hour)
-                    self.assertEqual(concentration, 184.9)
+                    self.assertEqual(concentration, 164.7)
 
     def test_calculate_concentration(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
@@ -177,14 +166,12 @@ class NowCastTests(unittest.TestCase):
                     start_vec = None
                     stop_vec = [self._populate_time_stamps(current_hour, len(data[0]))]
 
-                    data[0].reverse()
-                    stop_vec[0].reverse()
                     mock_xtype.return_value.get_series.return_value = start_vec, stop_vec, data
 
                     calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
                     concentration = calculator.calculate_concentration(None, current_hour)
-                    self.assertEqual(concentration, 63.3)
+                    self.assertEqual(concentration, 54.8)
 
 if __name__ == '__main__':
     unittest.main(exit=False)
