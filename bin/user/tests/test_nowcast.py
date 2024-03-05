@@ -38,7 +38,6 @@ class NowCastTests(unittest.TestCase):
 
     def test_incomplete_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
-        mock_manager = mock.Mock(spec=weewx.manager.Manager)
 
         with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval)as mock_start_of_interval:
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
@@ -50,18 +49,13 @@ class NowCastTests(unittest.TestCase):
                     data = [random.uniform(0, 700)]
                     data.reverse()
                     timestamps = self._populate_time_stamps(current_hour, len(data))
-                    records = zip(timestamps, data)
-
-                    mock_manager.getSql.return_value = len(data), min(data), max(data)
-                    mock_manager.genSql.return_value = records
 
                     calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                    calculator.calculate_concentration(mock_manager, current_hour)
+                    calculator.calculate_concentration(current_hour, len(data), min(data), max(data), timestamps, data)
 
     def test_old_minimum_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
-        mock_manager = mock.Mock(spec=weewx.manager.Manager)
 
         with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval)as mock_start_of_interval:
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
@@ -77,18 +71,13 @@ class NowCastTests(unittest.TestCase):
                     del timestamps[1:3]
 
                     data.reverse()
-                    records = list(zip(timestamps, data))
-
-                    mock_manager.getSql.return_value = len(data), min(data), max(data)
-                    mock_manager.genSql.return_value = records
 
                     calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                    calculator.calculate_concentration(mock_manager, current_hour)
+                    calculator.calculate_concentration(current_hour, len(data), min(data), max(data), timestamps, data)
 
     def test_old_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
-        mock_manager = mock.Mock(spec=weewx.manager.Manager)
 
         with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval)as mock_start_of_interval:
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
@@ -105,18 +94,12 @@ class NowCastTests(unittest.TestCase):
                     del data[:2]
                     del timestamps[:2]
 
-                    records = list(zip(timestamps, data))
-
-                    mock_manager.getSql.return_value = len(data), min(data), max(data)
-                    mock_manager.genSql.return_value = records
-
                     calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                    calculator.calculate_concentration(mock_manager, current_hour)
+                    calculator.calculate_concentration(current_hour, len(data), min(data), max(data), timestamps, data)
 
     def test_missing_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
-        mock_manager = mock.Mock(spec=weewx.manager.Manager)
 
         with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval)as mock_start_of_interval:
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
@@ -134,14 +117,9 @@ class NowCastTests(unittest.TestCase):
                         del timestamps[i]
                     i -= 1
 
-                records = list(zip(timestamps, data))
-
-                mock_manager.getSql.return_value = len(data), min(data), max(data)
-                mock_manager.genSql.return_value = records
-
                 calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                concentration = calculator.calculate_concentration(mock_manager, current_hour)
+                concentration = calculator.calculate_concentration(current_hour, len(data), min(data), max(data), timestamps, data)
                 self.assertEqual(concentration, 164.7)
 
     @unittest.skip("no longer valid - 'None' will never be in the data")
@@ -159,13 +137,9 @@ class NowCastTests(unittest.TestCase):
                 timestamps  = self._populate_time_stamps(current_hour, len(data))
 
                 data.reverse()
-                records = list(zip(timestamps, data))
-
-                mock_manager.getSql.return_value = len(data), 149.5, 763.8
-                mock_manager.genSql.return_value = records
 
                 calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
-                concentration = calculator.calculate_concentration(mock_manager, current_hour)
+                concentration = calculator.calculate_concentration(current_hour, len(data), min(data), max(data), timestamps, data)
                 self.assertEqual(concentration, 164.7)
 
     def test_calculate_concentration(self):
@@ -181,14 +155,10 @@ class NowCastTests(unittest.TestCase):
                 data = [123.3, 80.2, 49.3, 101.8, 93.7, 143.2, 215.4, 130.6, 129.2, 59.8, 27.4, 46.3]
                 data.reverse()
                 timestamps = self._populate_time_stamps(current_hour, len(data))
-                records = list(zip(timestamps, data))
-
-                mock_manager.getSql.return_value = len(data), min(data), max(data)
-                mock_manager.genSql.return_value = records
 
                 calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                concentration = calculator.calculate_concentration(mock_manager, current_hour)
+                concentration = calculator.calculate_concentration(current_hour, len(data), min(data), max(data), timestamps, data)
                 self.assertEqual(concentration, 54.8)
 
 if __name__ == '__main__':

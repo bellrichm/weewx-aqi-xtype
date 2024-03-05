@@ -167,14 +167,12 @@ class NOWCAST(AbstractCalculator):
 
         return record_stats[0], record_stats[1], record_stats[2], timestamps, data
 
-    def calculate_concentration(self, db_manager, time_stamp):
+    def calculate_concentration(self, current_hour, data_count, data_min, data_max, timestamps, concentrations):
         '''
         Calculate the nowcast concentration.
         '''
-        current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
-        two_hours_ago = current_hour - 7200
 
-        data_count, data_min, data_max, timestamps, concentrations = self._get_concentration_data(db_manager, current_hour)
+        two_hours_ago = current_hour - 7200
 
         # Missing data: 2 of the last 3 hours of data must be valid for a NowCast calculation.
         if data_count < 3:
@@ -209,7 +207,10 @@ class NOWCAST(AbstractCalculator):
         if time_stamp is None:
             raise weewx.CannotCalculate()
 
-        concentration = self.calculate_concentration(db_manager, time_stamp)
+        current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
+        data_count, data_min, data_max, timestamps, concentrations = self._get_concentration_data(db_manager, current_hour)
+
+        concentration = self.calculate_concentration(current_hour, data_count, data_min, data_max, timestamps, concentrations)
         aqi = self.sub_calculator.calculate(None, None, concentration, aqi_type)
         self._logdbg(f"The computed AQI is {aqi}")
 
