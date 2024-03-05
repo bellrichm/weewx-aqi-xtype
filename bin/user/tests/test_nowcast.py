@@ -125,7 +125,6 @@ class NowCastTests(unittest.TestCase):
     @unittest.skip("no longer valid - 'None' will never be in the data")
     def test_none_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
-        mock_manager = mock.Mock(spec=weewx.manager.Manager)
 
         with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval)as mock_start_of_interval:
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
@@ -144,7 +143,6 @@ class NowCastTests(unittest.TestCase):
 
     def test_calculate_concentration(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
-        mock_manager = mock.Mock(spec=weewx.manager.Manager)
 
         with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval)as mock_start_of_interval:
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
