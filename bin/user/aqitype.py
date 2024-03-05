@@ -154,7 +154,7 @@ class NOWCAST(AbstractCalculator):
 
         try:
             # Only one record is returned
-            record_stats = list(db_manager.genSql(stats_sql_str))[0]
+            record_stats = db_manager.getSql(stats_sql_str)
         except weedb.NoColumnError:
             raise weewx.UnknownType(self.sub_field_name) from weedb.NoColumnError
 
