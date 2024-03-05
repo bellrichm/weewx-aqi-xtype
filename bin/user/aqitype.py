@@ -8,7 +8,6 @@ WeeWX XTypes extensions that add new types of AQI.
 import logging
 import math
 import sys
-import time
 
 from collections import ChainMap
 
@@ -119,7 +118,7 @@ class NOWCAST(AbstractCalculator):
         if self.log_level <= 40:
             self.logger.logerr(f"(NOWCAST) {msg}")
 
-    def _get_concentration_data2(self, db_manager, stop):
+    def _get_concentration_data(self, db_manager, stop):
         # Get the necessary concentration data to compute for a given time
         start = stop - 43200
         # ToDo: need to get this from the 'console'
@@ -168,100 +167,39 @@ class NOWCAST(AbstractCalculator):
 
         return record_stats[0], record_stats[1], record_stats[2], timestamps, data
 
-    def _get_concentration_data(self, db_manager, start, stop):
-        xtype = weewx.xtypes.ArchiveTable()
-
-        _, stop_vec, data = xtype.get_series(self.sub_field_name,
-                                                    weeutil.weeutil.TimeSpan(start, stop),
-                                                    db_manager, aggregate_type='avg',
-                                                    aggregate_interval=3600)
-
-        self._logdbg(f"The data returned is {data[0]}.")
-        self._logdbg(f"The timestamps returned is {stop_vec[0]}.")
-
-        min_value = None
-        max_value = None
-        index = len(data[0]) - 1
-        while index >= 0 :
-            if data[0][index] is None:
-                del data[0][index]
-                del stop_vec[0][index]
-            else:
-                if min_value is None or data[0][index] < min_value:
-                    min_value = data[0][index]
-
-                if max_value is None or data[0][index] > max_value:
-                    max_value = data[0][index]
-            index -= 1
-
-        data_count = len(stop_vec[0])
-        self._logdbg(f"Number of readings are: {data_count}")
-
-        self._logdbg(f"The data after filtering is {data[0]}.")
-        self._logdbg(f"The timestamps after filtering is {stop_vec[0]}.")
-        return len(stop_vec[0]), min_value, max_value, stop_vec[0], data[0]
-
     def calculate_concentration(self, db_manager, time_stamp):
         '''
         Calculate the nowcast concentration.
         '''
         current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
-        start = time.time()
-        data_count, min_value, max_value, stop_vec, data = self._get_concentration_data(db_manager, current_hour - 43200, current_hour)
-        stop_vec.reverse()
-        data.reverse()
-        end = time.time()
-        print(end - start)
-        end = start
-        data_count2, data_min2, data_max2, timestamps, data3 = self._get_concentration_data2(db_manager, current_hour)
-
-        end = time.time()
-        print(end - start)
-
         two_hours_ago = current_hour - 7200
+
+        data_count, data_min, data_max, timestamps, concentrations = self._get_concentration_data(db_manager, current_hour)
 
         # Missing data: 2 of the last 3 hours of data must be valid for a NowCast calculation.
         if data_count < 3:
             self._logdbg(f"Less than 3 readings ({data_count}).")
             raise weewx.CannotCalculate()
 
-        if stop_vec[1] <= two_hours_ago:
+        if timestamps[1] <= two_hours_ago:
             self._logdbg(f"Of {data_count} readings, at least need to be within the last 2 hours ")
             raise weewx.CannotCalculate()
 
-        data_range = data_max2 - data_min2
-        scaled_rate_change = data_range/data_max2
+        data_range = data_max - data_min
+        scaled_rate_change = data_range/data_max
         weight_factor = max((1-scaled_rate_change), .5)
         numerator = 0
         denominator = 0
-        for i in range(data_count2):
+        for i in range(data_count):
             hours_ago = int((current_hour - timestamps[i]) / 3600 + 1)
-            self._logdbg(f"Hours ago: {hours_ago} pm was: {data3[i]}")
-            numerator += data3[i] * (weight_factor ** hours_ago)
+            self._logdbg(f"Hours ago: {hours_ago} pm was: {concentrations[i]}")
+            numerator += concentrations[i] * (weight_factor ** hours_ago)
             denominator += weight_factor ** hours_ago
-            print(f"{i} {timestamps[i]} {data3[i]} {hours_ago}")
+            print(f"{i} {timestamps[i]} {concentrations[i]} {hours_ago}")
 
         concentration = math.trunc((numerator / denominator) * 10) / 10
         self._logdbg(f"The computed concentration is {concentration}")
 
-        data_range = max_value - min_value
-        scaled_rate_change = data_range/max_value
-        weight_factor = max((1-scaled_rate_change), .5)
-        numerator = 0
-        denominator = 0
-        i = 0
-
-        print("")
-        while i < data_count:
-            hours_ago = (current_hour - stop_vec[i]) / 3600
-            self._logdbg(f"Hours ago: {hours_ago} pm was: {data[i]}")
-            numerator += data[i] * (weight_factor ** hours_ago)
-            denominator += weight_factor ** hours_ago
-            print(f"{i} {stop_vec[i]} {data[i]} {hours_ago}")
-            i += 1
-
-        concentration = math.trunc((numerator / denominator) * 10) / 10
-        self._logdbg(f"The computed concentration is {concentration}")
         return concentration
 
     def calculate(self, db_manager, time_stamp, reading, aqi_type):
