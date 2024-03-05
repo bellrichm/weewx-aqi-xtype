@@ -119,7 +119,10 @@ class NOWCAST(AbstractCalculator):
         if self.log_level <= 40:
             self.logger.logerr(f"(NOWCAST) {msg}")
 
-    def _get_concentration_data2(self, db_manager, start, stop):
+    def _get_concentration_data2(self, db_manager, stop):
+        # Get the necessary concentration data to compute for a given time
+        start = stop - 43200
+        # ToDo: need to get this from the 'console'
         archive_interval = 300
 
         stats_sql_str = f'''
@@ -139,29 +142,31 @@ class NOWCAST(AbstractCalculator):
         sql_str = f'''
         SELECT
             MAX(dateTime),
-            IFNULL(avg({self.sub_field_name}), 0) as avgConcentration
+            avg({self.sub_field_name}) as avgConcentration
         FROM archive
             /* 300 is the archive interval */
             WHERE dateTime >= {start} + 3600 + {archive_interval}
                 AND dateTime < {stop} + 3600
             /* need to subtract the archive interval to get the correct begin and end range */
             GROUP BY (dateTime - {archive_interval}) / 3600
+            HAVING avgConcentration IS NOT NULL
             ORDER BY dateTime DESC
         '''
 
         try:
-            # For now, only one record is returned
-            # When aggregation is supported, more will be returned
+            # Only one record is returned
             record_stats = list(db_manager.genSql(stats_sql_str))[0]
         except weedb.NoColumnError:
             raise weewx.UnknownType(self.sub_field_name) from weedb.NoColumnError
 
         try:
+            # Max of 12 is returned, grab them all and be done with it
             record = list(db_manager.genSql(sql_str))
+            timestamps, data = zip(*record)
         except weedb.NoColumnError:
             raise weewx.UnknownType(self.sub_field_name) from weedb.NoColumnError
-        
-        return record_stats[0], record_stats[1], record_stats[2], record
+
+        return record_stats[0], record_stats[1], record_stats[2], timestamps, data
 
     def _get_concentration_data(self, db_manager, start, stop):
         xtype = weewx.xtypes.ArchiveTable()
@@ -208,8 +213,8 @@ class NOWCAST(AbstractCalculator):
         end = time.time()
         print(end - start)
         end = start
-        data_count2, data_min2, data_max2, data2 = self._get_concentration_data2(db_manager, current_hour - 43200, current_hour)
-    
+        data_count2, data_min2, data_max2, timestamps, data3 = self._get_concentration_data2(db_manager, current_hour)
+
         end = time.time()
         print(end - start)
 
@@ -228,13 +233,13 @@ class NOWCAST(AbstractCalculator):
         scaled_rate_change = data_range/data_max2
         weight_factor = max((1-scaled_rate_change), .5)
         numerator = 0
-        denominator = 0        
+        denominator = 0
         for i in range(data_count2):
-            hours_ago = int((current_hour - data2[i][0]) / 3600 + 1)
-            self._logdbg(f"Hours ago: {hours_ago} pm was: {data2[i][1]}")
-            numerator += data2[i][1] * (weight_factor ** hours_ago)
+            hours_ago = int((current_hour - timestamps[i]) / 3600 + 1)
+            self._logdbg(f"Hours ago: {hours_ago} pm was: {data3[i]}")
+            numerator += data3[i] * (weight_factor ** hours_ago)
             denominator += weight_factor ** hours_ago
-            print(f"{i} {data2[i][0]} {data2[i][1]} {hours_ago}")
+            print(f"{i} {timestamps[i]} {data3[i]} {hours_ago}")
 
         concentration = math.trunc((numerator / denominator) * 10) / 10
         self._logdbg(f"The computed concentration is {concentration}")
@@ -245,6 +250,8 @@ class NOWCAST(AbstractCalculator):
         numerator = 0
         denominator = 0
         i = 0
+
+        print("")
         while i < data_count:
             hours_ago = (current_hour - stop_vec[i]) / 3600
             self._logdbg(f"Hours ago: {hours_ago} pm was: {data[i]}")
