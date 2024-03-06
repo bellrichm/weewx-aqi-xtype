@@ -270,7 +270,7 @@ class NOWCAST(AbstractCalculator):
         stop_vec = []
         stop_time = stop - 3600 * 11
         stop2 = timestamps[0]
-        data_count, records = self._get_concentration_data_series(db_manager, stop_time , timespan.start - 43200)
+        _data_count, records = self._get_concentration_data_series(db_manager, stop_time , timespan.start - 43200)
         for record in records:
             timestamps.append(record[0])
             if len(timestamps) > 12:
@@ -519,9 +519,24 @@ class AQIType(weewx.xtypes.XType):
         return self.aqi_fields[obs_type]['get_series'](obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict)
 
     def _get_series_nowcast(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict):
-        # For now the NOWCAST algorithm does not support 'series'
-        # Because XTypeTable will also try, an empty 'set' of data is returned.
+        aggregate_interval_seconds = weeutil.weeutil.nominal_spans(aggregate_interval)
         unit, unit_group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
+
+        # Because other XTypes will also try, an empty 'set' of data is returned.
+        if aggregate_type:
+            #raise weewx.UnknownAggregation
+            self._logerr(f"Agregate type '{aggregate_type}' is not supported.")
+            return (ValueTuple([], 'unix_epoch', 'group_time'),
+                    ValueTuple([], 'unix_epoch', 'group_time'),
+                    ValueTuple([], unit, unit_group))
+
+        # Because other XTypes will also try, an empty 'set' of data is returned.
+        if aggregate_interval_seconds and aggregate_interval_seconds != 3600:
+            #raise weewx.UnknownAggregation
+            self._logerr(f"Agregate interval '{aggregate_interval}' is not supported.")
+            return (ValueTuple([], 'unix_epoch', 'group_time'),
+                    ValueTuple([], 'unix_epoch', 'group_time'),
+                    ValueTuple([], unit, unit_group))
 
         aqi_type = self.aqi_fields[obs_type]['type']
         start_list, stop_list, concentration_list = self.aqi_fields[obs_type]['calculator'].calculate_series(db_manager, timespan, aqi_type)
@@ -604,8 +619,9 @@ class AQIType(weewx.xtypes.XType):
 
     def _get_aggregate_nowcast(self, obs_type, timespan, aggregate_type, db_manager, **option_dict):
        # For now the NOWCAST algorithm does not support 'aggregation'
-        # Because XTypeTable will also try, 'None' is returned.
+        # Because other XTypes will also try, 'None' is returned.
         if aggregate_type != 'not_null':
+            self._logerr(f"Agregate type '{aggregate_type}' is not supported.")
             aggregate_value = None
             # raise weewx.UnknownAggregation(aggregate_type)
 
