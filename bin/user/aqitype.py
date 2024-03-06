@@ -523,6 +523,14 @@ class AQIType(weewx.xtypes.XType):
         unit, unit_group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
 
         # Because other XTypes will also try, an empty 'set' of data is returned.
+        if timespan.stop - timespan.start < 86400:
+            self._logerr("Series less than a day are not supported.")
+            return (ValueTuple([], 'unix_epoch', 'group_time'),
+                    ValueTuple([], 'unix_epoch', 'group_time'),
+                    ValueTuple([], unit, unit_group))
+            #raise weewx.UnknownAggregation
+
+        # Because other XTypes will also try, an empty 'set' of data is returned.
         if aggregate_type:
             #raise weewx.UnknownAggregation
             self._logerr(f"Agregate type '{aggregate_type}' is not supported.")
@@ -620,12 +628,12 @@ class AQIType(weewx.xtypes.XType):
     def _get_aggregate_nowcast(self, obs_type, timespan, aggregate_type, db_manager, **option_dict):
        # For now the NOWCAST algorithm does not support 'aggregation'
         # Because other XTypes will also try, 'None' is returned.
-        if aggregate_type != 'not_null':
-            self._logerr(f"Agregate type '{aggregate_type}' is not supported.")
+        # ToDo: example placeholder
+        if timespan.stop - timespan.start < 86400:
+            self._logerr("Aggregate intervals less than a day are not supported.")
             aggregate_value = None
-            # raise weewx.UnknownAggregation(aggregate_type)
-
-        else:
+            #raise weewx.UnknownAggregation
+        elif aggregate_type == 'not_null':
             dependent_field = self.aqi_fields[obs_type]['input']
 
             interpolation_dict = {
@@ -648,6 +656,16 @@ class AQIType(weewx.xtypes.XType):
                 aggregate_value = None
             else:
                 aggregate_value = row[0]
+        elif aggregate_type == 'min':
+            # ToDo: placeholder
+            aqi_type = self.aqi_fields[obs_type]['type']
+            start_list, stop_list, concentration_list = self.aqi_fields[obs_type]['calculator'].calculate_series(db_manager, timespan, aqi_type)
+            print(len(concentration_list))
+            aggregate_value = None
+        else:
+            self._logerr(f"Agregate type '{aggregate_type}' is not supported.")
+            aggregate_value = None
+            # raise weewx.UnknownAggregation(aggregate_type)
 
         unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
         return weewx.units.ValueTuple(aggregate_value, unit_type, group)
