@@ -531,7 +531,8 @@ class AQIType(weewx.xtypes.XType):
             #raise weewx.UnknownAggregation
 
         # Because other XTypes will also try, an empty 'set' of data is returned.
-        if aggregate_type:
+        # ToDo: placeholder
+        if aggregate_type not in ['min']:
             #raise weewx.UnknownAggregation
             self._logerr(f"Agregate type '{aggregate_type}' is not supported.")
             return (ValueTuple([], 'unix_epoch', 'group_time'),
@@ -539,15 +540,56 @@ class AQIType(weewx.xtypes.XType):
                     ValueTuple([], unit, unit_group))
 
         # Because other XTypes will also try, an empty 'set' of data is returned.
+        # ToDo: what is valid?
         if aggregate_interval_seconds and aggregate_interval_seconds != 3600:
             #raise weewx.UnknownAggregation
             self._logerr(f"Agregate interval '{aggregate_interval}' is not supported.")
-            return (ValueTuple([], 'unix_epoch', 'group_time'),
-                    ValueTuple([], 'unix_epoch', 'group_time'),
-                    ValueTuple([], unit, unit_group))
+            #return (ValueTuple([], 'unix_epoch', 'group_time'),
+            #        ValueTuple([], 'unix_epoch', 'group_time'),
+            #        ValueTuple([], unit, unit_group))
+
+        print(aggregate_interval)
+        print(aggregate_interval_seconds)
+        print(timespan.stop - timespan.start)
 
         aqi_type = self.aqi_fields[obs_type]['type']
         start_list, stop_list, concentration_list = self.aqi_fields[obs_type]['calculator'].calculate_series(db_manager, timespan, aqi_type)
+
+        # ToDo: placeholder
+        if aggregate_type in ['min']:
+            i = 0
+            print(len(stop_list))
+
+            list1 = []
+            new_start_list = []
+            new_stop_list = []
+            new_concentration_list = []
+            while i < len(stop_list):
+                list1 = []
+                start = stop_list[i]
+                value_min = None
+                value_min_time = None
+                value_sum = 0
+                while stop_list[i] < start + aggregate_interval_seconds:
+                    value_sum += concentration_list[i]
+                    if value_min is None:
+                        value_min = concentration_list[i]
+                        value_min_time = [start_list[i], stop_list[i]]
+                    elif value_min < concentration_list[i]:
+                        value_min = concentration_list[i]
+                        value_min_time = (start_list[i], stop_list[i])
+
+                    list1.append(stop_list[i])
+                    i += 1
+                    if len(stop_list) -1  < i:
+                        break
+
+                print(f" {i} {list1}")
+                if aggregate_type == 'min':
+                    new_start_list.append(value_min_time[0])
+                    new_stop_list.append(value_min_time[1])
+                    new_concentration_list.append(value_min)
+
 
         return (ValueTuple(start_list, 'unix_epoch', 'group_time'),
                 ValueTuple(stop_list, 'unix_epoch', 'group_time'),
