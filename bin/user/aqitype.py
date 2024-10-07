@@ -518,7 +518,7 @@ class AQIType(weewx.xtypes.XType):
             raise weewx.UnknownType(obs_type)
         return self.aqi_fields[obs_type]['get_series'](obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict)
 
-    def _get_series_nowcast(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict):
+    def _get_series_nowcast(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **_option_dict):
         aggregate_interval_seconds = weeutil.weeutil.nominal_spans(aggregate_interval)
         unit, unit_group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
 
@@ -667,7 +667,7 @@ class AQIType(weewx.xtypes.XType):
             raise weewx.UnknownType(obs_type)
         return self.aqi_fields[obs_type]['get_aggregate'](obs_type, timespan, aggregate_type, db_manager, **option_dict)
 
-    def _get_aggregate_nowcast(self, obs_type, timespan, aggregate_type, db_manager, **option_dict):
+    def _get_aggregate_nowcast(self, obs_type, timespan, aggregate_type, db_manager, **_option_dict):
        # For now the NOWCAST algorithm does not support 'aggregation'
         # Because other XTypes will also try, 'None' is returned.
         # ToDo: example placeholder
@@ -701,7 +701,8 @@ class AQIType(weewx.xtypes.XType):
         elif aggregate_type == 'min':
             # ToDo: placeholder
             aqi_type = self.aqi_fields[obs_type]['type']
-            start_list, stop_list, concentration_list = self.aqi_fields[obs_type]['calculator'].calculate_series(db_manager, timespan, aqi_type)
+            _start_list, _stop_list, concentration_list =\
+                self.aqi_fields[obs_type]['calculator'].calculate_series(db_manager, timespan, aqi_type)
             print(len(concentration_list))
             aggregate_value = None
         else:
@@ -712,7 +713,7 @@ class AQIType(weewx.xtypes.XType):
         unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
         return weewx.units.ValueTuple(aggregate_value, unit_type, group)
 
-    def _get_aggregate_epaaqi(self, obs_type, timespan, aggregate_type, db_manager, **option_dict):
+    def _get_aggregate_epaaqi(self, obs_type, timespan, aggregate_type, db_manager, **_option_dict):
         sql_stmts = ChainMap(self.agg_sql_stmts, self.simple_sql_stmts, self.sql_stmts)
         if aggregate_type not in sql_stmts:
             raise weewx.UnknownAggregation(aggregate_type)
