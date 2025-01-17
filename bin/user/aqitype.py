@@ -518,7 +518,16 @@ class AQIType(weewx.xtypes.XType):
             raise weewx.UnknownType(obs_type)
         return self.aqi_fields[obs_type]['get_series'](obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict)
 
-    def _get_series_nowcast(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **_option_dict):
+    def _get_series_nowcast(self, obs_type, _timespan, db_manager, aggregate_type, _aggregate_interval, **_option_dict):
+        # For now the NOWCAST algorithm does not support 'series'
+        # Because XTypeTable will also try, an empty 'set' of data is returned.
+        unit, unit_group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
+
+        return (ValueTuple([], 'unix_epoch', 'group_time'),
+                ValueTuple([], 'unix_epoch', 'group_time'),
+                ValueTuple([], unit, unit_group))
+
+    def _get_series_nowcast_prototype(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **_option_dict):
         aggregate_interval_seconds = weeutil.weeutil.nominal_spans(aggregate_interval)
         unit, unit_group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
 
@@ -668,6 +677,39 @@ class AQIType(weewx.xtypes.XType):
         return self.aqi_fields[obs_type]['get_aggregate'](obs_type, timespan, aggregate_type, db_manager, **option_dict)
 
     def _get_aggregate_nowcast(self, obs_type, timespan, aggregate_type, db_manager, **_option_dict):
+       # For now the NOWCAST algorithm does not support 'aggregation'
+        # Because XTypeTable will also try, 'None' is returned.
+        if aggregate_type != 'not_null':
+            aggregate_value = None
+            # raise weewx.UnknownAggregation(aggregate_type)
+        else:
+            dependent_field = self.aqi_fields[obs_type]['input']
+
+            interpolation_dict = {
+                'start': timespan.start,
+                'stop': timespan.stop,
+                'table_name': db_manager.table_name,
+                'input': dependent_field
+            }
+
+            # This is not accurate
+            # Just because there is one concentration reading does not mean NOWCAST can be computed
+            sql_stmt = self.simple_sql_stmts[aggregate_type].format(**interpolation_dict)
+
+            try:
+                row = db_manager.getSql(sql_stmt)
+            except weedb.NoColumnError:
+                raise weewx.UnknownType(obs_type) from weedb.NoColumnError
+
+            if not row or None in row:
+                aggregate_value = None
+            else:
+                aggregate_value = row[0]
+
+        unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
+        return weewx.units.ValueTuple(aggregate_value, unit_type, group)
+
+    def _get_aggregate_nowcast_prototype(self, obs_type, timespan, aggregate_type, db_manager, **_option_dict):
        # For now the NOWCAST algorithm does not support 'aggregation'
         # Because other XTypes will also try, 'None' is returned.
         # ToDo: example placeholder
