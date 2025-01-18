@@ -1,4 +1,4 @@
-#    Copyright (c) 2023-2024 Rich Bell <bellrichm@gmail.com>
+#    Copyright (c) 2023-2025 Rich Bell <bellrichm@gmail.com>
 #    See the file LICENSE.txt for your full rights.
 
 """
@@ -21,6 +21,9 @@ from weewx.units import ValueTuple
 from weeutil.weeutil import to_bool, to_int
 
 VERSION = '1.2.0-rc01'
+
+class CalculationError(Exception):
+    ''' Error calculating AQI '''
 
 class Logger:
     '''
@@ -212,32 +215,43 @@ class NOWCAST(AbstractCalculator):
         Calculate the nowcast concentration.
         '''
 
-        two_hours_ago = current_hour - 7200
+        try:
+            two_hours_ago = current_hour - 7200
 
-        # Missing data: 2 of the last 3 hours of data must be valid for a NowCast calculation.
-        if data_count < 3:
-            self._logdbg(f"Less than 3 readings ({data_count}).")
-            raise weewx.CannotCalculate()
+            # Missing data: 2 of the last 3 hours of data must be valid for a NowCast calculation.
+            if data_count < 3:
+                self._logdbg(f"Less than 3 readings ({data_count}).")
+                raise weewx.CannotCalculate()
 
-        if timestamps[1] <= two_hours_ago:
-            self._logdbg(f"Of {data_count} readings, at least need to be within the last 2 hours ")
-            raise weewx.CannotCalculate()
+            if timestamps[1] <= two_hours_ago:
+                self._logdbg(f"Of {data_count} readings, at least need to be within the last 2 hours ")
+                raise weewx.CannotCalculate()
 
-        data_range = data_max - data_min
-        scaled_rate_change = data_range/data_max
-        weight_factor = max((1-scaled_rate_change), .5)
-        numerator = 0
-        denominator = 0
-        for i in range(data_count):
-            hours_ago = int((current_hour - timestamps[i]) / 3600 + 1)
-            self._logdbg(f"Hours ago: {hours_ago} pm was: {concentrations[i]}")
-            numerator += concentrations[i] * (weight_factor ** hours_ago)
-            denominator += weight_factor ** hours_ago
+            data_range = data_max - data_min
+            scaled_rate_change = data_range/data_max
+            weight_factor = max((1-scaled_rate_change), .5)
+            numerator = 0
+            denominator = 0
+            for i in range(data_count):
+                hours_ago = int((current_hour - timestamps[i]) / 3600 + 1)
+                self._logdbg(f"Hours ago: {hours_ago} pm was: {concentrations[i]}")
+                numerator += concentrations[i] * (weight_factor ** hours_ago)
+                denominator += weight_factor ** hours_ago
 
-        concentration = math.trunc((numerator / denominator) * 10) / 10
-        self._logdbg(f"The computed concentration is {concentration}")
+            concentration = math.trunc((numerator / denominator) * 10) / 10
+            self._logdbg(f"The computed concentration is {concentration}")
 
-        return concentration
+            return concentration
+        except weewx.CannotCalculate as exception:
+            raise exception
+        except Exception as exception: # (want to catch all - at least for now) pylint: disable=broad-except
+            error_message = f"Error Calculating Nowcast with a data_count of {data_count}, data_max is {data_max}, data_min is {data_min}, "
+            error_message += f"weight_factor is {weight_factor}.\n"
+            error_message += f"index is {i}, hours_ago is {hours_ago}, concentration is {concentrations[i]}\n"
+            error_message += f"There are {len(timestamps)} with values of {timestamps}.\n"
+            error_message += f"There are {len(concentrations)} with values of {concentrations}."
+            self._logerr(error_message)
+            raise CalculationError(error_message) from exception
 
     def calculate(self, db_manager, time_stamp, reading, aqi_type):
         self._logdbg(f"The time stamp is {time_stamp}.")
@@ -369,38 +383,46 @@ class EPAAQI(AbstractCalculator):
         https://www.airnow.gov/aqi/aqi-calculator-concentration/
         '''
 
-        self._logdbg(f"The input value is {reading}.")
-        self._logdbg(f"The type is '{aqi_type}'")
+        try:
+            self._logdbg(f"The input value is {reading}.")
+            self._logdbg(f"The type is '{aqi_type}'")
 
-        if reading is None:
-            return reading
+            if reading is None:
+                return reading
 
-        readings = EPAAQI.readings[aqi_type]
+            readings = EPAAQI.readings[aqi_type]
 
-        breakpoint_count = len(readings['breakpoints'])
-        index = 0
-        while index < breakpoint_count:
-            if reading < readings['breakpoints'][index]['max']:
-                break
-            index += 1
+            breakpoint_count = len(readings['breakpoints'])
+            index = 0
+            while index < breakpoint_count:
+                if reading < readings['breakpoints'][index]['max']:
+                    break
+                index += 1
 
-        if index >= breakpoint_count:
-            index =  len(readings['breakpoints']) - 1
+            if index >= breakpoint_count:
+                index =  len(readings['breakpoints']) - 1
 
-        reading_bp_max = readings['breakpoints'][index]['max']
-        reading_bp_min = readings['breakpoints'][index]['min']
+            reading_bp_max = readings['breakpoints'][index]['max']
+            reading_bp_min = readings['breakpoints'][index]['min']
 
-        aqi_bp_max = EPAAQI.aqi_bp[index]['max']
-        aqi_bp_min = EPAAQI.aqi_bp[index]['min']
+            aqi_bp_max = EPAAQI.aqi_bp[index]['max']
+            aqi_bp_min = EPAAQI.aqi_bp[index]['min']
 
-        self._logdbg(f"The AQI breakpoint index is {index},  max is {aqi_bp_max}, and the min is {aqi_bp_min}.")
-        self._logdbg(f"The reading breakpoint max is {reading_bp_max:f} and the min is {reading_bp_min:f}.")
+            self._logdbg(f"The AQI breakpoint index is {index},  max is {aqi_bp_max}, and the min is {aqi_bp_min}.")
+            self._logdbg(f"The reading breakpoint max is {reading_bp_max:f} and the min is {reading_bp_min:f}.")
 
-        aqi = round(((aqi_bp_max - aqi_bp_min)/(reading_bp_max - reading_bp_min) * (reading - reading_bp_min)) + aqi_bp_min)
+            aqi = round(((aqi_bp_max - aqi_bp_min)/(reading_bp_max - reading_bp_min) * (reading - reading_bp_min)) + aqi_bp_min)
 
-        self._logdbg(f"The computed AQI is {aqi}")
+            self._logdbg(f"The computed AQI is {aqi}")
 
-        return aqi
+            return aqi
+        except Exception as exception: # (want to catch all - at least for now) pylint: disable=broad-except
+            error_message = f"Error Calculating EDAAQI with a type of {aqi_type}, reading is {reading}, "
+            error_message += "breakpoint_count is {breakpoint_count}.\n"
+            error_message += f"The AQI breakpoint index is {index},  max is {aqi_bp_max}, and the min is {aqi_bp_min}.\n"
+            error_message += f"The reading breakpoint max is {reading_bp_max:f} and the min is {reading_bp_min:f}."
+            self._logerr(error_message)
+            raise CalculationError(error_message) from exception
 
 class AQIType(weewx.xtypes.XType):
     """
