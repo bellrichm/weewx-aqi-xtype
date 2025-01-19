@@ -207,6 +207,7 @@ It does not support aggregation nor series.
 ### Display values
 
 For example, in a Cheetah template
+
 |Desired display                                                   |Cheetah code |
 |------------------------------------------------------------------|--------------------|
 | Current value                                                    | $current.pm2_5_aqi |
@@ -265,6 +266,49 @@ This is called like, `$AQIColor(value, standard)`.
 #### $AQIDescription
 
 This is called like, `$AQIDescription(value, standard)`.
+
+## Logging
+
+In an attempt to reduce the amount of data that is logged, weewx-aqi-xtype supports different logging levels for each configured AQI field.
+The python logging facility and its logging levels are leveraged to accomplish this.
+The configuration option, `log_level`, is used to accomplish this.
+This option uses a subset of the [python logging levels](https://docs.python.org/3/library/logging.html#logging-levels).
+The valid values for `weewx-aqi-xtype` `log_level` configuration setting are:
+
+| Setting | Description                                              |
+|---------|----------------------------------------------------------|
+| 10      | Debug messages will be logged.                           |
+| 20      | Informational and Debug messages will be logged.         |
+| 30      | Error, Informational, and Debug messages will be logged. |
+
+Suppose that `weewx-aqi-xtype` has two AQI fields, `aqi_field_one` and `aqi_field_two`.
+And it is desired to only log `informmational` and `error` messages for `aqi_field_one`.
+But, one wants to log all three for `aqi_field_two`.
+The following configuration would accomplish this.
+
+Note, `# log_level = 20` is included only to show that it could be overriden at this level.
+So, if it was desired to see `debug` messages for both fields, this could be uncommented out.
+
+``` text
+[aqitype]
+    # This is the default log_level. 
+    # Even if WeeWX has a 'log_level of debug' (typically debug = 1), debug messages will not be logged.
+    # log_level = 20
+    [[aqi_field_one]]
+        .
+        .
+        .   
+    [[aqi_field_two]]
+        # This overrides the log_level.
+        # The result is for this AQI field, debug messages will be logged.
+        log_level = 10
+        .
+        .
+        .
+```
+
+In addition to understanding the [debug = 1 setting](https://weewx.com/docs/5.1/reference/weewx-options/general/?h=debug#debug),
+I would recommend reading up on [WeeWX's improved logging](https://github.com/weewx/weewx/wiki/WeeWX-v4-and-logging#customizing-what-gets-logged) that was introduced in V4.
 
 ## Getting Help
 
