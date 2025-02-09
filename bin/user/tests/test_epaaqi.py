@@ -10,26 +10,25 @@ import unittest
 import mock
 
 import user.aqitype
-import weewx
 
 def random_string(length=32):
     return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
 
+# https://www.airnow.gov/aqi/aqi-calculator/
 class EPAAQITests(unittest.TestCase):
     def test_pm2_5_calculation(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
         calculator = user.aqitype.EPAAQI(mock_logger, 0, None, None)
 
         self.assertEqual(calculator.calculate(None, None, 0.0, 'pm2_5'), 0)
-        self.assertEqual(calculator.calculate(None, None, 5.0, 'pm2_5'), 21)
-        self.assertEqual(calculator.calculate(None, None, 23.0, 'pm2_5'), 74)
+        self.assertEqual(calculator.calculate(None, None, 5.0, 'pm2_5'), 28)
+        self.assertEqual(calculator.calculate(None, None, 23.0, 'pm2_5'), 77)
         self.assertEqual(calculator.calculate(None, None, 40.0, 'pm2_5'), 112)
-        self.assertEqual(calculator.calculate(None, None, 100.0, 'pm2_5'), 174)
-        self.assertEqual(calculator.calculate(None, None, 200.0, 'pm2_5'), 250)
-        self.assertEqual(calculator.calculate(None, None, 300.0, 'pm2_5'), 350)
-        self.assertEqual(calculator.calculate(None, None, 400.0, 'pm2_5'), 434)
-        self.assertEqual(calculator.calculate(None, None, 600.0, 'pm2_5'), 566)
-
+        self.assertEqual(calculator.calculate(None, None, 100.0, 'pm2_5'), 182)
+        self.assertEqual(calculator.calculate(None, None, 200.0, 'pm2_5'), 275)
+        self.assertEqual(calculator.calculate(None, None, 300.0, 'pm2_5'), 449)
+        self.assertEqual(calculator.calculate(None, None, 400.0, 'pm2_5'), 649)
+        self.assertEqual(calculator.calculate(None, None, 600.0, 'pm2_5'), 1047)
     def test_pm10_calculation(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
         calculator = user.aqitype.EPAAQI(mock_logger, 0, None, None)
@@ -40,9 +39,9 @@ class EPAAQITests(unittest.TestCase):
         self.assertEqual(calculator.calculate(None, None, 200.0, 'pm10'), 123)
         self.assertEqual(calculator.calculate(None, None, 300.0, 'pm10'), 173)
         self.assertEqual(calculator.calculate(None, None, 400.0, 'pm10'), 266)
-        self.assertEqual(calculator.calculate(None, None, 475.0, 'pm10'), 364)
-        self.assertEqual(calculator.calculate(None, None, 550.0, 'pm10'), 446)
-        self.assertEqual(calculator.calculate(None, None, 700.0, 'pm10'), 596)
+        self.assertEqual(calculator.calculate(None, None, 475.0, 'pm10'), 357)
+        self.assertEqual(calculator.calculate(None, None, 550.0, 'pm10'), 440)
+        self.assertEqual(calculator.calculate(None, None, 700.0, 'pm10'), 607)
 
 if __name__ == '__main__':
     unittest.main(exit=False)
