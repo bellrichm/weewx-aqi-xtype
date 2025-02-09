@@ -424,6 +424,51 @@ class EPAAQI(AbstractCalculator):
             self._logerr(error_message)
             raise CalculationError(error_message) from exception
 
+class EPAAQIDeprecatedV0(EPAAQI):
+    """
+    Class for calculating the EPA'S AQI.
+    This is the algorithm (breakpoints) used to calculate the EDA AQI prior to 2024.
+    Only the pm 2.5 breakpoint changed, but it was easier to just override the whole 'readings' data.
+    In other words, the pm10 breakpoints are the same as the parent class, EPAAQI.
+    """
+
+    aqi_bp = [
+        {'min': 0, 'max': 50, 'color': '00e400'},
+        {'min': 51, 'max': 100, 'color': 'ffff00'},
+        {'min': 101, 'max': 150, 'color': 'ff7e00'},
+        {'min': 151, 'max': 200, 'color': 'ff0000'},
+        {'min': 201, 'max': 300, 'color': '8f3f97'},
+        {'min': 301, 'max': 400, 'color': '7e0023'},
+        {'min': 401, 'max': 500, 'color': '7e0023'},
+    ]
+
+    readings = {
+        'pm2_5': {
+            'prep_data': lambda x: math.trunc(x * 10) / 10,
+            'breakpoints': [
+                {'min': 0.0, 'max': 12.0},
+                {'min': 12.1, 'max': 35.4},
+                {'min': 35.5, 'max': 55.4},
+                {'min': 55.5, 'max': 150.4},
+                {'min': 150.5, 'max': 250.4},
+                {'min': 250.5, 'max': 350.4},
+                {'min': 350.5, 'max': 500.4,},
+            ]
+        },
+        'pm10': {
+            'prep_data': lambda x: math.trunc(x), # pylint: disable=unnecessary-lambda
+            'breakpoints': [
+                {'min': 0.0, 'max': 54},
+                {'min': 55, 'max': 154},
+                {'min': 155, 'max': 254},
+                {'min': 255, 'max': 354},
+                {'min': 355, 'max': 424},
+                {'min': 425, 'max': 504},
+                {'min': 505, 'max': 604},
+            ]
+        }
+    }
+    
 class AQIType(weewx.xtypes.XType):
     """
     AQI XType which computes the AQI (air quality index) from
