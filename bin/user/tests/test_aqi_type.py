@@ -203,29 +203,35 @@ class TestEPAAQICalculate(unittest.TestCase):
 
         SUT = user.aqitype.AQIType(mock_logger, config)
 
+        unit = random_string()
+        unit_group = random_string()
         now = int(time.time() + 0.5)
         end_timestamp = (int(now / archive_interval_seconds) + 1) * archive_interval_seconds
+        start_timestamp = end_timestamp - 3600
+        aggregate_interval = 1200
 
-        timespan = weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp)
-        print(timespan)
+        timespan = weeutil.weeutil.TimeSpan(start_timestamp, end_timestamp)
 
-        mock_db_manager.first_timestamp = end_timestamp-3600
+        mock_db_manager.first_timestamp = start_timestamp
         mock_db_manager.last_timestamp = end_timestamp
 
-        with mock.patch.object(user.aqitype.AQIType, 'get_aggregate', return_value=(9, 'aqi', 'aqi_group')):
-            ret_value  = SUT.get_series(calculated_field,
+        aqi_tuples = [(random.randint(11, 100), unit, unit_group),
+                      (random.randint(11, 100), unit, unit_group),
+                      (random.randint(11, 100), unit, unit_group)]
+        with mock.patch.object(user.aqitype.AQIType, 'get_aggregate', side_effect=aqi_tuples):
+            value_tuple  = SUT.get_series(calculated_field,
                                         timespan,
                                         mock_db_manager,
                                         aggregate_type='foo',
-                                        aggregate_interval=3600)
-            
-            print(ret_value)
+                                        aggregate_interval=aggregate_interval)
 
-        print('stop')
+            self.assertEqual(value_tuple[0], ([start_timestamp, start_timestamp + aggregate_interval, start_timestamp + 2*aggregate_interval], 'unix_epoch', 'group_time'))
+            self.assertEqual(value_tuple[1], ([end_timestamp - 2*aggregate_interval, end_timestamp - aggregate_interval, end_timestamp], 'unix_epoch', 'group_time'))
+            self.assertEqual(value_tuple[2], ([aqi_tuples[0][0], aqi_tuples[1][0], aqi_tuples[2][0]], unit, unit_group))
 
 if __name__ == '__main__':
-    test_suite = unittest.TestSuite()
-    test_suite.addTest(TestEPAAQICalculate('test_get_aggregated_series_valid_inputs'))
-    unittest.TextTestRunner().run(test_suite)
+    #test_suite = unittest.TestSuite()
+    #test_suite.addTest(TestEPAAQICalculate('test_get_aggregated_series_valid_inputs'))
+    #unittest.TextTestRunner().run(test_suite)
 
-    #unittest.main(exit=False)
+    unittest.main(exit=False)
