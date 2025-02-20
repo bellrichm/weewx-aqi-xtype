@@ -186,9 +186,46 @@ class TestEPAAQICalculate(unittest.TestCase):
                 self.assertEqual(value_tuple[1], unit)
                 self.assertEqual(value_tuple[2], unit_group)
 
-if __name__ == '__main__':
-    #test_suite = unittest.TestSuite()
-    #test_suite.addTest(TestEPAAQICalculate('test_get_aggregation_avg_valid_inputs'))
-    #unittest.TextTestRunner().run(test_suite)
+    def test_get_aggregated_series_valid_inputs(self):
+        print('start')
+ 
+        mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_db_manager = mock.Mock()
 
-    unittest.main(exit=False)
+        algorithm = 'EPAAQI'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = random_string()
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+
+        SUT = user.aqitype.AQIType(mock_logger, config)
+
+        now = int(time.time() + 0.5)
+        end_timestamp = (int(now / archive_interval_seconds) + 1) * archive_interval_seconds
+
+        timespan = weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp)
+        print(timespan)
+
+        mock_db_manager.first_timestamp = end_timestamp-3600
+        mock_db_manager.last_timestamp = end_timestamp
+
+        with mock.patch.object(user.aqitype.AQIType, 'get_aggregate', return_value=(9, 'aqi', 'aqi_group')):
+            ret_value  = SUT.get_series(calculated_field,
+                                        timespan,
+                                        mock_db_manager,
+                                        aggregate_type='foo',
+                                        aggregate_interval=3600)
+            
+            print(ret_value)
+
+        print('stop')
+
+if __name__ == '__main__':
+    test_suite = unittest.TestSuite()
+    test_suite.addTest(TestEPAAQICalculate('test_get_aggregated_series_valid_inputs'))
+    unittest.TextTestRunner().run(test_suite)
+
+    #unittest.main(exit=False)
