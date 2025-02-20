@@ -188,7 +188,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
     def test_get_aggregated_series_valid_inputs(self):
         print('start')
- 
+
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
         mock_db_manager = mock.Mock()
 
@@ -225,8 +225,14 @@ class TestEPAAQICalculate(unittest.TestCase):
                                         aggregate_type='foo',
                                         aggregate_interval=aggregate_interval)
 
-            self.assertEqual(value_tuple[0], ([start_timestamp, start_timestamp + aggregate_interval, start_timestamp + 2*aggregate_interval], 'unix_epoch', 'group_time'))
-            self.assertEqual(value_tuple[1], ([end_timestamp - 2*aggregate_interval, end_timestamp - aggregate_interval, end_timestamp], 'unix_epoch', 'group_time'))
+            self.assertEqual(value_tuple[0], \
+                             ([start_timestamp, start_timestamp + aggregate_interval, start_timestamp + 2*aggregate_interval], \
+                              'unix_epoch', \
+                              'group_time'))
+            self.assertEqual(value_tuple[1], \
+                             ([end_timestamp - 2*aggregate_interval, end_timestamp - aggregate_interval, end_timestamp], \
+                              'unix_epoch', \
+                              'group_time'))
             self.assertEqual(value_tuple[2], ([aqi_tuples[0][0], aqi_tuples[1][0], aqi_tuples[2][0]], unit, unit_group))
 
 if __name__ == '__main__':
