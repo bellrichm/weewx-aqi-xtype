@@ -152,7 +152,6 @@ class TestEPAAQICalculate(unittest.TestCase):
                 self.assertEqual(value_tuple[2], unit_group)
 
     def test_get_aggregation_min_valid_inputs(self):
-        print("start")
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
         mock_db_manager = mock.Mock()
 
@@ -165,9 +164,8 @@ class TestEPAAQICalculate(unittest.TestCase):
         config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
         config = configobj.ConfigObj(config_dict)
 
-        aqi = [random.randint(11, 100),
-               random.randint(11, 100)]
-        with mock.patch.object(user.aqitype.EPAAQI, 'calculate', side_effect=aqi):
+        aqi = random.randint(11, 100)
+        with mock.patch.object(user.aqitype.EPAAQI, 'calculate', return_value=aqi):
 
             SUT = user.aqitype.AQIType(mock_logger, config)
 
@@ -176,26 +174,17 @@ class TestEPAAQICalculate(unittest.TestCase):
             now = int(time.time() + 0.5)
             end_timestamp = (int(now / archive_interval_seconds) + 1) * archive_interval_seconds
 
-            mock_db_manager.genSql.return_value = [[random.randint(11, 100)],
-                                                   [random.randint(11, 100)]]
+            mock_db_manager.getSql.return_value = [[random.randint(11, 100)]]
 
             with mock.patch('weewx.units.getStandardUnitType') as mock_get_standard_unit_type:
                 mock_get_standard_unit_type.return_value = [unit, unit_group]
 
                 value_tuple  = \
-                    SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'avg', mock_db_manager)
+                    SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'min', mock_db_manager)
 
-                print(aqi)
-                #print(sql_results)
-                print(round(sum(aqi) / len(aqi)))
-                print(value_tuple)
-
-                #self.assertEqual(value_tuple[0], round(sum(aqi) / len(aqi)))
-                #self.assertEqual(value_tuple[1], unit)
-                #self.assertEqual(value_tuple[2], unit_group)
-
-        print("stop")
-
+                self.assertEqual(value_tuple[0], aqi)
+                self.assertEqual(value_tuple[1], unit)
+                self.assertEqual(value_tuple[2], unit_group)
 
 if __name__ == '__main__':
     #test_suite = unittest.TestSuite()
