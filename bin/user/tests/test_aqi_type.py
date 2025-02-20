@@ -103,7 +103,8 @@ class TestEPAAQICalculate(unittest.TestCase):
             with mock.patch('weewx.units.getStandardUnitType') as mock_get_standard_unit_type:
                 mock_get_standard_unit_type.return_value = [unit, unit_group]
 
-                start_vec_t, stop_vec_t, data_vec_t  = SUT.get_series(calculated_field, weeutil.weeutil.TimeSpan(now-3600, now), mock_db_manager)
+                start_vec_t, stop_vec_t, data_vec_t  = \
+                    SUT.get_series(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), mock_db_manager)
 
                 self.assertEqual(start_vec_t,\
                                  ([end_timestamp - 2 * archive_interval_seconds, end_timestamp - archive_interval_seconds], \
@@ -112,9 +113,93 @@ class TestEPAAQICalculate(unittest.TestCase):
                 self.assertEqual(stop_vec_t, ([end_timestamp - archive_interval_seconds, end_timestamp], 'unix_epoch', 'group_time'))
                 self.assertEqual(data_vec_t, (aqi, unit, unit_group))
 
+
+    def test_get_aggregation_avg_valid_inputs(self):
+        mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_db_manager = mock.Mock()
+
+        algorithm = 'EPAAQI'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = random_string()
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+
+        aqi = [random.randint(11, 100),
+               random.randint(11, 100)]
+        with mock.patch.object(user.aqitype.EPAAQI, 'calculate', side_effect=aqi):
+
+            SUT = user.aqitype.AQIType(mock_logger, config)
+
+            unit = random_string()
+            unit_group = random_string()
+            now = int(time.time() + 0.5)
+            end_timestamp = (int(now / archive_interval_seconds) + 1) * archive_interval_seconds
+
+            mock_db_manager.genSql.return_value = [[random.randint(11, 100)],
+                                                   [random.randint(11, 100)]]
+
+            with mock.patch('weewx.units.getStandardUnitType') as mock_get_standard_unit_type:
+                mock_get_standard_unit_type.return_value = [unit, unit_group]
+
+                value_tuple  = \
+                    SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'avg', mock_db_manager)
+
+                self.assertEqual(value_tuple[0], round(sum(aqi) / len(aqi)))
+                self.assertEqual(value_tuple[1], unit)
+                self.assertEqual(value_tuple[2], unit_group)
+
+    def test_get_aggregation_min_valid_inputs(self):
+        print("start")
+        mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_db_manager = mock.Mock()
+
+        algorithm = 'EPAAQI'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = random_string()
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+
+        aqi = [random.randint(11, 100),
+               random.randint(11, 100)]
+        with mock.patch.object(user.aqitype.EPAAQI, 'calculate', side_effect=aqi):
+
+            SUT = user.aqitype.AQIType(mock_logger, config)
+
+            unit = random_string()
+            unit_group = random_string()
+            now = int(time.time() + 0.5)
+            end_timestamp = (int(now / archive_interval_seconds) + 1) * archive_interval_seconds
+
+            mock_db_manager.genSql.return_value = [[random.randint(11, 100)],
+                                                   [random.randint(11, 100)]]
+
+            with mock.patch('weewx.units.getStandardUnitType') as mock_get_standard_unit_type:
+                mock_get_standard_unit_type.return_value = [unit, unit_group]
+
+                value_tuple  = \
+                    SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'avg', mock_db_manager)
+
+                print(aqi)
+                #print(sql_results)
+                print(round(sum(aqi) / len(aqi)))
+                print(value_tuple)
+
+                #self.assertEqual(value_tuple[0], round(sum(aqi) / len(aqi)))
+                #self.assertEqual(value_tuple[1], unit)
+                #self.assertEqual(value_tuple[2], unit_group)
+
+        print("stop")
+
+
 if __name__ == '__main__':
     #test_suite = unittest.TestSuite()
-    #test_suite.addTest(TestEPAAQICalculate('test_get_series_valid_inputs'))
+    #test_suite.addTest(TestEPAAQICalculate('test_get_aggregation_avg_valid_inputs'))
     #unittest.TextTestRunner().run(test_suite)
 
     unittest.main(exit=False)
