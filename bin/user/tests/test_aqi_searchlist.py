@@ -1,4 +1,4 @@
-#    Copyright (c) 2023 Rich Bell <bellrichm@gmail.com>
+#    Copyright (c) 2023-2025 Rich Bell <bellrichm@gmail.com>
 #    See the file LICENSE.txt for your full rights.
 
 # pylint: disable=missing-docstring
