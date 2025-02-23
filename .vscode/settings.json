@@ -5,12 +5,6 @@
         {
             "previewLimit": 50,
             "driver": "SQLite",
-            "database": "/home/richbell/weewx-data/archive-replica/monitor.sdb",
-            "name": "replica-monitor"
-        },
-        {
-            "previewLimit": 50,
-            "driver": "SQLite",
             "database": "bin/user/tests/data/pm.sdb",
             "name": "test-pm"
         },        
