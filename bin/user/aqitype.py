@@ -323,6 +323,124 @@ class EPAAQI(AbstractCalculator):
     """
 
     aqi_bp = [
+        # RGB = (R*65536)+(G*256)+B
+        # Good: Green (0, 228, 0)
+        {'min': 0, 'max': 50, 'color': f'{(0*65536)+(228*256)+0:06x}'},
+        # Moderate: Yellow (255, 255, 0)
+        {'min': 51, 'max': 100, 'color': f'{(255*65536)+(255*256)+0:06x}'},
+        # Unhealthy for Sensitive Groups: Orange (255, 126, 0)
+        {'min': 101, 'max': 150, 'color': f'{(255*65536)+(126*256)+0:06x}'},
+        # Unhealthy: Red (255, 0, 0)
+        {'min': 151, 'max': 200, 'color': f'{(255*65536)+(0*256)+0:06x}'},
+        # Very Unhealthy: Purple (143, 63, 151)
+        {'min': 201, 'max': 300, 'color': f'{(143*65536)+(63*256)+151:06x}'},
+        # Hazardous: Maroon (126, 0, 35)
+        {'min': 301, 'max': 500, 'color': f'{(126*65536)+(0*256)+35:06x}'},
+    ]
+
+    readings = {
+        'pm2_5': {
+            'prep_data': lambda x: math.trunc(x * 10) / 10,
+            'breakpoints': [
+                {'min': 0.0, 'max': 9.0},
+                {'min': 9.1, 'max': 35.4},
+                {'min': 35.5, 'max': 55.4},
+                {'min': 55.5, 'max': 125.4},
+                {'min': 125.5, 'max': 225.4},
+                {'min': 225.5, 'max': 325.4},
+            ]
+        },
+        'pm10': {
+            'prep_data': lambda x: math.trunc(x), # pylint: disable=unnecessary-lambda
+            'breakpoints': [
+                {'min': 0.0, 'max': 54},
+                {'min': 55, 'max': 154},
+                {'min': 155, 'max': 254},
+                {'min': 255, 'max': 354},
+                {'min': 355, 'max': 424},
+                {'min': 425, 'max': 604},
+            ]
+        }
+    }
+
+    def __init__(self, logger, log_level, sub_calculator, sub_field_name): # Need to match signature pylint: disable=unused-argument
+        self.logger = logger
+        self.log_level = log_level
+
+    def  _logdbg(self, msg):
+        if self.log_level <= 10:
+            self.logger.logdbg(f"(EPAAQI) {msg}")
+
+    def _loginf(self, msg):
+        if self.log_level <= 20:
+            self.logger.loginf(f"(EPAAQI) {msg}")
+
+    def _logerr(self, msg):
+        if self.log_level <= 40:
+            self.logger.logerr(f"(EPAAQI) {msg}")
+
+    def calculate(self, db_manager, time_stamp, reading, aqi_type):
+        '''
+        Calculate the AQI.
+        Additional information:
+          2024 Update:
+            https://www.epa.gov/system/files/documents/2024-02/pm-naaqs-air-quality-index-fact-sheet.pdf
+            https://document.airnow.gov/technical-assistance-document-for-the-reporting-of-daily-air-quailty.pdf
+          Prior to 2024:
+            https://www.airnow.gov/publications/air-quality-index/technical-assistance-document-for-reporting-the-daily-aqi/
+            https://www.airnow.gov/aqi/aqi-calculator-concentration/
+        '''
+
+        try:
+            self._logdbg(f"The input value is {reading}.")
+            self._logdbg(f"The type is '{aqi_type}'")
+
+            if reading is None:
+                return reading
+
+            readings = self.readings[aqi_type]
+
+            breakpoint_count = len(readings['breakpoints'])
+            index = 0
+            while index < breakpoint_count:
+                if reading < readings['breakpoints'][index]['max']:
+                    break
+                index += 1
+
+            if index >= breakpoint_count:
+                index =  len(readings['breakpoints']) - 1
+
+            reading_bp_max = readings['breakpoints'][index]['max']
+            reading_bp_min = readings['breakpoints'][index]['min']
+
+            aqi_bp_max = self.aqi_bp[index]['max']
+            aqi_bp_min = self.aqi_bp[index]['min']
+
+            self._logdbg(f"The AQI breakpoint index is {index},  max is {aqi_bp_max}, and the min is {aqi_bp_min}.")
+            self._logdbg(f"The reading breakpoint max is {reading_bp_max:f} and the min is {reading_bp_min:f}.")
+
+            aqi = round(((aqi_bp_max - aqi_bp_min)/(reading_bp_max - reading_bp_min) * (reading - reading_bp_min)) + aqi_bp_min)
+
+            self._logdbg(f"The computed AQI is {aqi}")
+
+            return aqi
+        except Exception as exception: # (want to catch all - at least for now) pylint: disable=broad-except
+            error_message = f"Error Calculating EPAAQI with a type of {aqi_type}, reading is {reading}, "
+            error_message += "breakpoint_count is {breakpoint_count}.\n"
+            error_message += f"The AQI breakpoint index is {index},  max is {aqi_bp_max}, and the min is {aqi_bp_min}.\n"
+            error_message += f"The reading breakpoint max is {reading_bp_max:f} and the min is {reading_bp_min:f}."
+            self._logerr(error_message)
+            raise CalculationError(error_message) from exception
+
+class EPAAQIDeprecatedV0(EPAAQI):
+    """
+    Class for calculating the EPA'S AQI.
+    This is the algorithm (breakpoints) used to calculate the EPA AQI prior to 2024.
+    Only the pm 2.5 breakpoint changed, but it was easier to just override the whole 'readings' data.
+    In other words, the pm10 breakpoints are the same as the parent class, EPAAQI.
+    """
+
+    aqi_bp = [
         {'min': 0, 'max': 50, 'color': '00e400'},
         {'min': 51, 'max': 100, 'color': 'ffff00'},
         {'min': 101, 'max': 150, 'color': 'ff7e00'},
@@ -358,71 +476,6 @@ class EPAAQI(AbstractCalculator):
             ]
         }
     }
-
-    def __init__(self, logger, log_level, sub_calculator, sub_field_name): # Need to match signature pylint: disable=unused-argument
-        self.logger = logger
-        self.log_level = log_level
-
-    def  _logdbg(self, msg):
-        if self.log_level <= 10:
-            self.logger.logdbg(f"(EPAAQI) {msg}")
-
-    def _loginf(self, msg):
-        if self.log_level <= 20:
-            self.logger.loginf(f"(EPAAQI) {msg}")
-
-    def _logerr(self, msg):
-        if self.log_level <= 40:
-            self.logger.logerr(f"(EPAAQI) {msg}")
-
-    def calculate(self, db_manager, time_stamp, reading, aqi_type):
-        '''
-        Calculate the AQI.
-        Additional information:
-        https://www.airnow.gov/publications/air-quality-index/technical-assistance-document-for-reporting-the-daily-aqi/
-        https://www.airnow.gov/aqi/aqi-calculator-concentration/
-        '''
-
-        try:
-            self._logdbg(f"The input value is {reading}.")
-            self._logdbg(f"The type is '{aqi_type}'")
-
-            if reading is None:
-                return reading
-
-            readings = EPAAQI.readings[aqi_type]
-
-            breakpoint_count = len(readings['breakpoints'])
-            index = 0
-            while index < breakpoint_count:
-                if reading < readings['breakpoints'][index]['max']:
-                    break
-                index += 1
-
-            if index >= breakpoint_count:
-                index =  len(readings['breakpoints']) - 1
-
-            reading_bp_max = readings['breakpoints'][index]['max']
-            reading_bp_min = readings['breakpoints'][index]['min']
-
-            aqi_bp_max = EPAAQI.aqi_bp[index]['max']
-            aqi_bp_min = EPAAQI.aqi_bp[index]['min']
-
-            self._logdbg(f"The AQI breakpoint index is {index},  max is {aqi_bp_max}, and the min is {aqi_bp_min}.")
-            self._logdbg(f"The reading breakpoint max is {reading_bp_max:f} and the min is {reading_bp_min:f}.")
-
-            aqi = round(((aqi_bp_max - aqi_bp_min)/(reading_bp_max - reading_bp_min) * (reading - reading_bp_min)) + aqi_bp_min)
-
-            self._logdbg(f"The computed AQI is {aqi}")
-
-            return aqi
-        except Exception as exception: # (want to catch all - at least for now) pylint: disable=broad-except
-            error_message = f"Error Calculating EDAAQI with a type of {aqi_type}, reading is {reading}, "
-            error_message += "breakpoint_count is {breakpoint_count}.\n"
-            error_message += f"The AQI breakpoint index is {index},  max is {aqi_bp_max}, and the min is {aqi_bp_min}.\n"
-            error_message += f"The reading breakpoint max is {reading_bp_max:f} and the min is {reading_bp_min:f}."
-            self._logerr(error_message)
-            raise CalculationError(error_message) from exception
 
 class AQIType(weewx.xtypes.XType):
     """

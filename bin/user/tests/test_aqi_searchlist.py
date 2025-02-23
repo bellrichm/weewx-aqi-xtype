@@ -1,4 +1,4 @@
-#    Copyright (c) 2023 Rich Bell <bellrichm@gmail.com>
+#    Copyright (c) 2023-2025 Rich Bell <bellrichm@gmail.com>
 #    See the file LICENSE.txt for your full rights.
 
 # pylint: disable=missing-docstring
@@ -30,8 +30,8 @@ class AQISearchListTests(unittest.TestCase):
         self.assertEqual(searchlist.get_aqi_description(175.0, 'EPAAQI'), 'aqi_EPAAQI_description4')
         self.assertEqual(searchlist.get_aqi_description(250.0, 'EPAAQI'), 'aqi_EPAAQI_description5')
         self.assertEqual(searchlist.get_aqi_description(350.0, 'EPAAQI'), 'aqi_EPAAQI_description6')
-        self.assertEqual(searchlist.get_aqi_description(450.0, 'EPAAQI'), 'aqi_EPAAQI_description7')
-        self.assertEqual(searchlist.get_aqi_description(6050.0, 'EPAAQI'), 'aqi_EPAAQI_description7')
+        self.assertEqual(searchlist.get_aqi_description(450.0, 'EPAAQI'), 'aqi_EPAAQI_description6')
+        self.assertEqual(searchlist.get_aqi_description(6050.0, 'EPAAQI'), 'aqi_EPAAQI_description6')
 
 if __name__ == '__main__':
     unittest.main(exit=False)
