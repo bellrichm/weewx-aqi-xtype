@@ -11,7 +11,7 @@
         {
             "previewLimit": 50,
             "driver": "SQLite",
-            "database": "/home/richbell/weewx_dev/weewx-aqi-xtype/aqi-xtype/bin/user/tests/data/pm.sdb",
+            "database": "bin/user/tests/data/pm.sdb",
             "name": "test-pm"
         },        
     ],
