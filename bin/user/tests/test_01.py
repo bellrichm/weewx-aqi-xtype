@@ -59,6 +59,10 @@ class Test01(unittest.TestCase):
 
         SUT = user.aqitype.NOWCAST(mock_logger, random.randint(1, 100), random_string(), 'pm2_5')
 
+        # The timestamp in the template that I am using is 1740168300 (3:05 PM Eastern on 2/21/2025)
+        # The code finds the hour that this timestamp belongs to, it is 1740168000 (3:00 PM Eastern on 2/21/2025)
+        # This is the stop value that is passed into _get_concentration_data
+        # This is used as the stop value in the SQL queries
         ret_value = SUT._get_concentration_data(db_manager, 1740168000)
 
         self.assertEqual(ret_value,
