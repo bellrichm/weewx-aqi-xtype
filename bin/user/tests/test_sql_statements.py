@@ -26,7 +26,7 @@ archive_interval_minutes = 5
 archive_interval_seconds = archive_interval_minutes * 60
 archive_intervals_in_day = 24 * 60 / archive_interval_minutes
 
-expected_pm_values = [1.0137931034482757, 0.9433333333333332, 0.996551724137931, 2.103333333333333, 1.4133333333333329,
+db_pm2_5_values = [1.0137931034482757, 0.9433333333333332, 0.996551724137931, 2.103333333333333, 1.4133333333333329,
                       1.7999999999999996, 1.9499999999999993, 2.617241379310345, 2.433333333333333, 1.7933333333333323,
                       1.5758620689655178, 1.9233333333333351, 0.7827586206896553, 1.3566666666666667, 1.3566666666666662,
                       1.1862068965517243, 1.4333333333333325, 0.8965517241379313, 1.0699999999999998, 1.49,
@@ -85,7 +85,7 @@ expected_pm_values = [1.0137931034482757, 0.9433333333333332, 0.996551724137931,
                       1.3344827586206895, 1.7266666666666663, 1.4137931034482762, 1.7999999999999998, 1.5900000000000005,
                       1.8689655172413788, 1.9833333333333327, 1.5517241379310336]
 
-expected_timestamps = [1740114300, 1740114600, 1740114900, 1740115200, 1740115500, 1740115800, 1740116100, 1740116400, 1740116700, 1740117000,
+db_timestamps = [1740114300, 1740114600, 1740114900, 1740115200, 1740115500, 1740115800, 1740116100, 1740116400, 1740116700, 1740117000,
                        1740117300, 1740117600, 1740117900, 1740118200, 1740118500, 1740118800, 1740119100, 1740119400, 1740119700, 1740120000,
                        1740120300, 1740120600, 1740120900, 1740121200, 1740121500, 1740121800, 1740122100, 1740122400, 1740122700, 1740123000,
                        1740123300, 1740123600, 1740123900, 1740124200, 1740124500, 1740124800, 1740125100, 1740125400, 1740125700, 1740126000,
@@ -227,9 +227,9 @@ class TestEPAAQICalculate(unittest.TestCase):
 
                 i = 0
                 for call_arg in mock_calculate.call_args_list:
-                    self.assertEqual(call_arg[0][2], expected_pm_values[i])
-                    self.assertEqual(stop_vec_t[0][i], expected_timestamps[i])
-                    self.assertEqual(start_vec_t[0][i], expected_timestamps[i] - archive_interval_seconds)
+                    self.assertEqual(call_arg[0][2], db_pm2_5_values[i])
+                    self.assertEqual(stop_vec_t[0][i], db_timestamps[i])
+                    self.assertEqual(start_vec_t[0][i], db_timestamps[i] - archive_interval_seconds)
                     i += 1
 
     def test_get_aggregate_avg_data(self):
@@ -248,7 +248,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
                 i = 0
                 for call_arg in mock_calculate.call_args_list:
-                    self.assertEqual(call_arg[0][2], expected_pm_values[i])
+                    self.assertEqual(call_arg[0][2], db_pm2_5_values[i])
                     i += 1
 
     def test_get_aggregate_min_data(self):
@@ -265,7 +265,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
                 mock_calculate.assert_called_once_with(TestEPAAQICalculate.db_manager,
                                                        None,
-                                                       min(expected_pm_values),
+                                                       min(db_pm2_5_values),
                                                        TestEPAAQICalculate.aqi_type)
 
     def test_get_aggregate_max_data(self):
@@ -282,7 +282,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
                 mock_calculate.assert_called_once_with(TestEPAAQICalculate.db_manager,
                                                        None,
-                                                       max(expected_pm_values),
+                                                       max(db_pm2_5_values),
                                                        TestEPAAQICalculate.aqi_type)
 
 if __name__ == '__main__':
