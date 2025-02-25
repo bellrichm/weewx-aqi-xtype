@@ -22,7 +22,7 @@ import user.aqitype
 
 usUnits = 1
 archive_interval = 5
-archive_interval_seconds = 5 * 60
+archive_interval_seconds = archive_interval * 60
 
 def random_string(length=32):
     return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
@@ -64,8 +64,7 @@ class TestEPAAQICalculate(unittest.TestCase):
                 input_field: random.randint(0, 10),
             }
 
-            with mock.patch('weewx.units.getStandardUnitType') as mock_get_standard_unit_type:
-                mock_get_standard_unit_type.return_value = [unit, unit_group]
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
 
                 value_tuple = SUT.get_scalar(calculated_field, record)
 
@@ -100,8 +99,7 @@ class TestEPAAQICalculate(unittest.TestCase):
             mock_db_manager.genSql.return_value =[(end_timestamp - archive_interval_seconds, usUnits, archive_interval, random.randint(1, 50)),
                                                   (end_timestamp, usUnits, archive_interval, random.randint(1, 50))]
 
-            with mock.patch('weewx.units.getStandardUnitType') as mock_get_standard_unit_type:
-                mock_get_standard_unit_type.return_value = [unit, unit_group]
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
 
                 start_vec_t, stop_vec_t, data_vec_t  = \
                     SUT.get_series(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), mock_db_manager)
@@ -112,7 +110,6 @@ class TestEPAAQICalculate(unittest.TestCase):
                                   'group_time'))
                 self.assertEqual(stop_vec_t, ([end_timestamp - archive_interval_seconds, end_timestamp], 'unix_epoch', 'group_time'))
                 self.assertEqual(data_vec_t, (aqi, unit, unit_group))
-
 
     def test_get_aggregation_avg_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
@@ -141,8 +138,7 @@ class TestEPAAQICalculate(unittest.TestCase):
             mock_db_manager.genSql.return_value = [[random.randint(11, 100)],
                                                    [random.randint(11, 100)]]
 
-            with mock.patch('weewx.units.getStandardUnitType') as mock_get_standard_unit_type:
-                mock_get_standard_unit_type.return_value = [unit, unit_group]
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
 
                 value_tuple  = \
                     SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'avg', mock_db_manager)
@@ -176,8 +172,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
             mock_db_manager.getSql.return_value = [[random.randint(11, 100)]]
 
-            with mock.patch('weewx.units.getStandardUnitType') as mock_get_standard_unit_type:
-                mock_get_standard_unit_type.return_value = [unit, unit_group]
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
 
                 value_tuple  = \
                     SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'min', mock_db_manager)
@@ -187,8 +182,6 @@ class TestEPAAQICalculate(unittest.TestCase):
                 self.assertEqual(value_tuple[2], unit_group)
 
     def test_get_aggregated_series_valid_inputs(self):
-        print('start')
-
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
         mock_db_manager = mock.Mock()
 
@@ -222,7 +215,7 @@ class TestEPAAQICalculate(unittest.TestCase):
             value_tuple  = SUT.get_series(calculated_field,
                                         timespan,
                                         mock_db_manager,
-                                        aggregate_type='foo',
+                                        aggregate_type=random_string(),
                                         aggregate_interval=aggregate_interval)
 
             self.assertEqual(value_tuple[0], \
@@ -237,7 +230,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
 if __name__ == '__main__':
     #test_suite = unittest.TestSuite()
-    #test_suite.addTest(TestEPAAQICalculate('test_get_aggregated_series_valid_inputs'))
+    #test_suite.addTest(TestEPAAQICalculate('test_get_aggregate_min_data'))
     #unittest.TextTestRunner().run(test_suite)
 
     unittest.main(exit=False)
