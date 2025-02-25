@@ -715,7 +715,7 @@ class AQIType(weewx.xtypes.XType):
         else:
             std_unit_system = None
             sql_str = f'SELECT dateTime, usUnits, `interval`, {dependent_field} FROM {db_manager.table_name} ' \
-                        'WHERE dateTime >= ? AND dateTime <= ?'
+                        'WHERE dateTime > ? AND dateTime <= ?'
 
             try:
                 for record in db_manager.genSql(sql_str, timespan):
