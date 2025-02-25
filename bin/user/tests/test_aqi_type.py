@@ -336,7 +336,7 @@ class TestEPAAQICalculate(unittest.TestCase):
             value_tuple  = SUT.get_series(calculated_field,
                                         timespan,
                                         mock_db_manager,
-                                        aggregate_type='foo',
+                                        aggregate_type=random_string(),
                                         aggregate_interval=aggregate_interval)
 
             self.assertEqual(value_tuple[0], \
