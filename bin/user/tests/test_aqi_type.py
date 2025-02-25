@@ -95,8 +95,7 @@ class TestEPAAQICalculate(unittest.TestCase):
                 input_field: random.randint(0, 10),
             }
 
-            with mock.patch('weewx.units.getStandardUnitType') as mock_get_standard_unit_type:
-                mock_get_standard_unit_type.return_value = [unit, unit_group]
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
 
                 value_tuple = SUT.get_scalar(calculated_field, record)
 
@@ -131,8 +130,7 @@ class TestEPAAQICalculate(unittest.TestCase):
             mock_db_manager.genSql.return_value =[(end_timestamp - archive_interval_seconds, usUnits, archive_interval, random.randint(1, 50)),
                                                   (end_timestamp, usUnits, archive_interval, random.randint(1, 50))]
 
-            with mock.patch('weewx.units.getStandardUnitType') as mock_get_standard_unit_type:
-                mock_get_standard_unit_type.return_value = [unit, unit_group]
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
 
                 start_vec_t, stop_vec_t, data_vec_t  = \
                     SUT.get_series(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), mock_db_manager)
@@ -172,8 +170,7 @@ class TestEPAAQICalculate(unittest.TestCase):
             mock_db_manager.genSql.return_value = [[random.randint(11, 100)],
                                                    [random.randint(11, 100)]]
 
-            with mock.patch('weewx.units.getStandardUnitType') as mock_get_standard_unit_type:
-                mock_get_standard_unit_type.return_value = [unit, unit_group]
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
 
                 value_tuple  = \
                     SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'avg', mock_db_manager)
@@ -207,8 +204,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
             mock_db_manager.getSql.return_value = [[random.randint(11, 100)]]
 
-            with mock.patch('weewx.units.getStandardUnitType') as mock_get_standard_unit_type:
-                mock_get_standard_unit_type.return_value = [unit, unit_group]
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
 
                 value_tuple  = \
                     SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'min', mock_db_manager)
@@ -282,8 +278,7 @@ class TestEPAAQICalculate(unittest.TestCase):
             unit = random_string()
             unit_group = random_string()
 
-            with mock.patch('weewx.units.getStandardUnitType') as mock_get_standard_unit_type:
-                mock_get_standard_unit_type.return_value = [unit, unit_group]
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
                 manager_config = configobj.ConfigObj(io.StringIO(MANAGER_DICT))
                 db_binder = weewx.manager.DBBinder(manager_config)
                 db_manager = db_binder.get_manager('aqi_binding')
@@ -319,16 +314,13 @@ class TestEPAAQICalculate(unittest.TestCase):
         config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
         config = configobj.ConfigObj(config_dict)
 
-        # ToDo: set aqi_values to random integers (288, the number in a day - also compute 288 based on archive interval and timespan)
-        aqi_values = [1.0137931034482757, 0.9433333333333332, 0.996551724137931, 2.103333333333333, 1.4133333333333329, 1.7999999999999996, 1.9499999999999993, 2.617241379310345, 2.433333333333333, 1.7933333333333323, 1.5758620689655178, 1.9233333333333351, 0.7827586206896553, 1.3566666666666667, 1.3566666666666662, 1.1862068965517243, 1.4333333333333325, 0.8965517241379313, 1.0699999999999998, 1.49, 1.317241379310345, 1.63, 1.5999999999999992, 0.8724137931034481, 0.9233333333333327, 0.9206896551724134, 1.806666666666666, 1.329999999999999, 0.8275862068965519, 1.3433333333333326, 1.8275862068965523, 1.3966666666666663, 1.166666666666667, 1.0862068965517244, 1.3799999999999994, 1.5433333333333328, 1.5344827586206886, 0.9366666666666668, 1.6689655172413793, 2.159999999999999, 1.3103448275862069, 1.353333333333333, 1.6966666666666668, 1.8896551724137935, 1.24, 1.7413793103448285, 1.4133333333333344, 1.11, 1.4517241379310344, 1.3300000000000003, 1.282758620689655, 1.23, 0.9933333333333333, 1.0172413793103448, 1.1799999999999997, 1.2433333333333327, 1.031034482758621, 1.3833333333333333, 1.4655172413793105, 1.2033333333333336, 0.9466666666666665, 1.0482758620689654, 1.2500000000000004, 1.589655172413794, 1.3600000000000003, 1.355172413793103, 1.2333333333333334, 1.4500000000000004, 1.3413793103448275, 0.8300000000000003, 1.151724137931035, 0.8233333333333339, 1.4333333333333327, 1.968965517241379, 1.413333333333333, 1.3551724137931038, 2.0000000000000004, 1.2399999999999998, 1.6068965517241385, 1.2433333333333327, 1.0566666666666664, 1.310344827586207, 1.0413793103448277, 1.1758620689655177, 1.06, 1.4100000000000004, 1.4482758620689649, 1.28, 1.7448275862068967, 1.3100000000000007, 1.7199999999999998, 1.820689655172414, 1.6800000000000002, 1.3068965517241382, 0.9233333333333337, 1.0266666666666668, 2.334482758620689, 1.1266666666666665, 1.5931034482758624, 1.5700000000000007, 1.0862068965517244, 2.046666666666666, 1.8333333333333326, 1.4034482758620692, 1.153333333333333, 1.8862068965517236, 1.6233333333333337, 1.4866666666666672, 1.806896551724137, 1.406666666666667, 1.1000000000000003, 0.9999999999999996, 1.3433333333333335, 1.6137931034482755, 1.0233333333333332, 1.7517241379310349, 0.9266666666666666, 1.7, 1.013793103448276, 1.3433333333333326, 1.8448275862068964, 1.5666666666666675, 1.716666666666667, 1.5344827586206902, 1.0433333333333332, 1.103448275862069, 1.5100000000000005, 1.524137931034483, 1.5100000000000007, 2.1833333333333327, 1.4482758620689653, 1.466666666666666, 1.3766666666666665, 1.8965517241379304, 1.836666666666666, 1.3299999999999998, 0.8724137931034479, 1.3900000000000001, 1.8482758620689657, 1.4733333333333332, 0.8400000000000005, 1.3103448275862064, 1.4833333333333336, 1.3275862068965527, 1.4833333333333338, 1.5620689655172417, 1.5166666666666657, 1.7833333333333334, 2.075862068965517, 1.7966666666666662, 1.276666666666667, 2.213793103448276, 1.6666666666666667, 1.582758620689655, 1.4933333333333334, 2.1379310344827576, 1.6900000000000004, 1.4799999999999995, 1.5034482758620689, 1.1599999999999995, 1.6, 1.7034482758620688, 0.9966666666666667, 1.3620689655172409, 1.2699999999999998, 1.3899999999999997, 2.2586206896551717, 1.77, 2.582758620689655, 2.0566666666666666, 1.1566666666666667, 1.510344827586207, 1.3599999999999999, 0.6699999999999999, 0.9586206896551727, 1.8100000000000007, 1.2666666666666668, 1.4931034482758618, 1.0433333333333332, 1.3793103448275856, 1.8366666666666664, 1.7733333333333343, 1.1137931034482755, 1.1799999999999997, 0.9344827586206894, 1.1699999999999997, 1.1482758620689653, 2.1666666666666656, 1.3400000000000003, 1.2965517241379312, 1.2833333333333337, 1.5699999999999998, 1.406896551724138, 1.3166666666666667, 1.1137931034482758, 0.9166666666666667, 1.4000000000000004, 1.2499999999999993, 1.7310344827586197, 1.423333333333334, 1.1299999999999997, 1.3758620689655177, 2.2166666666666672, 1.2310344827586208, 0.7533333333333332, 1.1, 1.5241379310344825, 0.8566666666666666, 1.5379310344827581, 1.6833333333333325, 1.241379310344827, 0.7266666666666668, 1.7033333333333334, 0.9999999999999997, 1.2766666666666662, 1.6566666666666665, 1.2413793103448276, 2.0866666666666664, 1.603448275862069, 1.5799999999999996, 0.9793103448275862, 1.5233333333333332, 1.4000000000000001, 1.0896551724137926, 1.693333333333334, 1.3724137931034481, 1.0333333333333332, 0.9034482758620687, 1.01, 0.8965517241379305, 1.0433333333333334, 1.4433333333333331, 1.327586206896552, 1.1933333333333342, 1.006896551724138, 0.9066666666666666, 0.7620689655172413, 0.9233333333333332, 1.0379310344827586, 0.6733333333333335, 1.275862068965517, 1.5866666666666667, 1.7333333333333334, 1.706896551724138, 1.333333333333333, 0.9310344827586209, 1.416666666666667, 0.9586206896551721, 1.2266666666666666, 1.280000000000001, 1.386206896551724, 1.5666666666666667, 1.6866666666666665, 1.3172413793103444, 1.7551724137931037, 1.1166666666666667, 1.2034482758620688, 0.8400000000000001, 1.1482758620689655, 1.1566666666666667, 1.8866666666666674, 1.3551724137931034, 1.366666666666667, 2.382758620689655, 1.2099999999999993, 1.1199999999999997, 1.3068965517241375, 1.1266666666666667, 0.9275862068965519, 1.3733333333333342, 1.0758620689655174, 1.5099999999999996, 1.1733333333333331, 1.8137931034482762, 1.843333333333334, 1.6655172413793105, 2.070000000000001, 1.6206896551724146, 1.2300000000000009, 1.2266666666666661, 1.3344827586206895, 1.7266666666666663, 1.4137931034482762, 1.7999999999999998, 1.5900000000000005, 1.8689655172413788, 1.9833333333333327, 1.5517241379310336]
-        with mock.patch.object(user.aqitype.EPAAQI, 'calculate', side_effect=aqi_values) as mock_calculate:
+        with mock.patch.object(user.aqitype.EPAAQI, 'calculate', side_effect=mock_calculate_effect    ) as mock_calculate:
             SUT = user.aqitype.AQIType(mock_logger, config)
 
             unit = random_string()
             unit_group = random_string()
 
-            with mock.patch('weewx.units.getStandardUnitType') as mock_get_standard_unit_type:
-                mock_get_standard_unit_type.return_value = [unit, unit_group]
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]) as mock_get_standard_unit_type:
                 manager_config = configobj.ConfigObj(io.StringIO(MANAGER_DICT))
                 db_binder = weewx.manager.DBBinder(manager_config)
                 db_manager = db_binder.get_manager('aqi_binding')
@@ -364,8 +356,7 @@ class TestEPAAQICalculate(unittest.TestCase):
             unit = random_string()
             unit_group = random_string()
 
-            with mock.patch('weewx.units.getStandardUnitType') as mock_get_standard_unit_type:
-                mock_get_standard_unit_type.return_value = [unit, unit_group]
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]) as mock_get_standard_unit_type:
                 manager_config = configobj.ConfigObj(io.StringIO(MANAGER_DICT))
                 db_binder = weewx.manager.DBBinder(manager_config)
                 db_manager = db_binder.get_manager('aqi_binding')
