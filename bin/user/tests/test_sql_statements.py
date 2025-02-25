@@ -22,8 +22,9 @@ import weewx.manager
 import user.aqitype
 
 #usUnits = 1
-archive_interval = 5
-archive_interval_seconds = archive_interval * 60
+archive_interval_minutes = 5
+archive_interval_seconds = archive_interval_minutes * 60
+archive_intervals_in_day = 24 * 60 / archive_interval_minutes
 
 expected_pm_values = [1.0137931034482757, 0.9433333333333332, 0.996551724137931, 2.103333333333333, 1.4133333333333329,
                       1.7999999999999996, 1.9499999999999993, 2.617241379310345, 2.433333333333333, 1.7933333333333323,
@@ -114,12 +115,13 @@ expected_timestamps = [1740114300, 1740114600, 1740114900, 1740115200, 174011550
                        1740195300, 1740195600, 1740195900, 1740196200, 1740196500, 1740196800, 1740197100, 1740197400, 1740197700, 1740198000,
                        1740198300, 1740198600, 1740198900, 1740199200, 1740199500, 1740199800, 1740200100, 1740200400]
 
-MANAGER_DICT = '''
+aqi_binding = 'aqi_binding'
+MANAGER_DICT = f'''
 WEEWX_ROOT = 'bin/user/tests/'
 
 #   This section binds a data store to a database.
 [DataBindings]
-    [[aqi_binding]]
+    [[{aqi_binding}]]
         database = aqi
         table_name = archive
         manager = weewx.wxmanager.WXDaySummaryManager
@@ -137,6 +139,8 @@ WEEWX_ROOT = 'bin/user/tests/'
         driver = weedb.sqlite
         SQLITE_ROOT = data
         '''
+manager_config = configobj.ConfigObj(io.StringIO(MANAGER_DICT))
+
 
 def random_string(length=32):
     return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
@@ -159,9 +163,8 @@ class Test01(unittest.TestCase):
     def test_01(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
-        config = configobj.ConfigObj(io.StringIO(MANAGER_DICT))
-        db_binder = weewx.manager.DBBinder(config)
-        db_manager = db_binder.get_manager('aqi_binding')
+        db_binder = weewx.manager.DBBinder(manager_config)
+        db_manager = db_binder.get_manager(aqi_binding)
 
         SUT = user.aqitype.NOWCAST(mock_logger, random.randint(1, 100), random_string(), 'pm2_5')
 
@@ -185,35 +188,42 @@ class Test01(unittest.TestCase):
         db_binder.close()
 
 class TestEPAAQICalculate(unittest.TestCase):
+    day_start = 1740114000
+    day_end = 1740200400
+
+    algorithm = 'EPAAQI'
+    aqi_type = 'pm2_5'
+    input_field = 'pm2_5'
+
+    calculated_field = random_string()
+
+    unit_group = [random_string(), random_string()]
+
+    config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+    config = configobj.ConfigObj(config_dict)
+
+    timespan = weeutil.weeutil.TimeSpan(day_start, day_end)
+
+    @classmethod
+    def setUpClass(cls):
+        db_binder = weewx.manager.DBBinder(manager_config)
+        cls.db_manager = db_binder.get_manager(aqi_binding)
+
     def test_get_series_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
-        algorithm = 'EPAAQI'
-        aqi_type = 'pm2_5'
-        input_field = 'pm2_5'
-
-        calculated_field = random_string()
-
-        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
-        config = configobj.ConfigObj(config_dict)
-
         with mock.patch.object(user.aqitype.EPAAQI, 'calculate', side_effect=mock_calculate_effect) as mock_calculate:
-            SUT = user.aqitype.AQIType(mock_logger, config)
+            SUT = user.aqitype.AQIType(mock_logger, TestEPAAQICalculate.config)
 
-            unit = random_string()
-            unit_group = random_string()
-
-            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
-                manager_config = configobj.ConfigObj(io.StringIO(MANAGER_DICT))
-                db_binder = weewx.manager.DBBinder(manager_config)
-                db_manager = db_binder.get_manager('aqi_binding')
-
-                timespan = weeutil.weeutil.TimeSpan(1740114000, 1740200400)
-
-                start_vec_t, stop_vec_t, _data_vec_t = SUT._get_series_epaaqi(calculated_field, timespan, db_manager, None, None)
+            with mock.patch('weewx.units.getStandardUnitType', return_value=TestEPAAQICalculate.unit_group):
+                start_vec_t, stop_vec_t, _data_vec_t = SUT._get_series_epaaqi(TestEPAAQICalculate.calculated_field,
+                                                                              TestEPAAQICalculate.timespan,
+                                                                              TestEPAAQICalculate.db_manager,
+                                                                              None,
+                                                                              None)
 
                 mock_calculate.assert_called()
-                self.assertEqual(mock_calculate.call_count, 288)
+                self.assertEqual(mock_calculate.call_count, archive_intervals_in_day)
 
                 i = 0
                 for call_arg in mock_calculate.call_args_list:
@@ -225,31 +235,16 @@ class TestEPAAQICalculate(unittest.TestCase):
     def test_get_aggregate_avg_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
-        algorithm = 'EPAAQI'
-        aqi_type = 'pm2_5'
-        input_field = 'pm2_5'
-
-        calculated_field = random_string()
-
-        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
-        config = configobj.ConfigObj(config_dict)
-
         with mock.patch.object(user.aqitype.EPAAQI, 'calculate', side_effect=mock_calculate_effect    ) as mock_calculate:
-            SUT = user.aqitype.AQIType(mock_logger, config)
+            SUT = user.aqitype.AQIType(mock_logger, TestEPAAQICalculate.config)
 
-            unit = random_string()
-            unit_group = random_string()
+            with mock.patch('weewx.units.getStandardUnitType', return_value=TestEPAAQICalculate.unit_group):
+                _ret_value = SUT._get_aggregate_epaaqi(TestEPAAQICalculate.calculated_field,
+                                                       TestEPAAQICalculate.timespan,
+                                                       'avg',
+                                                       TestEPAAQICalculate.db_manager)
 
-            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
-                manager_config = configobj.ConfigObj(io.StringIO(MANAGER_DICT))
-                db_binder = weewx.manager.DBBinder(manager_config)
-                db_manager = db_binder.get_manager('aqi_binding')
-
-                timespan = weeutil.weeutil.TimeSpan(1740114000, 1740200400)
-
-                _ret_value = SUT._get_aggregate_epaaqi(calculated_field, timespan, 'avg', db_manager)
-
-                self.assertEqual(mock_calculate.call_count, 288)
+                self.assertEqual(mock_calculate.call_count, archive_intervals_in_day)
 
                 i = 0
                 for call_arg in mock_calculate.call_args_list:
@@ -259,35 +254,23 @@ class TestEPAAQICalculate(unittest.TestCase):
     def test_get_aggregate_min_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
-        algorithm = 'EPAAQI'
-        aqi_type = 'pm2_5'
-        input_field = 'pm2_5'
-
-        calculated_field = random_string()
-
-        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
-        config = configobj.ConfigObj(config_dict)
-
         with mock.patch.object(user.aqitype.EPAAQI, 'calculate', return_value=random.randint(1, 100)) as mock_calculate:
-            SUT = user.aqitype.AQIType(mock_logger, config)
+            SUT = user.aqitype.AQIType(mock_logger, TestEPAAQICalculate.config)
 
-            unit = random_string()
-            unit_group = random_string()
+            with mock.patch('weewx.units.getStandardUnitType', return_value=TestEPAAQICalculate.unit_group):
+                _ret_value = SUT._get_aggregate_epaaqi(TestEPAAQICalculate.calculated_field,
+                                                       TestEPAAQICalculate.timespan,
+                                                       'min',
+                                                       TestEPAAQICalculate.db_manager)
 
-            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
-                manager_config = configobj.ConfigObj(io.StringIO(MANAGER_DICT))
-                db_binder = weewx.manager.DBBinder(manager_config)
-                db_manager = db_binder.get_manager('aqi_binding')
-
-                timespan = weeutil.weeutil.TimeSpan(1740114000, 1740200400)
-
-                _ret_value = SUT._get_aggregate_epaaqi(calculated_field, timespan, 'min', db_manager)
-
-                mock_calculate.assert_called_once_with(db_manager, None, min(expected_pm_values), aqi_type)
+                mock_calculate.assert_called_once_with(TestEPAAQICalculate.db_manager,
+                                                       None,
+                                                       min(expected_pm_values),
+                                                       TestEPAAQICalculate.aqi_type)
 
 if __name__ == '__main__':
     #test_suite = unittest.TestSuite()
-    #test_suite.addTest(TestEPAAQICalculate('test_get_aggregate_min_data'))
+    #test_suite.addTest(Test01('test_01'))
     #unittest.TextTestRunner().run(test_suite)
 
     unittest.main(exit=False)
