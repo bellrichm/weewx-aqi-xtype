@@ -159,8 +159,8 @@ def setup_config(calculated_field, input_field, algorithm, aqi_type):
     }
     return config_dict
 
-class Test01(unittest.TestCase):
-    def test_01(self):
+class TestNowcastCalculate(unittest.TestCase):
+    def test_get_concentration_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
         db_binder = weewx.manager.DBBinder(manager_config)
@@ -266,6 +266,23 @@ class TestEPAAQICalculate(unittest.TestCase):
                 mock_calculate.assert_called_once_with(TestEPAAQICalculate.db_manager,
                                                        None,
                                                        min(expected_pm_values),
+                                                       TestEPAAQICalculate.aqi_type)
+
+    def test_get_aggregate_max_data(self):
+        mock_logger = mock.Mock(spec=user.aqitype.Logger)
+
+        with mock.patch.object(user.aqitype.EPAAQI, 'calculate', return_value=random.randint(1, 100)) as mock_calculate:
+            SUT = user.aqitype.AQIType(mock_logger, TestEPAAQICalculate.config)
+
+            with mock.patch('weewx.units.getStandardUnitType', return_value=TestEPAAQICalculate.unit_group):
+                _ret_value = SUT._get_aggregate_epaaqi(TestEPAAQICalculate.calculated_field,
+                                                       TestEPAAQICalculate.timespan,
+                                                       'max',
+                                                       TestEPAAQICalculate.db_manager)
+
+                mock_calculate.assert_called_once_with(TestEPAAQICalculate.db_manager,
+                                                       None,
+                                                       max(expected_pm_values),
                                                        TestEPAAQICalculate.aqi_type)
 
 if __name__ == '__main__':
