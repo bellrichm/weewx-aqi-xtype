@@ -39,31 +39,29 @@ class NowCastTests(unittest.TestCase):
     def test_incomplete_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
-        with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval)as mock_start_of_interval:
+        now = time.time()
+        current_hour =  int(now / 3600) * 3600
+
+        with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval, return_value=current_hour):
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
                 with self.assertRaises(weewx.CannotCalculate):
-                    now = time.time()
-                    current_hour =  int(now / 3600) * 3600
-                    mock_start_of_interval.return_value = current_hour
-
                     data = [random.uniform(0, 700)]
                     data.reverse()
                     timestamps = self._populate_time_stamps(current_hour, len(data))
 
                     calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                    calculator.calculate_concentration(current_hour, len(data), min(data), max(data), timestamps, data)
+                    calculator.calculate_concentration(now, len(data), min(data), max(data), timestamps, data)
 
     def test_old_minimum_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
-        with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval)as mock_start_of_interval:
+        now = time.time()
+        current_hour =  int(now / 3600) * 3600
+
+        with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval, return_value=current_hour):
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
                 with self.assertRaises(weewx.CannotCalculate):
-                    now = time.time()
-                    current_hour =  int(now / 3600) * 3600
-                    mock_start_of_interval.return_value = current_hour
-
                     data = [random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700)]
                     timestamps = self._populate_time_stamps(current_hour, len(data))
                     # remove  1 and 2 hours ago data
@@ -74,18 +72,17 @@ class NowCastTests(unittest.TestCase):
 
                     calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                    calculator.calculate_concentration(current_hour, len(data), min(data), max(data), timestamps, data)
+                    calculator.calculate_concentration(now, len(data), min(data), max(data), timestamps, data)
 
     def test_old_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
-        with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval)as mock_start_of_interval:
+        now = time.time()
+        current_hour =  int(now / 3600) * 3600
+
+        with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval, return_value=current_hour):
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
                 with self.assertRaises(weewx.CannotCalculate):
-                    now = time.time()
-                    current_hour =  int(now / 3600) * 3600
-                    mock_start_of_interval.return_value = current_hour
-
                     data = [random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700),
                                 random.uniform(0, 700), random.uniform(0, 700)]
                     data.reverse()
@@ -96,17 +93,16 @@ class NowCastTests(unittest.TestCase):
 
                     calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                    calculator.calculate_concentration(current_hour, len(data), min(data), max(data), timestamps, data)
+                    calculator.calculate_concentration(now, len(data), min(data), max(data), timestamps, data)
 
     def test_missing_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
-        with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval)as mock_start_of_interval:
-            with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
-                now = time.time()
-                current_hour =  int(now / 3600) * 3600
-                mock_start_of_interval.return_value = current_hour
+        now = time.time()
+        current_hour =  int(now / 3600) * 3600
 
+        with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval, return_value=current_hour):
+            with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
                 data = [711.8, 734.0, 744.6, 763.8, None, None, None, None, None, 238.6, 149.9, 149.5]
                 timestamps = self._populate_time_stamps(current_hour, len(data))
                 data.reverse()
@@ -119,44 +115,42 @@ class NowCastTests(unittest.TestCase):
 
                 calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                concentration = calculator.calculate_concentration(current_hour, len(data), min(data), max(data), timestamps, data)
+                concentration = calculator.calculate_concentration(now, len(data), min(data), max(data), timestamps, data)
                 self.assertEqual(concentration, 164.7)
 
     @unittest.skip("no longer valid - 'None' will never be in the data")
     def test_none_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
-        with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval)as mock_start_of_interval:
-            with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
-                now = time.time()
-                current_hour =  int(now / 3600) * 3600
-                mock_start_of_interval.return_value = current_hour
+        now = time.time()
+        current_hour =  int(now / 3600) * 3600
 
+        with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval, return_value=current_hour):
+            with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
                 data = [711.8, 734.0, 744.6, 763.8, None, None, None, None, None, 238.6, 149.9, 149.5]
                 timestamps  = self._populate_time_stamps(current_hour, len(data))
 
                 data.reverse()
 
                 calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
-                concentration = calculator.calculate_concentration(current_hour, len(data), min(data), max(data), timestamps, data)
+                concentration = calculator.calculate_concentration(now, len(data), min(data), max(data), timestamps, data)
                 self.assertEqual(concentration, 164.7)
 
     def test_calculate_concentration(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
-        with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval)as mock_start_of_interval:
-            with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
-                now = time.time()
-                current_hour =  int(now / 3600) * 3600
-                mock_start_of_interval.return_value = current_hour
+        now = time.time()
+        current_hour =  int(now / 3600) * 3600
 
+        with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval, return_value=current_hour):
+            with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
                 data = [123.3, 80.2, 49.3, 101.8, 93.7, 143.2, 215.4, 130.6, 129.2, 59.8, 27.4, 46.3]
                 data.reverse()
                 timestamps = self._populate_time_stamps(current_hour, len(data))
 
                 calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                concentration = calculator.calculate_concentration(current_hour, len(data), min(data), max(data), timestamps, data)
+                concentration = calculator.calculate_concentration(now, len(data), min(data), max(data), timestamps, data)
                 self.assertEqual(concentration, 54.8)
 
 if __name__ == '__main__':

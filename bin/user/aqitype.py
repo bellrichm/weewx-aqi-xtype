@@ -122,8 +122,9 @@ class NOWCAST(AbstractCalculator):
         if self.log_level <= 40:
             self.logger.logerr(f"(NOWCAST) {msg}")
 
-    def _get_concentration_data(self, db_manager, stop):
+    def _get_concentration_data(self, db_manager, time_stamp):
         # Get the necessary concentration data to compute for a given time
+        stop = weeutil.weeutil.startOfInterval(time_stamp, 3600)
         start = stop - 43200
         # ToDo: need to get this from the 'console'
         archive_interval = 300
@@ -210,10 +211,11 @@ class NOWCAST(AbstractCalculator):
 
         return record_stats[0], db_manager.genSql(sql_str)
 
-    def calculate_concentration(self, current_hour, data_count, data_min, data_max, timestamps, concentrations):
+    def calculate_concentration(self, time_stamp, data_count, data_min, data_max, timestamps, concentrations):
         '''
         Calculate the nowcast concentration.
         '''
+        current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
 
         try:
             two_hours_ago = current_hour - 7200
@@ -260,10 +262,9 @@ class NOWCAST(AbstractCalculator):
         if time_stamp is None:
             raise weewx.CannotCalculate()
 
-        current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
-        data_count, data_min, data_max, timestamps, concentrations = self._get_concentration_data(db_manager, current_hour)
+        data_count, data_min, data_max, timestamps, concentrations = self._get_concentration_data(db_manager, time_stamp)
 
-        concentration = self.calculate_concentration(current_hour, data_count, data_min, data_max, timestamps, concentrations)
+        concentration = self.calculate_concentration(time_stamp, data_count, data_min, data_max, timestamps, concentrations)
         aqi = self.sub_calculator.calculate(None, None, concentration, aqi_type)
         self._logdbg(f"The computed AQI is {aqi}")
 

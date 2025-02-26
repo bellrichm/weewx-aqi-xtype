@@ -172,7 +172,7 @@ class TestNowcastCalculate(unittest.TestCase):
         # The code finds the hour that this timestamp belongs to, it is 1740168000 (3:00 PM Eastern on 2/21/2025)
         # This is the stop value that is passed into _get_concentration_data
         # This is used as the stop value in the SQL queries
-        ret_value = SUT._get_concentration_data(db_manager, 1740168000)
+        ret_value = SUT._get_concentration_data(db_manager, 1740168300)
 
         expected_pm_values = (1.3857366771159874, 1.4406226053639848, 1.5153544061302677,
                               1.7157567049808427, 1.4154310344827585, 1.5376532567049808,
@@ -286,8 +286,8 @@ class TestEPAAQICalculate(unittest.TestCase):
                                                        TestEPAAQICalculate.aqi_type)
 
 if __name__ == '__main__':
-    #test_suite = unittest.TestSuite()
-    #test_suite.addTest(Test01('test_01'))
-    #unittest.TextTestRunner().run(test_suite)
+    test_suite = unittest.TestSuite()
+    test_suite.addTest(TestNowcastCalculate('test_get_concentration_data'))
+    unittest.TextTestRunner().run(test_suite)
 
-    unittest.main(exit=False)
+    #unittest.main(exit=False)
