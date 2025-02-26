@@ -122,9 +122,10 @@ class NOWCAST(AbstractCalculator):
         if self.log_level <= 40:
             self.logger.logerr(f"(NOWCAST) {msg}")
 
-    def _get_concentration_data(self, db_manager, time_stamp):
+    def _get_concentration_data(self, db_manager, timestamp):
         # Get the necessary concentration data to compute for a given time
-        stop = weeutil.weeutil.startOfInterval(time_stamp, 3600)
+        timestamp_interval_start = weeutil.weeutil.startOfInterval(timestamp, 3600)
+        stop = timestamp_interval_start + 3600
         start = stop - 43200
         # ToDo: need to get this from the 'console'
         archive_interval = 300
@@ -136,8 +137,8 @@ class NOWCAST(AbstractCalculator):
         FROM (
             SELECT avg({self.sub_field_name}) as avgConcentration
             FROM archive
-            WHERE dateTime >= {start} + 3600 + {archive_interval}
-                AND dateTime < {stop} + 3600
+            WHERE dateTime > {start}
+                AND dateTime <= {stop}
             /* need to subtract the archive interval to get the correct begin and end range */
             GROUP BY (dateTime - {archive_interval}) / 3600
             ) AS rowStats
@@ -148,9 +149,8 @@ class NOWCAST(AbstractCalculator):
             MAX(dateTime),
             avg({self.sub_field_name}) as avgConcentration
         FROM archive
-            /* 300 is the archive interval */
-        WHERE dateTime >= {start} + 3600 + {archive_interval}
-            AND dateTime < {stop} + 3600
+        WHERE dateTime > {start}
+            AND dateTime <= {stop}
         /* need to subtract the archive interval to get the correct begin and end range */
         GROUP BY (dateTime - {archive_interval}) / 3600
         HAVING avgConcentration IS NOT NULL
@@ -174,6 +174,7 @@ class NOWCAST(AbstractCalculator):
 
     def _get_concentration_data_series(self, db_manager, stop, start):
         # Get the necessary concentration data to compute for a given time
+        # 02/26/2025 - not used
 
         # ToDo: need to get this from the 'console'
         archive_interval = 300
@@ -271,6 +272,7 @@ class NOWCAST(AbstractCalculator):
         return aqi
 
     def calculate_series(self, db_manager, timespan, aqi_type):
+        # 02/26/2025 - not used
         self._logdbg(f"The time stamp is {timespan}.")
         self._logdbg(f"The type is '{aqi_type}'")
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
