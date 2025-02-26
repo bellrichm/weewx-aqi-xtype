@@ -133,8 +133,8 @@ class NOWCAST(AbstractCalculator):
             MIN(rowStats.avgConcentration) as rowMin,
             MAX(rowStats.avgConcentration) as rowMax
         FROM (
-                SELECT avg({self.sub_field_name}) as avgConcentration
-                FROM archive
+            SELECT avg({self.sub_field_name}) as avgConcentration
+            FROM archive
             WHERE dateTime >= {start} + 3600 + {archive_interval}
                 AND dateTime < {stop} + 3600
             /* need to subtract the archive interval to get the correct begin and end range */
@@ -148,12 +148,12 @@ class NOWCAST(AbstractCalculator):
             avg({self.sub_field_name}) as avgConcentration
         FROM archive
             /* 300 is the archive interval */
-            WHERE dateTime >= {start} + 3600 + {archive_interval}
-                AND dateTime < {stop} + 3600
-            /* need to subtract the archive interval to get the correct begin and end range */
-            GROUP BY (dateTime - {archive_interval}) / 3600
-            HAVING avgConcentration IS NOT NULL
-            ORDER BY dateTime DESC
+        WHERE dateTime >= {start} + 3600 + {archive_interval}
+            AND dateTime < {stop} + 3600
+        /* need to subtract the archive interval to get the correct begin and end range */
+        GROUP BY (dateTime - {archive_interval}) / 3600
+        HAVING avgConcentration IS NOT NULL
+        ORDER BY dateTime DESC
         '''
 
         try:
@@ -180,8 +180,8 @@ class NOWCAST(AbstractCalculator):
         stats_sql_str = f'''
         Select COUNT(rowStats.avgConcentration) as rowCount
         FROM (
-                SELECT avg({self.sub_field_name}) as avgConcentration
-                FROM archive
+            SELECT avg({self.sub_field_name}) as avgConcentration
+            FROM archive
             WHERE dateTime >= {start} + {archive_interval}
                 AND dateTime < {stop}
             /* need to subtract the archive interval to get the correct begin and end range */
