@@ -169,17 +169,14 @@ class TestNowcastCalculate(unittest.TestCase):
         SUT = user.aqitype.NOWCAST(mock_logger, random.randint(1, 100), random_string(), 'pm2_5')
 
         # The timestamp in the template that I am using is 1740168300 (3:05 PM Eastern on 2/21/2025)
-        # The code finds the hour that this timestamp belongs to, it is 1740168000 (3:00 PM Eastern on 2/21/2025)
-        # This is the stop value that is passed into _get_concentration_data
-        # This is used as the stop value in the SQL queries
         ret_value = SUT._get_concentration_data(db_manager, 1740168300)
 
         expected_pm_values = (1.4010919540229885, 1.4406226053639848, 1.5153544061302677,
                               1.7157567049808427, 1.4154310344827585, 1.5376532567049808,
                               1.3357950191570878, 1.5952873563218388, 1.3942241379310343,
                               1.4037739463601533, 1.1982950191570885, 1.2343007662835248)
-        expected_timestamps = (1740171600, 1740168000, 1740164400, 1740160800, 1740157200, 1740153600,
-                               1740150000, 1740146400, 1740142800, 1740139200, 1740135600, 1740132000)
+        expected_timestamps = (1740168000, 1740164400, 1740160800, 1740157200, 1740153600, 1740150000,
+                               1740146400, 1740142800, 1740139200, 1740135600, 1740132000, 1740128400)
 
         self.assertEqual(ret_value,
                          (12, 1.1982950191570885, 1.7157567049808427, expected_timestamps, expected_pm_values)
@@ -286,8 +283,8 @@ class TestEPAAQICalculate(unittest.TestCase):
                                                        TestEPAAQICalculate.aqi_type)
 
 if __name__ == '__main__':
-    test_suite = unittest.TestSuite()
-    test_suite.addTest(TestNowcastCalculate('test_get_concentration_data'))
-    unittest.TextTestRunner().run(test_suite)
+    #test_suite = unittest.TestSuite()
+    #test_suite.addTest(TestNowcastCalculate('test_get_concentration_data'))
+    #unittest.TextTestRunner().run(test_suite)
 
-    #unittest.main(exit=False)
+    unittest.main(exit=False)

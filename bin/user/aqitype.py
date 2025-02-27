@@ -99,7 +99,19 @@ class NOWCAST(AbstractCalculator):
     Class for calculating the Nowcast AQI.
     Additional information:
     https://usepa.servicenowservices.com/airnow?id=kb_article_view&sys_id=bb8b65ef1b06bc10028420eae54bcb98&spa=1
-    https://www3.epa.gov/airnow/aqicalctest/nowcast.htm
+
+    https://www.epa.gov/sites/default/files/2018-01/documents/nowcastfactsheet.pdf
+    https://mazamascience.github.io/AirMonitor/articles/NowCast.html
+    http://cran.nexr.com/web/packages/PWFSLSmoke/vignettes/NowCast.html
+    https://forum.airnowtech.org/t/the-nowcast-for-pm2-5-and-pm10/172
+    
+    https://mazamascience.github.io/AirMonitor/articles/NowCast.html#does-most-recent-include-current
+    - Another reason for including the “current” hour in the NowCast “three most recent hours” is for speed of updates. 
+    Suppose it is 12:04, and a measurement just came in at 12:00 (the Hour 11 measurement). 
+    It would be inappropriate to wait until 13:00 to calculate the updated NowCast value. 
+    For this reason, we calculate NowCast values using the monitored data for the “current” hour and the N−1 prior hours.
+    - As a result of this convention, timestamps are usually an entire hour (or more) earlier than 
+    the time the measurements were actually taken (exact differences depend on several factors).
     """
 
     readings = {'pm2_5', 'pm10'}
@@ -127,7 +139,7 @@ class NOWCAST(AbstractCalculator):
         timestamp_interval_start = weeutil.weeutil.startOfInterval(timestamp, 3600)
         stop = timestamp_interval_start + 3600
         start = stop - 43200
-        # ToDo: need to get this from the 'console'
+        # ToDo: need to get this from the 'console' (or the record?)
         archive_interval = 300
 
         stats_sql_str = f'''
@@ -139,19 +151,27 @@ class NOWCAST(AbstractCalculator):
             FROM archive
             WHERE dateTime > {start}
                 AND dateTime <= {stop}
-            /* need to subtract the archive interval to get the correct begin and end range */
+            /* In WeeWX the first recording of an hour is the archival interval of the hour, typically 5 minutes.
+            This interval records the values from 0 to 5 minutes
+            In other words, assumning an archival interval of 5 minutes, the dateTimes will be
+            05, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 00 (of the following hour)
+            So, to get the correct grouping, the archive interval must deleted from dateTime in the database */
             GROUP BY (dateTime - {archive_interval}) / 3600
             ) AS rowStats
         '''
 
         sql_str = f'''
         SELECT
-            MAX(dateTime),
+            MAX(dateTime) - 3600,
             avg({self.sub_field_name}) as avgConcentration
         FROM archive
         WHERE dateTime > {start}
             AND dateTime <= {stop}
-        /* need to subtract the archive interval to get the correct begin and end range */
+        /* In WeeWX the first recording of an hour is the archival interval of the hour, typically 5 minutes.
+        This interval records the values from 0 to 5 minutes
+        In other words, assumning an archival interval of 5 minutes, the dateTimes will be
+        05, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 00 (of the following hour)
+        So, to get the correct grouping, the archive interval must deleted from dateTime in the database */
         GROUP BY (dateTime - {archive_interval}) / 3600
         HAVING avgConcentration IS NOT NULL
         ORDER BY dateTime DESC
@@ -193,7 +213,7 @@ class NOWCAST(AbstractCalculator):
 
         sql_str = f'''
         SELECT
-            MAX(dateTime),
+            MAX(dateTime) - 3600,
             avg({self.sub_field_name}) as avgConcentration
         FROM archive
             /* 300 is the archive interval */
