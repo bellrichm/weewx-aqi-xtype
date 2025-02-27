@@ -99,7 +99,19 @@ class NOWCAST(AbstractCalculator):
     Class for calculating the Nowcast AQI.
     Additional information:
     https://usepa.servicenowservices.com/airnow?id=kb_article_view&sys_id=bb8b65ef1b06bc10028420eae54bcb98&spa=1
-    https://www3.epa.gov/airnow/aqicalctest/nowcast.htm
+
+    https://www.epa.gov/sites/default/files/2018-01/documents/nowcastfactsheet.pdf
+    https://mazamascience.github.io/AirMonitor/articles/NowCast.html
+    http://cran.nexr.com/web/packages/PWFSLSmoke/vignettes/NowCast.html
+    https://forum.airnowtech.org/t/the-nowcast-for-pm2-5-and-pm10/172
+    
+    https://mazamascience.github.io/AirMonitor/articles/NowCast.html#does-most-recent-include-current
+    - Another reason for including the “current” hour in the NowCast “three most recent hours” is for speed of updates. 
+    Suppose it is 12:04, and a measurement just came in at 12:00 (the Hour 11 measurement). 
+    It would be inappropriate to wait until 13:00 to calculate the updated NowCast value. 
+    For this reason, we calculate NowCast values using the monitored data for the “current” hour and the N−1 prior hours.
+    - As a result of this convention, timestamps are usually an entire hour (or more) earlier than 
+    the time the measurements were actually taken (exact differences depend on several factors).
     """
 
     readings = {'pm2_5', 'pm10'}
@@ -122,10 +134,12 @@ class NOWCAST(AbstractCalculator):
         if self.log_level <= 40:
             self.logger.logerr(f"(NOWCAST) {msg}")
 
-    def _get_concentration_data(self, db_manager, stop):
+    def _get_concentration_data(self, db_manager, timestamp):
         # Get the necessary concentration data to compute for a given time
+        timestamp_interval_start = weeutil.weeutil.startOfInterval(timestamp, 3600)
+        stop = timestamp_interval_start + 3600
         start = stop - 43200
-        # ToDo: need to get this from the 'console'
+        # ToDo: need to get this from the 'console' (or the record?)
         archive_interval = 300
 
         stats_sql_str = f'''
@@ -133,27 +147,34 @@ class NOWCAST(AbstractCalculator):
             MIN(rowStats.avgConcentration) as rowMin,
             MAX(rowStats.avgConcentration) as rowMax
         FROM (
-                SELECT avg({self.sub_field_name}) as avgConcentration
-                FROM archive
-            WHERE dateTime >= {start} + 3600 + {archive_interval}
-                AND dateTime < {stop} + 3600
-            /* need to subtract the archive interval to get the correct begin and end range */
+            SELECT avg({self.sub_field_name}) as avgConcentration
+            FROM archive
+            WHERE dateTime > {start}
+                AND dateTime <= {stop}
+            /* In WeeWX the first recording of an hour is the archival interval of the hour, typically 5 minutes.
+            This interval records the values from 0 to 5 minutes
+            In other words, assumning an archival interval of 5 minutes, the dateTimes will be
+            05, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 00 (of the following hour)
+            So, to get the correct grouping, the archive interval must deleted from dateTime in the database */
             GROUP BY (dateTime - {archive_interval}) / 3600
             ) AS rowStats
         '''
 
         sql_str = f'''
         SELECT
-            MAX(dateTime),
+            MAX(dateTime) - 3600,
             avg({self.sub_field_name}) as avgConcentration
         FROM archive
-            /* 300 is the archive interval */
-            WHERE dateTime >= {start} + 3600 + {archive_interval}
-                AND dateTime < {stop} + 3600
-            /* need to subtract the archive interval to get the correct begin and end range */
-            GROUP BY (dateTime - {archive_interval}) / 3600
-            HAVING avgConcentration IS NOT NULL
-            ORDER BY dateTime DESC
+        WHERE dateTime > {start}
+            AND dateTime <= {stop}
+        /* In WeeWX the first recording of an hour is the archival interval of the hour, typically 5 minutes.
+        This interval records the values from 0 to 5 minutes
+        In other words, assumning an archival interval of 5 minutes, the dateTimes will be
+        05, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 00 (of the following hour)
+        So, to get the correct grouping, the archive interval must deleted from dateTime in the database */
+        GROUP BY (dateTime - {archive_interval}) / 3600
+        HAVING avgConcentration IS NOT NULL
+        ORDER BY dateTime DESC
         '''
 
         try:
@@ -173,6 +194,7 @@ class NOWCAST(AbstractCalculator):
 
     def _get_concentration_data_series(self, db_manager, stop, start):
         # Get the necessary concentration data to compute for a given time
+        # 02/26/2025 - not used
 
         # ToDo: need to get this from the 'console'
         archive_interval = 300
@@ -180,8 +202,8 @@ class NOWCAST(AbstractCalculator):
         stats_sql_str = f'''
         Select COUNT(rowStats.avgConcentration) as rowCount
         FROM (
-                SELECT avg({self.sub_field_name}) as avgConcentration
-                FROM archive
+            SELECT avg({self.sub_field_name}) as avgConcentration
+            FROM archive
             WHERE dateTime >= {start} + {archive_interval}
                 AND dateTime < {stop}
             /* need to subtract the archive interval to get the correct begin and end range */
@@ -191,7 +213,7 @@ class NOWCAST(AbstractCalculator):
 
         sql_str = f'''
         SELECT
-            MAX(dateTime),
+            MAX(dateTime) - 3600,
             avg({self.sub_field_name}) as avgConcentration
         FROM archive
             /* 300 is the archive interval */
@@ -210,10 +232,11 @@ class NOWCAST(AbstractCalculator):
 
         return record_stats[0], db_manager.genSql(sql_str)
 
-    def calculate_concentration(self, current_hour, data_count, data_min, data_max, timestamps, concentrations):
+    def calculate_concentration(self, time_stamp, data_count, data_min, data_max, timestamps, concentrations):
         '''
         Calculate the nowcast concentration.
         '''
+        current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
 
         try:
             two_hours_ago = current_hour - 7200
@@ -260,16 +283,16 @@ class NOWCAST(AbstractCalculator):
         if time_stamp is None:
             raise weewx.CannotCalculate()
 
-        current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
-        data_count, data_min, data_max, timestamps, concentrations = self._get_concentration_data(db_manager, current_hour)
+        data_count, data_min, data_max, timestamps, concentrations = self._get_concentration_data(db_manager, time_stamp)
 
-        concentration = self.calculate_concentration(current_hour, data_count, data_min, data_max, timestamps, concentrations)
+        concentration = self.calculate_concentration(time_stamp, data_count, data_min, data_max, timestamps, concentrations)
         aqi = self.sub_calculator.calculate(None, None, concentration, aqi_type)
         self._logdbg(f"The computed AQI is {aqi}")
 
         return aqi
 
     def calculate_series(self, db_manager, timespan, aqi_type):
+        # 02/26/2025 - not used
         self._logdbg(f"The time stamp is {timespan}.")
         self._logdbg(f"The type is '{aqi_type}'")
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
