@@ -639,7 +639,7 @@ class AQIType(weewx.xtypes.XType):
 
         # Because other XTypes will also try, an empty 'set' of data is returned.
         # ToDo: placeholder
-        if aggregate_type not in ['min']:
+        if aggregate_type and aggregate_type not in ['min']:
             #raise weewx.UnknownAggregation
             self._logerr(f"Agregate type '{aggregate_type}' is not supported.")
             return (ValueTuple([], 'unix_epoch', 'group_time'),
