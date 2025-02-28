@@ -52,7 +52,7 @@ class TestNowcastCalculate(unittest.TestCase):
         self.mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
     def test_get_concentration_data(self):
-        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(), 'pm2_5')
+        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(), data.database.PM2_5_INPUT_FIELD)
 
         # The timestamp in the template that I am using is 1740168300 (3:05 PM Eastern on 2/21/2025)
         ret_value = SUT._get_concentration_data(TestNowcastCalculate.db_manager, 1740168300)
@@ -73,7 +73,7 @@ class TestEPAAQICalculate(unittest.TestCase):
     def setUpClass(cls):
         cls.algorithm = 'EPAAQI'
         cls.aqi_type = 'pm2_5'
-        cls.input_field = 'pm2_5'
+        cls.input_field = data.database.PM2_5_INPUT_FIELD
 
         cls.db_manager = data.database.get_db_manager()
 

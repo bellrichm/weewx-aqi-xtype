@@ -7,13 +7,22 @@ Necessary data and functions to initialize a WeeWX database to be used for testi
 #    See the file LICENSE.txt for your full rights.
 #
 
+import random
+import string
+
 import weewx.manager
 import weeutil.weeutil
+
+def random_string(length=32):
+    ''' Create a random string. '''
+    return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
+
+PM2_5_INPUT_FIELD = random_string(5)
 
 table = [('dateTime', 'INTEGER NOT NULL UNIQUE PRIMARY KEY'),
          ('usUnits', 'INTEGER NOT NULL'),
          ('interval', 'INTEGER NOT NULL'),
-         ('pm2_5', 'REAL'),
+         (PM2_5_INPUT_FIELD, 'REAL'),
          ]
 
 day_summaries = [(e[0], 'scalar') for e in table
@@ -126,7 +135,7 @@ def generate_records():
             'dateTime': date_time,
             'usUnits': US_UNITS,
             'interval': ARCHIVE_INTERVAL_MINUTES,
-            'pm2_5': db_pm2_5_values[i],
+            PM2_5_INPUT_FIELD: db_pm2_5_values[i],
         }
         i += 1
 
