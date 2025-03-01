@@ -68,6 +68,18 @@ class TestNowcastCalculate(unittest.TestCase):
                          (12, 1.1982950191570885, 1.7157567049808427, expected_timestamps, expected_pm_values)
                         )
 
+    def test_calculate_series_prototype(self):
+        # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
+        #       Note, due to performance concerns, I am not sure the Nowcast algotithm will be supported.
+        #
+        print("begin")
+
+        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(), data.database.PM2_5_INPUT_FIELD)
+        ret_value = SUT.calculate_series(self.db_manager, data.database.timespan, 'pm2_5')
+        print(ret_value)
+
+        print("end")
+
 class TestEPAAQICalculate(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -165,7 +177,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
 if __name__ == '__main__':
     #test_suite = unittest.TestSuite()
-    #test_suite.addTest(TestEPAAQICalculate('test_get_series_data'))
+    #test_suite.addTest(TestNowcastCalculate('test_calculate_series_prototype'))
     #unittest.TextTestRunner().run(test_suite)
 
     unittest.main(exit=False)
