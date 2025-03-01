@@ -12,7 +12,6 @@ import string
 
 import weewx.manager
 import weeutil.weeutil
-import weedb
 
 def random_string(length=32):
     ''' Create a random string. '''
@@ -127,7 +126,7 @@ def _generate_records(pm2_5_column):
         i += 1
 
 def get_db_manager(pm2_5_column):
-    ''' Create and initialize a db manager. '''
+    ''' Create a WeeWX database and initialize its db manager. '''
 
     table = [('dateTime', 'INTEGER NOT NULL UNIQUE PRIMARY KEY'),
             ('usUnits', 'INTEGER NOT NULL'),
@@ -155,10 +154,10 @@ def get_db_manager(pm2_5_column):
 
     return db_manager
 
-def backup():
-    backup_connection = weedb.connect(
-        {
-            'database_name': ':memory:',
-            'driver': 'weedb.sqlite'
-        })
-    print(backup_connection)
+def backup(db_manager, filename):
+    ''' Create a backup of the database being managed by db_manager to the file named filename. '''
+    import sqlite3 # want to ensure that sqlite3 use is limited, pylint: disable=import-outside-toplevel
+
+    backup_connection = sqlite3.connect(filename)
+    db_manager.connection.connection.backup(backup_connection)
+    backup_connection.close()

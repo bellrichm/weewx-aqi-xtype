@@ -44,6 +44,10 @@ class TestNowcastCalculate(unittest.TestCase):
         cls.input_field = data.database.PM2_5_INPUT_FIELD
         cls.db_manager = data.database.get_db_manager(cls.input_field)
 
+        # Create a backup of the database used in these tests.
+        # This could be useful if there is a problem in the tests.
+        data.database.backup(cls.db_manager, 'bin/user/tests/data/test_nowcast_calculate.sdb')
+
     @classmethod
     def tearDownClass(cls):
         cls.db_manager.close()
@@ -89,6 +93,10 @@ class TestEPAAQICalculate(unittest.TestCase):
         cls.input_field = data.database.PM2_5_INPUT_FIELD
 
         cls.db_manager = data.database.get_db_manager(cls.input_field)
+
+        # Create a backup of the database used in these tests.
+        # This could be useful if there is a problem in the tests.
+        data.database.backup(cls.db_manager, 'bin/user/tests/data/test_epa_calculate.sdb')
 
     @classmethod
     def tearDownClass(cls):
