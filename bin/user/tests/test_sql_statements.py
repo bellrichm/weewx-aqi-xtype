@@ -41,7 +41,8 @@ def setup_config(calculated_field, input_field, algorithm, aqi_type):
 class TestNowcastCalculate(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.db_manager = data.database.get_db_manager()
+        cls.input_field = data.database.PM2_5_INPUT_FIELD
+        cls.db_manager = data.database.get_db_manager(cls.input_field)
 
     @classmethod
     def tearDownClass(cls):
@@ -52,7 +53,7 @@ class TestNowcastCalculate(unittest.TestCase):
         self.mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
     def test_get_concentration_data(self):
-        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(), data.database.PM2_5_INPUT_FIELD)
+        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(),TestNowcastCalculate.input_field)
 
         # The timestamp in the template that I am using is 1740168300 (3:05 PM Eastern on 2/21/2025)
         ret_value = SUT._get_concentration_data(TestNowcastCalculate.db_manager, 1740168300)
@@ -74,7 +75,7 @@ class TestNowcastCalculate(unittest.TestCase):
         #
         print("begin")
 
-        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(), data.database.PM2_5_INPUT_FIELD)
+        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(), TestNowcastCalculate.input_field)
         ret_value = SUT.calculate_series(self.db_manager, data.database.timespan, 'pm2_5')
         print(ret_value)
 
@@ -87,7 +88,7 @@ class TestEPAAQICalculate(unittest.TestCase):
         cls.aqi_type = 'pm2_5'
         cls.input_field = data.database.PM2_5_INPUT_FIELD
 
-        cls.db_manager = data.database.get_db_manager()
+        cls.db_manager = data.database.get_db_manager(cls.input_field)
 
     @classmethod
     def tearDownClass(cls):

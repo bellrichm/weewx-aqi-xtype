@@ -12,26 +12,13 @@ import string
 
 import weewx.manager
 import weeutil.weeutil
+import weedb
 
 def random_string(length=32):
     ''' Create a random string. '''
     return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
 
 PM2_5_INPUT_FIELD = random_string(5)
-
-table = [('dateTime', 'INTEGER NOT NULL UNIQUE PRIMARY KEY'),
-         ('usUnits', 'INTEGER NOT NULL'),
-         ('interval', 'INTEGER NOT NULL'),
-         (PM2_5_INPUT_FIELD, 'REAL'),
-         ]
-
-day_summaries = [(e[0], 'scalar') for e in table
-                 if e[0] not in ('dateTime', 'usUnits', 'interval')]
-
-schema = {
-    'table': table,
-    'day_summaries' : day_summaries
-}
 
 US_UNITS = 1
 ARCHIVE_INTERVAL_MINUTES = 5
@@ -127,7 +114,7 @@ db_timestamps = [1740114300, 1740114600, 1740114900, 1740115200, 1740115500, 174
 
 timespan = weeutil.weeutil.TimeSpan(db_timestamps[0] - ARCHIVE_INTERVAL_MINUTES, db_timestamps[-1])
 
-def generate_records():
+def _generate_records(pm2_5_column):
     ''' Generate records to be inserted into a WeeWX database. '''
     i = 0
     for date_time in db_timestamps:
@@ -135,12 +122,27 @@ def generate_records():
             'dateTime': date_time,
             'usUnits': US_UNITS,
             'interval': ARCHIVE_INTERVAL_MINUTES,
-            PM2_5_INPUT_FIELD: db_pm2_5_values[i],
+            pm2_5_column: db_pm2_5_values[i],
         }
         i += 1
 
-def get_db_manager():
+def get_db_manager(pm2_5_column):
     ''' Create and initialize a db manager. '''
+
+    table = [('dateTime', 'INTEGER NOT NULL UNIQUE PRIMARY KEY'),
+            ('usUnits', 'INTEGER NOT NULL'),
+            ('interval', 'INTEGER NOT NULL'),
+            (pm2_5_column, 'REAL'),
+            ]
+
+    day_summaries = [(e[0], 'scalar') for e in table
+                    if e[0] not in ('dateTime', 'usUnits', 'interval')]
+
+    schema = {
+        'table': table,
+        'day_summaries' : day_summaries
+    }
+
     db_manager = weewx.manager.Manager.open_with_create(
         {
             'database_name': ':memory:',
@@ -148,7 +150,15 @@ def get_db_manager():
         },
         schema=schema)
 
-    for record in generate_records():
+    for record in _generate_records(pm2_5_column):
         db_manager.addRecord(record)
 
     return db_manager
+
+def backup():
+    backup_connection = weedb.connect(
+        {
+            'database_name': ':memory:',
+            'driver': 'weedb.sqlite'
+        })
+    print(backup_connection)
