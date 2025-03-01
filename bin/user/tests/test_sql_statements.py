@@ -18,7 +18,7 @@ import user.aqitype
 
 import data.database
 
-archive_interval_seconds = data.database.ARCHIVE_INTERVAL_MINUTES * 60
+#data.database.ARCHIVE_INTERVAL_SECONDS = data.database.ARCHIVE_INTERVAL_MINUTES * 60
 archive_intervals_in_day = 24 * 60 / data.database.ARCHIVE_INTERVAL_MINUTES
 
 def random_string(length=32):
@@ -134,7 +134,7 @@ class TestEPAAQICalculate(unittest.TestCase):
                 for call_arg in mock_calculate.call_args_list:
                     self.assertEqual(call_arg[0][2], data.database.db_pm2_5_values[i])
                     self.assertEqual(stop_vec_t[0][i], data.database.db_timestamps[i])
-                    self.assertEqual(start_vec_t[0][i], data.database.db_timestamps[i] - archive_interval_seconds)
+                    self.assertEqual(start_vec_t[0][i], data.database.db_timestamps[i] - data.database.ARCHIVE_INTERVAL_SECONDS)
                     i += 1
 
     def test_get_aggregate_avg_data(self):

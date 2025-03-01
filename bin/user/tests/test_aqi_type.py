@@ -20,9 +20,8 @@ import weeutil.weeutil
 
 import user.aqitype
 
+import data.database
 usUnits = 1
-archive_interval = 5
-archive_interval_seconds = archive_interval * 60
 
 def random_string(length=32):
     return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
@@ -59,7 +58,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
             record = {
                 'usUnits': usUnits,
-                'interval': archive_interval,
+                'interval': data.database.ARCHIVE_INTERVAL_MINUTES,
                 'dateTime': time.time(),
                 input_field: random.randint(0, 10),
             }
@@ -94,21 +93,29 @@ class TestEPAAQICalculate(unittest.TestCase):
             unit = random_string()
             unit_group = random_string()
             now = int(time.time() + 0.5)
-            end_timestamp = (int(now / archive_interval_seconds) + 1) * archive_interval_seconds
+            end_timestamp = (int(now / data.database.ARCHIVE_INTERVAL_SECONDS) + 1) * data.database.ARCHIVE_INTERVAL_SECONDS
 
-            mock_db_manager.genSql.return_value =[(end_timestamp - archive_interval_seconds, usUnits, archive_interval, random.randint(1, 50)),
-                                                  (end_timestamp, usUnits, archive_interval, random.randint(1, 50))]
+            mock_db_manager.genSql.return_value =[(end_timestamp - data.database.ARCHIVE_INTERVAL_SECONDS,
+                                                   usUnits,
+                                                   data.database.ARCHIVE_INTERVAL_MINUTES,
+                                                   random.randint(1, 50)),
+                                                  (end_timestamp,
+                                                   usUnits,
+                                                   data.database.ARCHIVE_INTERVAL_MINUTES,
+                                                   random.randint(1, 50))]
 
             with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
 
                 start_vec_t, stop_vec_t, data_vec_t  = \
                     SUT.get_series(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), mock_db_manager)
 
-                self.assertEqual(start_vec_t,\
-                                 ([end_timestamp - 2 * archive_interval_seconds, end_timestamp - archive_interval_seconds], \
-                                  'unix_epoch', \
+                self.assertEqual(start_vec_t,
+                                 ([end_timestamp - 2 * data.database.ARCHIVE_INTERVAL_SECONDS,
+                                   end_timestamp - data.database.ARCHIVE_INTERVAL_SECONDS],
+                                  'unix_epoch',
                                   'group_time'))
-                self.assertEqual(stop_vec_t, ([end_timestamp - archive_interval_seconds, end_timestamp], 'unix_epoch', 'group_time'))
+                self.assertEqual(stop_vec_t,
+                                 ([end_timestamp - data.database.ARCHIVE_INTERVAL_SECONDS, end_timestamp], 'unix_epoch', 'group_time'))
                 self.assertEqual(data_vec_t, (aqi, unit, unit_group))
 
     def test_get_aggregation_avg_valid_inputs(self):
@@ -133,7 +140,7 @@ class TestEPAAQICalculate(unittest.TestCase):
             unit = random_string()
             unit_group = random_string()
             now = int(time.time() + 0.5)
-            end_timestamp = (int(now / archive_interval_seconds) + 1) * archive_interval_seconds
+            end_timestamp = (int(now / data.database.ARCHIVE_INTERVAL_SECONDS) + 1) * data.database.ARCHIVE_INTERVAL_SECONDS
 
             mock_db_manager.genSql.return_value = [[random.randint(11, 100)],
                                                    [random.randint(11, 100)]]
@@ -168,7 +175,7 @@ class TestEPAAQICalculate(unittest.TestCase):
             unit = random_string()
             unit_group = random_string()
             now = int(time.time() + 0.5)
-            end_timestamp = (int(now / archive_interval_seconds) + 1) * archive_interval_seconds
+            end_timestamp = (int(now / data.database.ARCHIVE_INTERVAL_SECONDS) + 1) * data.database.ARCHIVE_INTERVAL_SECONDS
 
             mock_db_manager.getSql.return_value = [[random.randint(11, 100)]]
 
@@ -199,7 +206,7 @@ class TestEPAAQICalculate(unittest.TestCase):
         unit = random_string()
         unit_group = random_string()
         now = int(time.time() + 0.5)
-        end_timestamp = (int(now / archive_interval_seconds) + 1) * archive_interval_seconds
+        end_timestamp = (int(now / data.database.ARCHIVE_INTERVAL_SECONDS) + 1) * data.database.ARCHIVE_INTERVAL_SECONDS
         start_timestamp = end_timestamp - 3600
         aggregate_interval = 1200
 
