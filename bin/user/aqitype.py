@@ -967,6 +967,6 @@ class AQISearchList(weewx.cheetahgenerator.SearchList):
             index =  len(breakpoints) - 1
 
         return index
-    
+
     # The following is to develop series support for nowcast
     #AQIType._get_series_nowcast = AQIType._get_series_nowcast_prototype
