@@ -7,6 +7,12 @@
             "driver": "SQLite",
             "database": "bin/user/tests/data/pm2_5.sdb",
             "name": "test-pm"
-        },        
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "../../weewx-data/weewx-data/archive-replica/monitor.sdb",
+            "name": "monitor-replica"
+        },
     ],
 }
