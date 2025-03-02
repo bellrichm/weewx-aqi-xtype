@@ -86,9 +86,25 @@ class TestNowcastCalculate(unittest.TestCase):
 
         start_vec, stop_vec, concentration_vec = SUT.calculate_series(self.db_manager, utils.database.timespan, 'pm2_5')
 
-        print(start_vec)
-        print(stop_vec)
-        print(concentration_vec)
+        #print(start_vec)
+        #print(stop_vec)
+        #print(concentration_vec)
+
+        self.assertEqual(start_vec,
+                         [1740110400, 1740114000, 1740117600, 1740121200, 1740124800, 1740128400,
+                          1740132000, 1740135600, 1740139200, 1740142800, 1740146400, 1740150000,
+                          1740153600, 1740157200, 1740160800, 1740164400, 1740168000, 1740171600,
+                          1740175200, 1740178800, 1740182400, 1740186000, 1740189600, 1740193200, 1740196800])
+        self.assertEqual(stop_vec,
+                         [1740114000, 1740117600, 1740121200, 1740124800, 1740128400, 1740132000,
+                          1740135600, 1740139200, 1740142800, 1740146400, 1740150000, 1740153600,
+                          1740157200, 1740160800, 1740164400, 1740168000, 1740171600, 1740175200,
+                          1740178800, 1740182400, 1740186000, 1740189600, 1740193200, 1740196800, 1740200100])
+        self.assertEqual(concentration_vec,
+                         [1.5, 1.5, 1.4, 1.4, 1.4, 1.3,
+                          1.3, 1.3, 1.3, 1.4, 1.4, 1.4,
+                          1.4, 1.5, 1.5, 1.5, 1.5, 1.4,
+                          1.4, 1.4, 1.4, 1.2, 1.2, 1.3, 1.3])
 
         print("end")
 
@@ -224,7 +240,8 @@ class TestEPAAQICalculate(unittest.TestCase):
 
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()
-    test_suite.addTest(TestNowcastCalculate('test_get_concentration_data_series'))
+    #test_suite.addTest(TestNowcastCalculate('test_get_concentration_data_series'))
+    test_suite.addTest(TestNowcastCalculate('test_calculate_series_prototype'))
     unittest.TextTestRunner().run(test_suite)
 
     #unittest.main(exit=False)
