@@ -1,5 +1,5 @@
 *.pyc
 .coverage
 sql/
-bin/user/tests/data/*.sdb
-bin/user/tests/data/*.sqbpro
+bin/user/tests/utils/*.sdb
+bin/user/tests/utils/*.sqbpro

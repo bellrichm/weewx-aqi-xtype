@@ -16,10 +16,10 @@ import string
 
 import user.aqitype
 
-import data.database
+import utils.database
 
-#data.database.ARCHIVE_INTERVAL_SECONDS = data.database.ARCHIVE_INTERVAL_MINUTES * 60
-archive_intervals_in_day = 24 * 60 / data.database.ARCHIVE_INTERVAL_MINUTES
+#utils.database.ARCHIVE_INTERVAL_SECONDS = utils.database.ARCHIVE_INTERVAL_MINUTES * 60
+archive_intervals_in_day = 24 * 60 / utils.database.ARCHIVE_INTERVAL_MINUTES
 
 def random_string(length=32):
     return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
@@ -41,12 +41,12 @@ def setup_config(calculated_field, input_field, algorithm, aqi_type):
 class TestNowcastCalculate(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.input_field = data.database.PM2_5_INPUT_FIELD
-        cls.db_manager = data.database.get_db_manager(cls.input_field)
+        cls.input_field = utils.database.PM2_5_INPUT_FIELD
+        cls.db_manager = utils.database.get_db_manager(cls.input_field)
 
         # Create a backup of the database used in these tests.
         # This could be useful if there is a problem in the tests.
-        data.database.backup(cls.db_manager, 'bin/user/tests/data/test_nowcast_calculate.sdb')
+        utils.database.backup(cls.db_manager, 'bin/user/tests/utils/test_nowcast_calculate.sdb')
 
     @classmethod
     def tearDownClass(cls):
@@ -80,7 +80,7 @@ class TestNowcastCalculate(unittest.TestCase):
         print("begin")
 
         SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(), TestNowcastCalculate.input_field)
-        ret_value = SUT.calculate_series(self.db_manager, data.database.timespan, 'pm2_5')
+        ret_value = SUT.calculate_series(self.db_manager, utils.database.timespan, 'pm2_5')
         print(ret_value)
 
         print("end")
@@ -90,13 +90,13 @@ class TestEPAAQICalculate(unittest.TestCase):
     def setUpClass(cls):
         cls.algorithm = 'EPAAQI'
         cls.aqi_type = 'pm2_5'
-        cls.input_field = data.database.PM2_5_INPUT_FIELD
+        cls.input_field = utils.database.PM2_5_INPUT_FIELD
 
-        cls.db_manager = data.database.get_db_manager(cls.input_field)
+        cls.db_manager = utils.database.get_db_manager(cls.input_field)
 
         # Create a backup of the database used in these tests.
         # This could be useful if there is a problem in the tests.
-        data.database.backup(cls.db_manager, 'bin/user/tests/data/test_epa_calculate.sdb')
+        utils.database.backup(cls.db_manager, 'bin/user/tests/utils/test_epa_calculate.sdb')
 
     @classmethod
     def tearDownClass(cls):
@@ -122,7 +122,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
             with mock.patch('weewx.units.getStandardUnitType', return_value=self.unit_group):
                 start_vec_t, stop_vec_t, _data_vec_t = SUT._get_series_epaaqi(self.calculated_field,
-                                                                              data.database.timespan,
+                                                                              utils.database.timespan,
                                                                               TestEPAAQICalculate.db_manager,
                                                                               None,
                                                                               None)
@@ -132,9 +132,9 @@ class TestEPAAQICalculate(unittest.TestCase):
 
                 i = 0
                 for call_arg in mock_calculate.call_args_list:
-                    self.assertEqual(call_arg[0][2], data.database.db_pm2_5_values[i])
-                    self.assertEqual(stop_vec_t[0][i], data.database.db_timestamps[i])
-                    self.assertEqual(start_vec_t[0][i], data.database.db_timestamps[i] - data.database.ARCHIVE_INTERVAL_SECONDS)
+                    self.assertEqual(call_arg[0][2], utils.database.db_pm2_5_values[i])
+                    self.assertEqual(stop_vec_t[0][i], utils.database.db_timestamps[i])
+                    self.assertEqual(start_vec_t[0][i], utils.database.db_timestamps[i] - utils.database.ARCHIVE_INTERVAL_SECONDS)
                     i += 1
 
     def test_get_aggregate_avg_data(self):
@@ -143,7 +143,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
             with mock.patch('weewx.units.getStandardUnitType', return_value=self.unit_group):
                 _ret_value = SUT._get_aggregate_epaaqi(self.calculated_field,
-                                                       data.database.timespan,
+                                                       utils.database.timespan,
                                                        'avg',
                                                        TestEPAAQICalculate.db_manager)
 
@@ -151,7 +151,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
                 i = 0
                 for call_arg in mock_calculate.call_args_list:
-                    self.assertEqual(call_arg[0][2], data.database.db_pm2_5_values[i])
+                    self.assertEqual(call_arg[0][2], utils.database.db_pm2_5_values[i])
                     i += 1
 
     def test_get_aggregate_min_data(self):
@@ -160,13 +160,13 @@ class TestEPAAQICalculate(unittest.TestCase):
 
             with mock.patch('weewx.units.getStandardUnitType', return_value=self.unit_group):
                 _ret_value = SUT._get_aggregate_epaaqi(self.calculated_field,
-                                                       data.database.timespan,
+                                                       utils.database.timespan,
                                                        'min',
                                                        TestEPAAQICalculate.db_manager)
 
                 mock_calculate.assert_called_once_with(TestEPAAQICalculate.db_manager,
                                                        None,
-                                                       min(data.database.db_pm2_5_values),
+                                                       min(utils.database.db_pm2_5_values),
                                                        TestEPAAQICalculate.aqi_type)
 
     def test_get_aggregate_max_data(self):
@@ -175,13 +175,13 @@ class TestEPAAQICalculate(unittest.TestCase):
 
             with mock.patch('weewx.units.getStandardUnitType', return_value=self.unit_group):
                 _ret_value = SUT._get_aggregate_epaaqi(self.calculated_field,
-                                                       data.database.timespan,
+                                                       utils.database.timespan,
                                                        'max',
                                                        self.db_manager)
 
                 mock_calculate.assert_called_once_with(TestEPAAQICalculate.db_manager,
                                                        None,
-                                                       max(data.database.db_pm2_5_values),
+                                                       max(utils.database.db_pm2_5_values),
                                                        TestEPAAQICalculate.aqi_type)
 
 if __name__ == '__main__':

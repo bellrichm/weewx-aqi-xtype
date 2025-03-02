@@ -6,7 +6,7 @@
         {
             "previewLimit": 50,
             "driver": "SQLite",
-            "database": "bin/user/tests/data/pm2_5.sdb",
+            "database": "bin/user/tests/utils/pm2_5.sdb",
             "name": "test-pm"
         },
         {
