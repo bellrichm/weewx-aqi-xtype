@@ -13,6 +13,9 @@ import mock
 import configobj
 import random
 import string
+import time
+
+import weeutil.weeutil
 
 import user.aqitype
 
@@ -80,10 +83,43 @@ class TestNowcastCalculate(unittest.TestCase):
         print("begin")
 
         SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(), TestNowcastCalculate.input_field)
+
         start_vec, stop_vec, concentration_vec = SUT.calculate_series(self.db_manager, utils.database.timespan, 'pm2_5')
+
         print(start_vec)
         print(stop_vec)
         print(concentration_vec)
+
+        print("end")
+
+    def test_get_concentration_data_series(self):
+        # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
+        #       Note, due to performance concerns, I am not sure the Nowcast algotithm will be supported.
+        #
+        print("begin")
+
+        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(), TestNowcastCalculate.input_field)
+
+        stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), utils.database.timespan.stop)
+        stop_time = stop - 3600 * 11
+
+        data_count, records_iter = SUT._get_concentration_data_series(self.db_manager, stop_time , utils.database.timespan.start - 43200)
+        records = list(records_iter)
+
+        #print(records)
+        #print(data_count)
+
+        self.assertEqual(data_count, 25)
+        self.assertEqual(records,
+                         [(1740156900, 1.6773772204806685), (1740153600, 1.4154310344827585), (1740150000, 1.5376532567049808),
+                          (1740146400, 1.3357950191570878), (1740142800, 1.5952873563218388), (1740139200, 1.3942241379310343),
+                          (1740135600, 1.4037739463601533), (1740132000, 1.1982950191570885), (1740128400, 1.2343007662835248),
+                          (1740124800, 1.5045689655172414), (1740121200, 1.2960057471264366), (1740117600, 1.2493199233716472),
+                          (1740114000, 1.7136206896551724), (1740110400, 1.6761015325670499), (1740106800, 1.3132375478927203),
+                          (1740103200, 1.4535919540229882), (1740099600, 1.366609195402299), (1740096000, 1.4308908045977013),
+                          (1740092400, 1.722883141762452), (1740088800, 1.364310344827586), (1740085200, 1.6051053639846746),
+                          (1740081600, 1.6208045977011494), (1740078000, 1.6583045977011492), (1740074400, 1.7926724137931034),
+                          (1740070800, 1.8538122605363985)])
 
         print("end")
 
@@ -187,8 +223,8 @@ class TestEPAAQICalculate(unittest.TestCase):
                                                        TestEPAAQICalculate.aqi_type)
 
 if __name__ == '__main__':
-    #test_suite = unittest.TestSuite()
-    #test_suite.addTest(TestNowcastCalculate('test_calculate_series_prototype'))
-    #unittest.TextTestRunner().run(test_suite)
+    test_suite = unittest.TestSuite()
+    test_suite.addTest(TestNowcastCalculate('test_get_concentration_data_series'))
+    unittest.TextTestRunner().run(test_suite)
 
-    unittest.main(exit=False)
+    #unittest.main(exit=False)
