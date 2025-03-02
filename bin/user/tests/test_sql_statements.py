@@ -80,8 +80,10 @@ class TestNowcastCalculate(unittest.TestCase):
         print("begin")
 
         SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(), TestNowcastCalculate.input_field)
-        ret_value = SUT.calculate_series(self.db_manager, utils.database.timespan, 'pm2_5')
-        print(ret_value)
+        start_vec, stop_vec, concentration_vec = SUT.calculate_series(self.db_manager, utils.database.timespan, 'pm2_5')
+        print(start_vec)
+        print(stop_vec)
+        print(concentration_vec)
 
         print("end")
 
