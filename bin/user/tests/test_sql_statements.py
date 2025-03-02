@@ -132,9 +132,9 @@ class TestEPAAQICalculate(unittest.TestCase):
 
                 i = 0
                 for call_arg in mock_calculate.call_args_list:
-                    self.assertEqual(call_arg[0][2], utils.database.db_pm2_5_values[i])
-                    self.assertEqual(stop_vec_t[0][i], utils.database.db_timestamps[i])
-                    self.assertEqual(start_vec_t[0][i], utils.database.db_timestamps[i] - utils.database.ARCHIVE_INTERVAL_SECONDS)
+                    self.assertEqual(call_arg[0][2], utils.database.db_20250221_pm2_5_values[i])
+                    self.assertEqual(stop_vec_t[0][i], utils.database.db_20250221_timestamps[i])
+                    self.assertEqual(start_vec_t[0][i], utils.database.db_20250221_timestamps[i] - utils.database.ARCHIVE_INTERVAL_SECONDS)
                     i += 1
 
     def test_get_aggregate_avg_data(self):
@@ -151,7 +151,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
                 i = 0
                 for call_arg in mock_calculate.call_args_list:
-                    self.assertEqual(call_arg[0][2], utils.database.db_pm2_5_values[i])
+                    self.assertEqual(call_arg[0][2], utils.database.db_20250221_pm2_5_values[i])
                     i += 1
 
     def test_get_aggregate_min_data(self):
@@ -166,7 +166,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
                 mock_calculate.assert_called_once_with(TestEPAAQICalculate.db_manager,
                                                        None,
-                                                       min(utils.database.db_pm2_5_values),
+                                                       min(utils.database.db_20250221_pm2_5_values),
                                                        TestEPAAQICalculate.aqi_type)
 
     def test_get_aggregate_max_data(self):
@@ -181,7 +181,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
                 mock_calculate.assert_called_once_with(TestEPAAQICalculate.db_manager,
                                                        None,
-                                                       max(utils.database.db_pm2_5_values),
+                                                       max(utils.database.db_20250221_pm2_5_values),
                                                        TestEPAAQICalculate.aqi_type)
 
 if __name__ == '__main__':
