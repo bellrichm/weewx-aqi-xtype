@@ -19,7 +19,6 @@ import user.aqitype
 import utils.database
 from utils import data
 
-#utils.database.ARCHIVE_INTERVAL_SECONDS = utils.database.ARCHIVE_INTERVAL_MINUTES * 60
 archive_intervals_in_day = 24 * 60 / utils.database.ARCHIVE_INTERVAL_MINUTES
 
 def random_string(length=32):

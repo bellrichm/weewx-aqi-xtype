@@ -21,7 +21,6 @@ import weeutil.weeutil
 import user.aqitype
 
 import utils.database
-usUnits = 1
 
 def random_string(length=32):
     return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
@@ -57,7 +56,7 @@ class TestEPAAQICalculate(unittest.TestCase):
             unit_group = random_string()
 
             record = {
-                'usUnits': usUnits,
+                'usUnits': utils.database.US_UNITS,
                 'interval': utils.database.ARCHIVE_INTERVAL_MINUTES,
                 'dateTime': time.time(),
                 input_field: random.randint(0, 10),
@@ -96,11 +95,11 @@ class TestEPAAQICalculate(unittest.TestCase):
             end_timestamp = (int(now / utils.database.ARCHIVE_INTERVAL_SECONDS) + 1) * utils.database.ARCHIVE_INTERVAL_SECONDS
 
             mock_db_manager.genSql.return_value =[(end_timestamp - utils.database.ARCHIVE_INTERVAL_SECONDS,
-                                                   usUnits,
+                                                   utils.database.US_UNITS,
                                                    utils.database.ARCHIVE_INTERVAL_MINUTES,
                                                    random.randint(1, 50)),
                                                   (end_timestamp,
-                                                   usUnits,
+                                                   utils.database.US_UNITS,
                                                    utils.database.ARCHIVE_INTERVAL_MINUTES,
                                                    random.randint(1, 50))]
 
