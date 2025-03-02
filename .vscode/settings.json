@@ -2,6 +2,7 @@
     "sqltools.useNodeRuntime": true,
     "sqltools.sessionFilesFolder": "sql",
     "sqltools.connections": [
+
         {
             "previewLimit": 50,
             "driver": "SQLite",
@@ -11,7 +12,7 @@
         {
             "previewLimit": 50,
             "driver": "SQLite",
-            "database": "../../weewx-data/weewx-data/archive-replica/monitor.sdb",
+            "database": "/home/richbell/weewx-data/archive-replica/monitor.sdb",
             "name": "monitor-replica"
         },
     ],
