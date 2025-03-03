@@ -198,38 +198,20 @@ class NOWCAST(AbstractCalculator):
         # ToDo: need to get this from the 'console'
         archive_interval = 300
 
-        stats_sql_str = f'''
-        Select COUNT(rowStats.avgConcentration) as rowCount
-        FROM (
-            SELECT avg({self.sub_field_name}) as avgConcentration
-            FROM archive
-            WHERE dateTime >= {start} + {archive_interval}
-                AND dateTime < {stop}
-            /* need to subtract the archive interval to get the correct begin and end range */
-            GROUP BY (dateTime - {archive_interval}) / 3600
-            ) AS rowStats
-        '''
-
+        # ToDo: This is duplicate code, refactor into a single routine
         sql_str = f'''
         SELECT
             MAX(dateTime) - 3600,
             avg({self.sub_field_name}) as avgConcentration
         FROM archive
-            /* 300 is the archive interval */
-            WHERE dateTime >= {start}+ {archive_interval}
-                AND dateTime < {stop}
+            WHERE dateTime > {start}
+                AND dateTime <= {stop}
             /* need to subtract the archive interval to get the correct begin and end range */
             GROUP BY (dateTime - {archive_interval}) / 3600
             ORDER BY dateTime DESC
         '''
 
-        try:
-            # Only one record is returned
-            record_stats = db_manager.getSql(stats_sql_str)
-        except weedb.NoColumnError:
-            raise weewx.UnknownType(self.sub_field_name) from weedb.NoColumnError
-
-        return record_stats[0], db_manager.genSql(sql_str)
+        return db_manager.genSql(sql_str)
 
     def calculate_concentration(self, time_stamp, data_count, data_min, data_max, timestamps, concentrations):
         '''
@@ -297,19 +279,17 @@ class NOWCAST(AbstractCalculator):
         self._logdbg(f"The type is '{aqi_type}'")
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
 
-        _data_count, _data_min, _data_max, timestamps_tuple, concentrations_tuple = self._get_concentration_data(db_manager, stop)
-        timestamps = list(timestamps_tuple)
-        concentrations = list(concentrations_tuple)
-
-        del timestamps[0]
-        del concentrations[0]
         concentration_vec = []
         stop_vec = []
-        stop_time = stop - 3600 * 11
+        #stop_time = stop - 3600 * 11
         start_time = timespan.start - 43200
-        _data_count, records_iter = self._get_concentration_data_series(db_manager, stop_time , start_time)
+
+        records_iter = self._get_concentration_data_series(db_manager, stop , start_time)
         records = list(records_iter) # ToDo: temporary while developing
-        for record in records:
+        timestamps = list(list(zip(*records))[0])[0:12]
+        concentrations = list(list(zip(*records))[1])[0:12]
+
+        for record in records[12:-1]:
             timestamps.append(record[0])
             if len(timestamps) > 12:
                 del timestamps[0]
