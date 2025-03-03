@@ -18,6 +18,17 @@ import user.aqitype
 def random_string(length=32):
     return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
 
+def min_max(values):
+    min_value = values[0]
+    max_value = values[0]
+    for value in values:
+        if value is not None:
+            if value < min_value:
+                min_value = value
+            elif value > max_value:
+                max_value = value
+    return min_value, max_value
+
 class NowCastTests(unittest.TestCase):
     def _populate_time_stamps(self, current_hour, count):
         time_stamps = []
@@ -118,7 +129,6 @@ class NowCastTests(unittest.TestCase):
                 concentration = calculator.calculate_concentration(now, len(data), min(data), max(data), timestamps, data)
                 self.assertEqual(concentration, 164.7)
 
-    @unittest.skip("no longer valid - 'None' will never be in the data")
     def test_none_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
@@ -128,12 +138,13 @@ class NowCastTests(unittest.TestCase):
         with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval, return_value=current_hour):
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
                 data = [711.8, 734.0, 744.6, 763.8, None, None, None, None, None, 238.6, 149.9, 149.5]
+                min_value, max_value = min_max(data)
                 timestamps  = self._populate_time_stamps(current_hour, len(data))
 
                 data.reverse()
 
                 calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
-                concentration = calculator.calculate_concentration(now, len(data), min(data), max(data), timestamps, data)
+                concentration = calculator.calculate_concentration(now, len(data), min_value, max_value, timestamps, data)
                 self.assertEqual(concentration, 164.7)
 
     def test_calculate_concentration(self):

@@ -173,7 +173,6 @@ class NOWCAST(AbstractCalculator):
         05, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 00 (of the following hour)
         So, to get the correct grouping, the archive interval must deleted from dateTime in the database */
         GROUP BY (dateTime - {archive_interval}) / 3600
-        HAVING avgConcentration IS NOT NULL
         ORDER BY dateTime DESC
         '''
 
@@ -256,10 +255,11 @@ class NOWCAST(AbstractCalculator):
             numerator = 0
             denominator = 0
             for i in range(data_count):
-                hours_ago = int((current_hour - timestamps[i]) / 3600 + 1)
-                self._logdbg(f"Hours ago: {hours_ago} pm was: {concentrations[i]}")
-                numerator += concentrations[i] * (weight_factor ** hours_ago)
-                denominator += weight_factor ** hours_ago
+                if concentrations[i] is not None:
+                    hours_ago = int((current_hour - timestamps[i]) / 3600 + 1)
+                    self._logdbg(f"Hours ago: {hours_ago} pm was: {concentrations[i]}")
+                    numerator += concentrations[i] * (weight_factor ** hours_ago)
+                    denominator += weight_factor ** hours_ago
 
             concentration = math.trunc((numerator / denominator) * 10) / 10
             self._logdbg(f"The computed concentration is {concentration}")
@@ -297,17 +297,18 @@ class NOWCAST(AbstractCalculator):
         self._logdbg(f"The type is '{aqi_type}'")
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
 
-        _data_count, _data_min, _data_max, timestamps, concentrations = self._get_concentration_data(db_manager, stop)
-        timestamps = list(timestamps)
-        concentrations = list(concentrations)
+        _data_count, _data_min, _data_max, timestamps_tuple, concentrations_tuple = self._get_concentration_data(db_manager, stop)
+        timestamps = list(timestamps_tuple)
+        concentrations = list(concentrations_tuple)
 
         del timestamps[0]
         del concentrations[0]
         concentration_vec = []
         stop_vec = []
         stop_time = stop - 3600 * 11
-        stop2 = timestamps[0]
-        _data_count, records = self._get_concentration_data_series(db_manager, stop_time , timespan.start - 43200)
+        start_time = timespan.start - 43200
+        _data_count, records_iter = self._get_concentration_data_series(db_manager, stop_time , start_time)
+        records = list(records_iter) # ToDo: temporary while developing
         for record in records:
             timestamps.append(record[0])
             if len(timestamps) > 12:
@@ -318,7 +319,6 @@ class NOWCAST(AbstractCalculator):
                 del concentrations[0]
 
             stop_vec.append(record[0] + 43200)
-            stop2 -= 3600
             if record[1] is not None:
                 try:
                     concentration_vec.append(self.calculate_concentration(timestamps[0],
