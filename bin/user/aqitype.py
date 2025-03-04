@@ -682,11 +682,19 @@ class AQIType(weewx.xtypes.XType):
                 ValueTuple(stop_list, 'unix_epoch', 'group_time'),
                 ValueTuple(aqi_list, unit, unit_group))
 
+    def _get_concentration_data(self, obs_type, timespan, db_manager):
+        dependent_field = self.aqi_fields[obs_type]['input']
+        sql_str = f'SELECT dateTime, usUnits, `interval`, {dependent_field} FROM {db_manager.table_name} WHERE dateTime > ? AND dateTime <= ?'
+
+        try:
+            records_iter = db_manager.genSql(sql_str, timespan)
+        except weedb.NoColumnError:
+            raise weewx.UnknownType(obs_type) from weedb.NoColumnError
+
+        return records_iter
+
     def _get_series_epaaqi(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict):
         aqi_type = self.aqi_fields[obs_type]['type']
-
-        dependent_field = self.aqi_fields[obs_type]['input']
-
         start_vec = []
         stop_vec = []
         data_vec = []
@@ -717,30 +725,25 @@ class AQIType(weewx.xtypes.XType):
                 data_vec.append(agg_vt[0])
         else:
             std_unit_system = None
-            sql_str = f'SELECT dateTime, usUnits, `interval`, {dependent_field} FROM {db_manager.table_name} ' \
-                        'WHERE dateTime > ? AND dateTime <= ?'
+            records_iter = self._get_concentration_data(obs_type, timespan, db_manager)
 
-            try:
-                for record in db_manager.genSql(sql_str, timespan):
+            for record in records_iter:
+                aqi = None
+                timestamp, unit_system, interval, input_value = record
+                if std_unit_system:
+                    if std_unit_system != unit_system:
+                        raise weewx.UnsupportedFeature("Unit type cannot change within a time interval.")
+                else:
+                    std_unit_system = unit_system
+
+                try:
+                    aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
+                except weewx.CannotCalculate:
                     aqi = None
-                    timestamp, unit_system, interval, input_value = record
-                    if std_unit_system:
-                        if std_unit_system != unit_system:
-                            raise weewx.UnsupportedFeature("Unit type cannot change within a time interval.")
-                    else:
-                        std_unit_system = unit_system
 
-                    try:
-                        aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
-                    except weewx.CannotCalculate:
-                        aqi = None
-
-                    start_vec.append(timestamp - interval * 60)
-                    stop_vec.append(timestamp)
-                    data_vec.append(aqi)
-
-            except weedb.NoColumnError:
-                raise weewx.UnknownType(obs_type) from weedb.NoColumnError
+                start_vec.append(timestamp - interval * 60)
+                stop_vec.append(timestamp)
+                data_vec.append(aqi)
 
             unit, unit_group = weewx.units.getStandardUnitType(std_unit_system, obs_type, aggregate_type)
 

@@ -103,9 +103,6 @@ class TestNowcastCalculate(unittest.TestCase):
                          [9, 8, 7, 8, 7, 7,7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 8])
 
     def test_get_concentration_data(self):
-        # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
-        #       Note, due to performance concerns, I am not sure the Nowcast algotithm will be supported.
-        #
         SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(), TestNowcastCalculate.input_field)
 
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), utils.database.timespan.stop)
@@ -158,6 +155,22 @@ class TestEPAAQICalculate(unittest.TestCase):
                                    TestEPAAQICalculate.aqi_type)
         self.config = configobj.ConfigObj(config_dict)
 
+    def test_get_concentration_data(self):
+        SUT = user.aqitype.AQIType(self.mock_logger, self.config)
+
+        #timespan = (1740114000, 1740200400)
+        records_iter = SUT._get_concentration_data(self.calculated_field, utils.database.timespan, TestEPAAQICalculate.db_manager)
+
+        i = 0
+        for record in records_iter:
+            self.assertEqual(record,
+                             (utils.data.db_20250221_timestamps[i],
+                              utils.database.US_UNITS,
+                              utils.database.ARCHIVE_INTERVAL_MINUTES,
+                              utils.data.db_20250221_pm2_5_values[i]))
+            i += 1
+
+    # ToDo: move out of SQL tests and refactor to use mocks
     def test_get_series_data(self):
         with mock.patch.object(user.aqitype.EPAAQI, 'calculate', side_effect=mock_calculate_effect) as mock_calculate:
             SUT = user.aqitype.AQIType(self.mock_logger, self.config)
