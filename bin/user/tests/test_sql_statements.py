@@ -67,22 +67,18 @@ class TestNowcastCalculate(unittest.TestCase):
     def setUp(self):
         self.mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
-    def test_get_concentration_data(self):
+    def test_get_concentration_data_stats(self):
         SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(),TestNowcastCalculate.input_field)
 
         # The timestamp in the template that I am using is 1740168300 (3:05 PM Eastern on 2/21/2025)
-        ret_value = SUT._get_concentration_data(TestNowcastCalculate.db_manager, 1740168300)
+        timestamp_interval_start = weeutil.weeutil.startOfInterval(1740168300, 3600)
+        stop = timestamp_interval_start + 3600
+        start = stop - 43200
+        data_count, data_min, data_max = SUT._get_concentration_data_stats(TestNowcastCalculate.db_manager, stop, start)
 
-        expected_pm_values = (1.4010919540229885, 1.4406226053639848, 1.5153544061302677,
-                              1.7157567049808427, 1.4154310344827585, 1.5376532567049808,
-                              1.3357950191570878, 1.5952873563218388, 1.3942241379310343,
-                              1.4037739463601533, 1.1982950191570885, 1.2343007662835248)
-        expected_timestamps = (1740168000, 1740164400, 1740160800, 1740157200, 1740153600, 1740150000,
-                               1740146400, 1740142800, 1740139200, 1740135600, 1740132000, 1740128400)
-
-        self.assertEqual(ret_value,
-                         (12, 1.1982950191570885, 1.7157567049808427, expected_timestamps, expected_pm_values)
-                        )
+        self.assertEqual(data_count, 12)
+        self.assertEqual(data_min, 1.1982950191570885)
+        self.assertEqual(data_max, 1.7157567049808427)
 
     def test_calculate_series_prototype(self):
         # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
@@ -106,7 +102,7 @@ class TestNowcastCalculate(unittest.TestCase):
         self.assertEqual(aqi_vec,
                          [9, 8, 7, 8, 7, 7,7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 8])
 
-    def test_get_concentration_data_series(self):
+    def test_get_concentration_data(self):
         # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
         #       Note, due to performance concerns, I am not sure the Nowcast algotithm will be supported.
         #
@@ -114,7 +110,7 @@ class TestNowcastCalculate(unittest.TestCase):
 
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), utils.database.timespan.stop)
 
-        records_iter = SUT._get_concentration_data_series(self.db_manager, stop , utils.database.timespan.start - 43200)
+        records_iter = SUT._get_concentration_data(self.db_manager, stop , utils.database.timespan.start - 43200)
         records = list(records_iter)
         timestamps = list(list(zip(*records))[0])
         concentrations = list(list(zip(*records))[1])
@@ -231,9 +227,10 @@ class TestEPAAQICalculate(unittest.TestCase):
                                                        TestEPAAQICalculate.aqi_type)
 
 if __name__ == '__main__':
-    test_suite = unittest.TestSuite()
-    test_suite.addTest(TestNowcastCalculate('test_get_concentration_data_series'))
-    test_suite.addTest(TestNowcastCalculate('test_calculate_series_prototype'))
-    unittest.TextTestRunner().run(test_suite)
+    #test_suite = unittest.TestSuite()
+    #test_suite.addTest(TestNowcastCalculate('test_get_concentration_data_stats'))
+    #test_suite.addTest(TestNowcastCalculate('test_get_concentration_data'))
+    #test_suite.addTest(TestNowcastCalculate('test_calculate_series_prototype'))
+    #unittest.TextTestRunner().run(test_suite)
 
-    #unittest.main(exit=False)
+    unittest.main(exit=False)

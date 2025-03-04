@@ -134,11 +134,9 @@ class NOWCAST(AbstractCalculator):
         if self.log_level <= 40:
             self.logger.logerr(f"(NOWCAST) {msg}")
 
-    def _get_concentration_data(self, db_manager, timestamp):
+    def _get_concentration_data_stats(self, db_manager, stop, start):
         # Get the necessary concentration data to compute for a given time
-        timestamp_interval_start = weeutil.weeutil.startOfInterval(timestamp, 3600)
-        stop = timestamp_interval_start + 3600
-        start = stop - 43200
+
         # ToDo: need to get this from the 'console' (or the record?)
         archive_interval = 300
 
@@ -160,6 +158,21 @@ class NOWCAST(AbstractCalculator):
             ) AS rowStats
         '''
 
+        try:
+            # Only one record is returned
+            record_stats = db_manager.getSql(stats_sql_str)
+        except weedb.NoColumnError:
+            raise weewx.UnknownType(self.sub_field_name) from weedb.NoColumnError
+
+        return record_stats[0], record_stats[1], record_stats[2]
+
+    def _get_concentration_data(self, db_manager, stop, start):
+        # Get the necessary concentration data to compute for a given time
+
+        # ToDo: need to get this from the 'console'
+        archive_interval = 300
+
+        # ToDo: This is duplicate code, refactor into a single routine
         sql_str = f'''
         SELECT
             MAX(dateTime) - 3600,
@@ -174,41 +187,6 @@ class NOWCAST(AbstractCalculator):
         So, to get the correct grouping, the archive interval must deleted from dateTime in the database */
         GROUP BY (dateTime - {archive_interval}) / 3600
         ORDER BY dateTime DESC
-        '''
-
-        try:
-            # Only one record is returned
-            record_stats = db_manager.getSql(stats_sql_str)
-        except weedb.NoColumnError:
-            raise weewx.UnknownType(self.sub_field_name) from weedb.NoColumnError
-
-        try:
-            # Max of 12 is returned, grab them all and be done with it
-            record = list(db_manager.genSql(sql_str))
-            timestamps, data = zip(*record)
-        except weedb.NoColumnError:
-            raise weewx.UnknownType(self.sub_field_name) from weedb.NoColumnError
-
-        return record_stats[0], record_stats[1], record_stats[2], timestamps, data
-
-    def _get_concentration_data_series(self, db_manager, stop, start):
-        # Get the necessary concentration data to compute for a given time
-        # 02/26/2025 - not used
-
-        # ToDo: need to get this from the 'console'
-        archive_interval = 300
-
-        # ToDo: This is duplicate code, refactor into a single routine
-        sql_str = f'''
-        SELECT
-            MAX(dateTime) - 3600,
-            avg({self.sub_field_name}) as avgConcentration
-        FROM archive
-            WHERE dateTime > {start}
-                AND dateTime <= {stop}
-            /* need to subtract the archive interval to get the correct begin and end range */
-            GROUP BY (dateTime - {archive_interval}) / 3600
-            ORDER BY dateTime DESC
         '''
 
         return db_manager.genSql(sql_str)
@@ -265,7 +243,14 @@ class NOWCAST(AbstractCalculator):
         if time_stamp is None:
             raise weewx.CannotCalculate()
 
-        data_count, data_min, data_max, timestamps, concentrations = self._get_concentration_data(db_manager, time_stamp)
+        timestamp_interval_start = weeutil.weeutil.startOfInterval(time_stamp, 3600)
+        stop = timestamp_interval_start + 3600
+        start = stop - 43200
+        data_count, data_min, data_max = self._get_concentration_data_stats(db_manager, stop, start)
+        records_iter = self._get_concentration_data(db_manager, stop, start)
+
+        records = list(records_iter)
+        timestamps, concentrations = zip(*records)
 
         concentration = self.calculate_concentration(time_stamp, data_count, data_min, data_max, timestamps, concentrations)
         aqi = self.sub_calculator.calculate(None, None, concentration, aqi_type)
@@ -280,7 +265,7 @@ class NOWCAST(AbstractCalculator):
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
         start_time = timespan.start - 43200 + 3600 # todo ????
 
-        records_iter = self._get_concentration_data_series(db_manager, stop , start_time)
+        records_iter = self._get_concentration_data(db_manager, stop , start_time)
 
         i = 1
         timestamps = []
