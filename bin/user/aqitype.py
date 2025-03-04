@@ -321,8 +321,7 @@ class NOWCAST(AbstractCalculator):
                                                                   timestamps,
                                                                   concentrations)
                     aqi = self.sub_calculator.calculate(None, None, concentration, aqi_type)
-                    aqi_vec.append(aqi)                                          
-                    print(aqi)
+                    aqi_vec.append(aqi)
 
                 except weewx.CannotCalculate:
                     aqi_vec.append(None)
@@ -654,10 +653,6 @@ class AQIType(weewx.xtypes.XType):
             #        ValueTuple([], 'unix_epoch', 'group_time'),
             #        ValueTuple([], unit, unit_group))
 
-        print(aggregate_interval)
-        print(aggregate_interval_seconds)
-        print(timespan.stop - timespan.start)
-
         aqi_type = self.aqi_fields[obs_type]['type']
         start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate_series(db_manager, timespan, aqi_type)
 
@@ -970,3 +965,4 @@ class AQISearchList(weewx.cheetahgenerator.SearchList):
 
 # The following is to develop series support for nowcast
 AQIType._get_series_nowcast = AQIType._get_series_nowcast_prototype # pylint: disable=protected-access
+#AQIType._get_aggregate_nowcast = AQIType._get_aggregate_nowcast_prototype # pylint: disable=protected-access

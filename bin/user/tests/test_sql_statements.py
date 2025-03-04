@@ -88,8 +88,6 @@ class TestNowcastCalculate(unittest.TestCase):
         # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
         #       Note, due to performance concerns, I am not sure the Nowcast algotithm will be supported.
         #
-        print("begin")
-
         sub_calculator = user.aqitype.EPAAQI(self.mock_logger, random.randint(1, 100), None, None)
         SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), sub_calculator, TestNowcastCalculate.input_field)
 
@@ -106,16 +104,12 @@ class TestNowcastCalculate(unittest.TestCase):
                           1740160800, 1740164400, 1740168000, 1740171600, 1740175200, 1740178800,
                           1740182400, 1740186000, 1740189600, 1740193200, 1740196800, 1740200400])
         self.assertEqual(aqi_vec,
-                         [9, 8, 7, 8, 7, 7,7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 8]) 
-
-        print("end")
+                         [9, 8, 7, 8, 7, 7,7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 8])
 
     def test_get_concentration_data_series(self):
         # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
         #       Note, due to performance concerns, I am not sure the Nowcast algotithm will be supported.
         #
-        print("begin")
-
         SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(), TestNowcastCalculate.input_field)
 
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), utils.database.timespan.stop)
@@ -136,8 +130,6 @@ class TestNowcastCalculate(unittest.TestCase):
         self.assertEqual(concentrations,
                          list(reversed(calculate_interval_average(data.db_20250221_pm2_5_values, 12))) + \
                          list(reversed(calculate_interval_average(data.db_20250220_pm2_5_values[144:], 12))))
-
-        print("end")
 
 class TestEPAAQICalculate(unittest.TestCase):
     @classmethod
