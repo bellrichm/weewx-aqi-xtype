@@ -1,3 +1,13 @@
+#
+#    Copyright (c) 2025 Rich Bell <bellrichm@gmail.com>
+#
+#    See the file LICENSE.txt for your full rights.
+#
+
+'''
+Necessary data to initialize a WeeWX database to be used for testing SQL statements.
+'''
+
 db_20250221_pm2_5_values = [
     1.0137931034482757, 0.9433333333333332, 0.996551724137931, 2.103333333333333, 1.4133333333333329, 1.7999999999999996,
     1.9499999999999993, 2.617241379310345, 2.433333333333333, 1.7933333333333323, 1.5758620689655178, 1.9233333333333351,

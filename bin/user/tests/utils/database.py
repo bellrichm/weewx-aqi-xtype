@@ -1,11 +1,12 @@
-'''
-Necessary data and functions to initialize a WeeWX database to be used for testing SQL statements.
-'''
 #
 #    Copyright (c) 2025 Rich Bell <bellrichm@gmail.com>
 #
 #    See the file LICENSE.txt for your full rights.
 #
+
+'''
+Necessary functions to initialize a WeeWX database to be used for testing SQL statements.
+'''
 
 import random
 import string
@@ -16,8 +17,8 @@ import weeutil.weeutil
 from utils import data
 
 def random_string(length=32):
-    ''' Create a random string. '''
-    return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)])  # pylint: disable=unused-variable
+    ''' This is a random string with an alpha characater always as the first character. '''
+    return random.choice(string.ascii_letters) + ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
 
 PM2_5_INPUT_FIELD = random_string(5)
 
