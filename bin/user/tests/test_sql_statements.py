@@ -223,7 +223,7 @@ class TestEPAAQICalculate(unittest.TestCase):
 
         query_type, records_iter = SUT._get_aggregate_concentation_data(self.calculated_field,
                                                                         utils.database.timespan,
-                                                                        'min',
+                                                                        'max',
                                                                         TestEPAAQICalculate.db_manager)
 
         self.assertEqual(query_type, 'basic')
