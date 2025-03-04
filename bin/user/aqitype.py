@@ -300,7 +300,7 @@ class NOWCAST(AbstractCalculator):
 
             i += 1
 
-        concentration_vec = []
+        aqi_vec = []
         start_vec = []
         for record in records_iter:
             timestamps.append(record[0])
@@ -314,16 +314,20 @@ class NOWCAST(AbstractCalculator):
             # ToDo: Research this if statement
             if concentrations[0] is not None:
                 try:
-                    concentration_vec.append(self.calculate_concentration(timestamps[0],
-                                                                          len(concentrations),
-                                                                          min_concentration,
-                                                                          max_concentration,
-                                                                          timestamps,
-                                                                          concentrations))
+                    concentration = self.calculate_concentration(timestamps[0],
+                                                                 len(concentrations),
+                                                                  min_concentration,
+                                                                  max_concentration,
+                                                                  timestamps,
+                                                                  concentrations)
+                    aqi = self.sub_calculator.calculate(None, None, concentration, aqi_type)
+                    aqi_vec.append(aqi)                                          
+                    print(aqi)
+
                 except weewx.CannotCalculate:
-                    concentration_vec.append(None)
+                    aqi_vec.append(None)
             else:
-                concentration_vec.append(None)
+                aqi_vec.append(None)
 
             del timestamps[0]
             del concentrations[0]
@@ -331,9 +335,9 @@ class NOWCAST(AbstractCalculator):
         start_vec.reverse()
         stop_vec = start_vec[1:]
         stop_vec.append(start_vec[-1] + 3600)
-        concentration_vec.reverse()
+        aqi_vec.reverse()
 
-        return start_vec, stop_vec, concentration_vec
+        return start_vec, stop_vec, aqi_vec
 
 class EPAAQI(AbstractCalculator):
     """
@@ -655,10 +659,11 @@ class AQIType(weewx.xtypes.XType):
         print(timespan.stop - timespan.start)
 
         aqi_type = self.aqi_fields[obs_type]['type']
-        start_list, stop_list, concentration_list = self.aqi_fields[obs_type]['calculator'].calculate_series(db_manager, timespan, aqi_type)
+        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate_series(db_manager, timespan, aqi_type)
 
         # ToDo: placeholder
         if aggregate_type in ['min']:
+            print("This is not supported")
             i = 0
             print(len(stop_list))
 
@@ -673,12 +678,12 @@ class AQIType(weewx.xtypes.XType):
                 value_min_time = None
                 value_sum = 0
                 while stop_list[i] < start + aggregate_interval_seconds:
-                    value_sum += concentration_list[i]
+                    value_sum += aqi_list[i]
                     if value_min is None:
-                        value_min = concentration_list[i]
+                        value_min = aqi_list[i]
                         value_min_time = [start_list[i], stop_list[i]]
-                    elif value_min < concentration_list[i]:
-                        value_min = concentration_list[i]
+                    elif value_min < aqi_list[i]:
+                        value_min = aqi_list[i]
                         value_min_time = (start_list[i], stop_list[i])
 
                     list1.append(stop_list[i])
@@ -695,7 +700,7 @@ class AQIType(weewx.xtypes.XType):
 
         return (ValueTuple(start_list, 'unix_epoch', 'group_time'),
                 ValueTuple(stop_list, 'unix_epoch', 'group_time'),
-                ValueTuple(concentration_list, unit, unit_group))
+                ValueTuple(aqi_list, unit, unit_group))
 
     def _get_series_epaaqi(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict):
         aqi_type = self.aqi_fields[obs_type]['type']

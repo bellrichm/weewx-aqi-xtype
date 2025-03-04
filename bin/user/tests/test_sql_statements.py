@@ -90,9 +90,10 @@ class TestNowcastCalculate(unittest.TestCase):
         #
         print("begin")
 
-        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(), TestNowcastCalculate.input_field)
+        sub_calculator = user.aqitype.EPAAQI(self.mock_logger, random.randint(1, 100), None, None)
+        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), sub_calculator, TestNowcastCalculate.input_field)
 
-        start_vec, stop_vec, concentration_vec = SUT.calculate_series(self.db_manager, utils.database.timespan, 'pm2_5')
+        start_vec, stop_vec, aqi_vec = SUT.calculate_series(self.db_manager, utils.database.timespan, 'pm2_5')
 
         self.assertEqual(start_vec,
                          [1740114000, 1740117600, 1740121200, 1740124800, 1740128400, 1740132000,
@@ -104,11 +105,8 @@ class TestNowcastCalculate(unittest.TestCase):
                           1740139200, 1740142800, 1740146400, 1740150000, 1740153600, 1740157200,
                           1740160800, 1740164400, 1740168000, 1740171600, 1740175200, 1740178800,
                           1740182400, 1740186000, 1740189600, 1740193200, 1740196800, 1740200400])
-        self.assertEqual(concentration_vec,
-                         [1.6, 1.4, 1.3, 1.4, 1.3, 1.2,
-                          1.3, 1.3, 1.4, 1.4, 1.4, 1.4,
-                          1.5, 1.5, 1.4, 1.4, 1.4, 1.3,
-                          1.3, 1.2, 1.2, 1.3, 1.3, 1.4])
+        self.assertEqual(aqi_vec,
+                         [9, 8, 7, 8, 7, 7,7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 8]) 
 
         print("end")
 
