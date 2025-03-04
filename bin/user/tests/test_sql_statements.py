@@ -193,51 +193,42 @@ class TestEPAAQICalculate(unittest.TestCase):
                     i += 1
 
     def test_get_aggregate_avg_data(self):
-        with mock.patch.object(user.aqitype.EPAAQI, 'calculate', side_effect=mock_calculate_effect    ) as mock_calculate:
-            SUT = user.aqitype.AQIType(self.mock_logger, self.config)
+        SUT = user.aqitype.AQIType(self.mock_logger, self.config)
 
-            with mock.patch('weewx.units.getStandardUnitType', return_value=self.unit_group):
-                _ret_value = SUT._get_aggregate_epaaqi(self.calculated_field,
-                                                       utils.database.timespan,
-                                                       'avg',
-                                                       TestEPAAQICalculate.db_manager)
+        query_type, records_iter = SUT._get_aggregate_concentation_data(self.calculated_field,
+                                                                        utils.database.timespan,
+                                                                        'avg',
+                                                                        TestEPAAQICalculate.db_manager)
 
-                self.assertEqual(mock_calculate.call_count, archive_intervals_in_day)
-
-                i = 0
-                for call_arg in mock_calculate.call_args_list:
-                    self.assertEqual(call_arg[0][2], data.db_20250221_pm2_5_values[i])
-                    i += 1
+        self.assertEqual(query_type, 'aggregate')
+        i = 0
+        for record in records_iter:
+            self.assertEqual(record, (utils.data.db_20250221_pm2_5_values[i],))
+            i += 1
 
     def test_get_aggregate_min_data(self):
-        with mock.patch.object(user.aqitype.EPAAQI, 'calculate', return_value=random.randint(1, 100)) as mock_calculate:
-            SUT = user.aqitype.AQIType(self.mock_logger, self.config)
+        SUT = user.aqitype.AQIType(self.mock_logger, self.config)
 
-            with mock.patch('weewx.units.getStandardUnitType', return_value=self.unit_group):
-                _ret_value = SUT._get_aggregate_epaaqi(self.calculated_field,
-                                                       utils.database.timespan,
-                                                       'min',
-                                                       TestEPAAQICalculate.db_manager)
+        query_type, records_iter = SUT._get_aggregate_concentation_data(self.calculated_field,
+                                                                        utils.database.timespan,
+                                                                        'min',
+                                                                        TestEPAAQICalculate.db_manager)
 
-                mock_calculate.assert_called_once_with(TestEPAAQICalculate.db_manager,
-                                                       None,
-                                                       min(data.db_20250221_pm2_5_values),
-                                                       TestEPAAQICalculate.aqi_type)
+        self.assertEqual(query_type, 'basic')
+        concentration = list(records_iter)[0][0]
+        self.assertEqual(concentration, min(data.db_20250221_pm2_5_values))
 
     def test_get_aggregate_max_data(self):
-        with mock.patch.object(user.aqitype.EPAAQI, 'calculate', return_value=random.randint(1, 100)) as mock_calculate:
-            SUT = user.aqitype.AQIType(self.mock_logger, self.config)
+        SUT = user.aqitype.AQIType(self.mock_logger, self.config)
 
-            with mock.patch('weewx.units.getStandardUnitType', return_value=self.unit_group):
-                _ret_value = SUT._get_aggregate_epaaqi(self.calculated_field,
-                                                       utils.database.timespan,
-                                                       'max',
-                                                       self.db_manager)
+        query_type, records_iter = SUT._get_aggregate_concentation_data(self.calculated_field,
+                                                                        utils.database.timespan,
+                                                                        'min',
+                                                                        TestEPAAQICalculate.db_manager)
 
-                mock_calculate.assert_called_once_with(TestEPAAQICalculate.db_manager,
-                                                       None,
-                                                       max(data.db_20250221_pm2_5_values),
-                                                       TestEPAAQICalculate.aqi_type)
+        self.assertEqual(query_type, 'basic')
+        concentration = list(records_iter)[0][0]
+        self.assertEqual(concentration, max(data.db_20250221_pm2_5_values))
 
 if __name__ == '__main__':
     #test_suite = unittest.TestSuite()
