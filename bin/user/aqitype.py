@@ -875,7 +875,7 @@ class AQIType(weewx.xtypes.XType):
                     aggregate_value = round(aggregate_value / len(input_values))
         else:
             try:
-                row = db_manager.getSql(sql_stmt)
+                row = list(db_manager.genSql(sql_stmt))[0]
             except weedb.NoColumnError:
                 raise weewx.UnknownType(obs_type) from weedb.NoColumnError
 
