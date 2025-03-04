@@ -519,48 +519,6 @@ class AQIType(weewx.xtypes.XType):
             field_option['calculator']  = \
                   getattr(sys.modules[__name__], field_option['algorithm'])(self.logger, log_level, sub_calculator, sub_field_name)
 
-        self.simple_sql_stmts = {
-        'count': "SELECT COUNT(dateTime) FROM {table_name} "
-                 "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
-        'firsttime': "SELECT MIN(dateTime) FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-               "ORDER BY dateTime ASC LIMIT 1;",
-        'lasttime': "SELECT MAX(dateTime) FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-               "ORDER BY dateTime DESC LIMIT 1;",                 
-        'maxtime': "SELECT dateTime FROM {table_name} "
-                   "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-                   "ORDER BY {input} DESC LIMIT 1", 
-        'mintime': "SELECT dateTime FROM {table_name} "
-                   "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-                   "ORDER BY {input} ASC LIMIT 1",
-        'not_null': "SELECT 1 FROM {table_name} "
-                    "WHERE dateTime > {start} AND dateTime <= {stop} "
-                    "AND {input} IS NOT NULL LIMIT 1",                   
-        }
-
-        self.agg_sql_stmts = {
-        'avg': "SELECT {input} FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
-        'sum': "SELECT {input} FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
-        }
-
-        self.sql_stmts = {
-        'first': "SELECT {input} FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-               "ORDER BY dateTime ASC LIMIT 1;",
-        'last': "SELECT {input} FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-               "ORDER BY dateTime DESC LIMIT 1;",
-        'min': "SELECT {input} FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-               "ORDER BY {input} ASC LIMIT 1;",
-        'max': "SELECT {input} FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-               "ORDER BY {input} DESC LIMIT 1;",
-    }
-
     def _logdbg(self, msg):
         self.logger.logdbg(f"(XTYPE) {msg}")
 
@@ -775,7 +733,26 @@ class AQIType(weewx.xtypes.XType):
 
             # This is not accurate
             # Just because there is one concentration reading does not mean NOWCAST can be computed
-            sql_stmt = self.simple_sql_stmts[aggregate_type].format(**interpolation_dict)
+            simple_sql_stmts = {
+            'count': "SELECT COUNT(dateTime) FROM {table_name} "
+                    "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
+            'firsttime': "SELECT MIN(dateTime) FROM {table_name} "
+                "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+                "ORDER BY dateTime ASC LIMIT 1;",
+            'lasttime': "SELECT MAX(dateTime) FROM {table_name} "
+                "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+                "ORDER BY dateTime DESC LIMIT 1;",                 
+            'maxtime': "SELECT dateTime FROM {table_name} "
+                    "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+                    "ORDER BY {input} DESC LIMIT 1", 
+            'mintime': "SELECT dateTime FROM {table_name} "
+                    "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+                    "ORDER BY {input} ASC LIMIT 1",
+            'not_null': "SELECT 1 FROM {table_name} "
+                        "WHERE dateTime > {start} AND dateTime <= {stop} "
+                        "AND {input} IS NOT NULL LIMIT 1",                   
+            }
+            sql_stmt = simple_sql_stmts[aggregate_type].format(**interpolation_dict)
 
             try:
                 row = db_manager.getSql(sql_stmt)
@@ -810,7 +787,26 @@ class AQIType(weewx.xtypes.XType):
 
             # This is not accurate
             # Just because there is one concentration reading does not mean NOWCAST can be computed
-            sql_stmt = self.simple_sql_stmts[aggregate_type].format(**interpolation_dict)
+            simple_sql_stmts = {
+            'count': "SELECT COUNT(dateTime) FROM {table_name} "
+                    "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
+            'firsttime': "SELECT MIN(dateTime) FROM {table_name} "
+                "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+                "ORDER BY dateTime ASC LIMIT 1;",
+            'lasttime': "SELECT MAX(dateTime) FROM {table_name} "
+                "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+                "ORDER BY dateTime DESC LIMIT 1;",                 
+            'maxtime': "SELECT dateTime FROM {table_name} "
+                    "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+                    "ORDER BY {input} DESC LIMIT 1", 
+            'mintime': "SELECT dateTime FROM {table_name} "
+                    "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+                    "ORDER BY {input} ASC LIMIT 1",
+            'not_null': "SELECT 1 FROM {table_name} "
+                        "WHERE dateTime > {start} AND dateTime <= {stop} "
+                        "AND {input} IS NOT NULL LIMIT 1",                   
+            }
+            sql_stmt = simple_sql_stmts[aggregate_type].format(**interpolation_dict)
 
             try:
                 row = db_manager.getSql(sql_stmt)
@@ -836,13 +832,60 @@ class AQIType(weewx.xtypes.XType):
         unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
         return weewx.units.ValueTuple(aggregate_value, unit_type, group)
 
-    def _get_aggregate_epaaqi(self, obs_type, timespan, aggregate_type, db_manager, **_option_dict):
-        sql_stmts = ChainMap(self.agg_sql_stmts, self.simple_sql_stmts, self.sql_stmts)
+    def _get_aggregate_concentation_data(self, obs_type, timespan, aggregate_type, db_manager):
+        dependent_field = self.aqi_fields[obs_type]['input']
+
+        simple_sql_stmts = {
+        'count': "SELECT COUNT(dateTime) FROM {table_name} "
+                 "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
+        'firsttime': "SELECT MIN(dateTime) FROM {table_name} "
+               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+               "ORDER BY dateTime ASC LIMIT 1;",
+        'lasttime': "SELECT MAX(dateTime) FROM {table_name} "
+               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+               "ORDER BY dateTime DESC LIMIT 1;",                 
+        'maxtime': "SELECT dateTime FROM {table_name} "
+                   "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+                   "ORDER BY {input} DESC LIMIT 1", 
+        'mintime': "SELECT dateTime FROM {table_name} "
+                   "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+                   "ORDER BY {input} ASC LIMIT 1",
+        'not_null': "SELECT 1 FROM {table_name} "
+                    "WHERE dateTime > {start} AND dateTime <= {stop} "
+                    "AND {input} IS NOT NULL LIMIT 1",                   
+        }
+
+        aggregate_sql_stmts = {
+        'avg': "SELECT {input} FROM {table_name} "
+               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
+        'sum': "SELECT {input} FROM {table_name} "
+               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
+        }
+
+        basic_sql_stmts = {
+        'first': "SELECT {input} FROM {table_name} "
+               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+               "ORDER BY dateTime ASC LIMIT 1;",
+        'last': "SELECT {input} FROM {table_name} "
+               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+               "ORDER BY dateTime DESC LIMIT 1;",
+        'min': "SELECT {input} FROM {table_name} "
+               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+               "ORDER BY {input} ASC LIMIT 1;",
+        'max': "SELECT {input} FROM {table_name} "
+               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
+               "ORDER BY {input} DESC LIMIT 1;",
+    }
+        sql_stmts = ChainMap(aggregate_sql_stmts, simple_sql_stmts, basic_sql_stmts)
         if aggregate_type not in sql_stmts:
             raise weewx.UnknownAggregation(aggregate_type)
 
-        dependent_field = self.aqi_fields[obs_type]['input']
-        aqi_type = self.aqi_fields[obs_type]['type']
+        if aggregate_type in simple_sql_stmts:
+            query_type = 'simple'
+        elif aggregate_type in aggregate_sql_stmts:
+            query_type = 'aggregate'
+        else:
+            query_type = 'basic'
 
         interpolation_dict = {
             'start': timespan.start,
@@ -853,38 +896,42 @@ class AQIType(weewx.xtypes.XType):
 
         sql_stmt = sql_stmts[aggregate_type].format(**interpolation_dict)
 
-        if aggregate_type in self.agg_sql_stmts:
+        try:
+            records_iter = db_manager.genSql(sql_stmt)
+        except weedb.NoColumnError:
+            raise weewx.UnknownType(obs_type) from weedb.NoColumnError
+
+        return query_type, records_iter
+
+    def _get_aggregate_epaaqi(self, obs_type, timespan, aggregate_type, db_manager, **_option_dict):
+        aqi_type = self.aqi_fields[obs_type]['type']
+        query_type, records_iter = self._get_aggregate_concentation_data(obs_type, timespan, aggregate_type, db_manager)
+
+        if query_type == 'aggregate':
             input_values = []
             aggregate_value = None
-            try:
-                for row in db_manager.genSql(sql_stmt):
+            for row in records_iter:
+                try:
+                    input_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, row[0], aqi_type)
+                except weewx.CannotCalculate:
+                    input_value = None
 
-                    try:
-                        input_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, row[0], aqi_type)
-                    except weewx.CannotCalculate:
-                        input_value = None
-
-                    if input_value is not None:
-                        input_values.append(input_value)
-            except weedb.NoColumnError:
-                raise weewx.UnknownType(obs_type) from weedb.NoColumnError
+                if input_value is not None:
+                    input_values.append(input_value)
 
             if input_values:
                 aggregate_value = sum(input_values)
                 if aggregate_type == 'avg':
                     aggregate_value = round(aggregate_value / len(input_values))
         else:
-            try:
-                row = list(db_manager.genSql(sql_stmt))[0]
-            except weedb.NoColumnError:
-                raise weewx.UnknownType(obs_type) from weedb.NoColumnError
+            row = list(records_iter)[0]
 
             if not row or None in row:
                 input_value = None
             else:
                 input_value = row[0]
 
-            if aggregate_type in self.simple_sql_stmts:
+            if query_type == 'simple':
                 aggregate_value = input_value
             else:
                 try:
