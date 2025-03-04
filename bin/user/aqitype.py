@@ -278,33 +278,46 @@ class NOWCAST(AbstractCalculator):
         self._logdbg(f"The time stamp is {timespan}.")
         self._logdbg(f"The type is '{aqi_type}'")
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
-
-        concentration_vec = []
-        stop_vec = []
-        #stop_time = stop - 3600 * 11
-        start_time = timespan.start - 43200
+        start_time = timespan.start - 43200 + 3600 # todo ????
 
         records_iter = self._get_concentration_data_series(db_manager, stop , start_time)
-        records = list(records_iter) # ToDo: temporary while developing
-        timestamps = list(list(zip(*records))[0])[0:12]
-        concentrations = list(list(zip(*records))[1])[0:12]
 
-        for record in records[12:-1]:
+        i = 1
+        timestamps = []
+        concentrations = []
+        min_concentration = float('inf')
+        max_concentration = -float('inf')
+        for record in records_iter:
             timestamps.append(record[0])
-            if len(timestamps) > 12:
-                del timestamps[0]
-
             concentrations.append(record[1])
-            if len(concentrations) > 12:
-                del concentrations[0]
+            if record[1] < min_concentration:
+                min_concentration = record[1]
+            if record[1] > max_concentration:
+                max_concentration = record[1]
 
-            stop_vec.append(record[0] + 43200)
-            if record[1] is not None:
+            if i >= 11:
+                break
+
+            i += 1
+
+        concentration_vec = []
+        start_vec = []
+        for record in records_iter:
+            timestamps.append(record[0])
+            concentrations.append(record[1])
+            start_vec.append(timestamps[0])
+            if record[1] < min_concentration:
+                min_concentration = record[1]
+            if record[1] > max_concentration:
+                max_concentration = record[1]
+
+            # ToDo: Research this if statement
+            if concentrations[0] is not None:
                 try:
                     concentration_vec.append(self.calculate_concentration(timestamps[0],
                                                                           len(concentrations),
-                                                                          min(concentrations),
-                                                                          max(concentrations),
+                                                                          min_concentration,
+                                                                          max_concentration,
                                                                           timestamps,
                                                                           concentrations))
                 except weewx.CannotCalculate:
@@ -312,10 +325,12 @@ class NOWCAST(AbstractCalculator):
             else:
                 concentration_vec.append(None)
 
-        start_vec = list(stop_vec[1:])
-        start_vec.append(start_vec[-1] - 3600)
+            del timestamps[0]
+            del concentrations[0]
+
         start_vec.reverse()
-        stop_vec.reverse()
+        stop_vec = start_vec[1:]
+        stop_vec.append(start_vec[-1] + 3600)
         concentration_vec.reverse()
 
         return start_vec, stop_vec, concentration_vec
