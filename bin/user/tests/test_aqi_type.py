@@ -141,17 +141,16 @@ class TestEPAAQICalculate(unittest.TestCase):
             now = int(time.time() + 0.5)
             end_timestamp = (int(now / utils.database.ARCHIVE_INTERVAL_SECONDS) + 1) * utils.database.ARCHIVE_INTERVAL_SECONDS
 
-            mock_db_manager.genSql.return_value = [[random.randint(11, 100)],
-                                                   [random.randint(11, 100)]]
+            mock_data  = 'aggregate', [[random.randint(11, 100)], [random.randint(11, 100)]]
+            with mock.patch.object(user.aqitype.AQIType, '_get_aggregate_concentation_data', return_value=mock_data):
+                with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
 
-            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
+                    value_tuple  = \
+                        SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'avg', mock_db_manager)
 
-                value_tuple  = \
-                    SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'avg', mock_db_manager)
-
-                self.assertEqual(value_tuple[0], round(sum(aqi) / len(aqi)))
-                self.assertEqual(value_tuple[1], unit)
-                self.assertEqual(value_tuple[2], unit_group)
+                    self.assertEqual(value_tuple[0], round(sum(aqi) / len(aqi)))
+                    self.assertEqual(value_tuple[1], unit)
+                    self.assertEqual(value_tuple[2], unit_group)
 
     def test_get_aggregation_min_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
@@ -176,16 +175,16 @@ class TestEPAAQICalculate(unittest.TestCase):
             now = int(time.time() + 0.5)
             end_timestamp = (int(now / utils.database.ARCHIVE_INTERVAL_SECONDS) + 1) * utils.database.ARCHIVE_INTERVAL_SECONDS
 
-            mock_db_manager.genSql.return_value =[(random.random(),)]
+            mock_data  = random_string(), [[random.random()],]
+            with mock.patch.object(user.aqitype.AQIType, '_get_aggregate_concentation_data', return_value=mock_data):
+                with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
 
-            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
+                    value_tuple  = \
+                        SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'min', mock_db_manager)
 
-                value_tuple  = \
-                    SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'min', mock_db_manager)
-
-                self.assertEqual(value_tuple[0], aqi)
-                self.assertEqual(value_tuple[1], unit)
-                self.assertEqual(value_tuple[2], unit_group)
+                    self.assertEqual(value_tuple[0], aqi)
+                    self.assertEqual(value_tuple[1], unit)
+                    self.assertEqual(value_tuple[2], unit_group)
 
     def test_get_aggregated_series_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
