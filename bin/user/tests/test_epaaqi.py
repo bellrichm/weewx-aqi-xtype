@@ -29,6 +29,7 @@ class EPAAQITests(unittest.TestCase):
         self.assertEqual(calculator.calculate(None, None, 300.0, 'pm2_5'), 449)
         self.assertEqual(calculator.calculate(None, None, 400.0, 'pm2_5'), 649)
         self.assertEqual(calculator.calculate(None, None, 600.0, 'pm2_5'), 1047)
+
     def test_pm10_calculation(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
         calculator = user.aqitype.EPAAQI(mock_logger, 0, None, None)
