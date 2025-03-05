@@ -88,7 +88,7 @@ class AbstractCalculator():
     """
     Abstract Calculator class.
     """
-    def calculate(self, db_manager, time_stamp, reading, aqi_type):
+    def calculate(self, db_manager, aqi_type, time_stamp, reading):
         """
         Perform the calculation.
         """
@@ -235,7 +235,7 @@ class NOWCAST(AbstractCalculator):
             self._logerr(error_message)
             raise CalculationError(error_message) from exception
 
-    def calculate(self, db_manager, time_stamp, reading, aqi_type):
+    def calculate(self, db_manager, aqi_type, time_stamp, reading):
         self._logdbg(f"The time stamp is {time_stamp}.")
         self._logdbg(f"The type is '{aqi_type}'")
 
@@ -305,7 +305,7 @@ class NOWCAST(AbstractCalculator):
                                                                   max_concentration,
                                                                   timestamps,
                                                                   concentrations)
-                    aqi = self.sub_calculator.calculate(None, None, concentration, aqi_type)
+                    aqi = self.sub_calculator.calculate(None, aqi_type, None, concentration)
                     aqi_vec.append(aqi)
 
                 except weewx.CannotCalculate:
@@ -385,7 +385,7 @@ class EPAAQI(AbstractCalculator):
         if self.log_level <= 40:
             self.logger.logerr(f"(EPAAQI) {msg}")
 
-    def calculate(self, db_manager, time_stamp, reading, aqi_type):
+    def calculate(self, db_manager, aqi_type, time_stamp, reading):
         '''
         Calculate the AQI.
         Additional information:
