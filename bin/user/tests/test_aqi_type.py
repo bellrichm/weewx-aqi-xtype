@@ -68,3 +68,7 @@ class TestGetScalar(unittest.TestCase):
                 self.assertEqual(value_tuple[0], aqi)
                 self.assertEqual(value_tuple[1], unit)
                 self.assertEqual(value_tuple[2], unit_group)
+
+if __name__ == '__main__':
+
+    unittest.main(exit=False)

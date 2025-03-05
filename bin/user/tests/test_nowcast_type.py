@@ -55,3 +55,7 @@ class TestNowcastDevelopment(unittest.TestCase):
                           1740182400, 1740186000, 1740189600, 1740193200, 1740196800, 1740200400])
         self.assertEqual(aqi_vec,
                          [9, 8, 7, 8, 7, 7,7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 8])
+
+if __name__ == '__main__':
+
+    unittest.main(exit=False)
