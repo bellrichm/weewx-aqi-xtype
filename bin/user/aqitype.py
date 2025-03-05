@@ -509,6 +509,7 @@ class AQIType(weewx.xtypes.XType):
                 sub_field_name = field_option['input']
                 field_option['get_aggregate'] = self._get_aggregate_nowcast
                 field_option['get_series'] = self._get_series_nowcast
+                field_option['get_scalar'] = self._get_scalar_nowcast
             else:
                 if field_option['type'] not in EPAAQI.readings:
                     raise ValueError(f"Algorithm 'EPAAQI' is not supported for pollutant '{field_option['type']}'")
@@ -516,6 +517,7 @@ class AQIType(weewx.xtypes.XType):
                 field_option['support_series'] = True
                 field_option['get_aggregate'] = self._get_aggregate_epaaqi
                 field_option['get_series'] = self._get_series_epaaqi
+                field_option['get_scalar'] = self._get_scalar_epaaqi
             field_option['calculator']  = \
                   getattr(sys.modules[__name__], field_option['algorithm'])(self.logger, log_level, sub_calculator, sub_field_name)
 
@@ -541,12 +543,7 @@ class AQIType(weewx.xtypes.XType):
         if record[dependent_field] is None:
             raise weewx.CannotCalculate(obs_type)
 
-        aqi_type = self.aqi_fields[obs_type]['type']
-
-        try:
-            aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, record['dateTime'], record[dependent_field], aqi_type)
-        except weewx.CannotCalculate as exception:
-            raise weewx.CannotCalculate(obs_type) from exception
+        aqi = self.aqi_fields[obs_type]['get_scalar'](obs_type, db_manager, record['dateTime'], record[dependent_field])
 
         unit_type, group = weewx.units.getStandardUnitType(record['usUnits'], obs_type)
         return weewx.units.ValueTuple(aqi, unit_type, group)
@@ -562,6 +559,26 @@ class AQIType(weewx.xtypes.XType):
         if obs_type not in self.aqi_fields:
             raise weewx.UnknownType(obs_type)
         return self.aqi_fields[obs_type]['get_aggregate'](obs_type, timespan, aggregate_type, db_manager, **option_dict)
+
+    def _get_scalar_nowcast(self, obs_type, db_manager, timestamp, concentration):
+        aqi_type = self.aqi_fields[obs_type]['type']
+
+        try:
+            aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, timestamp, concentration, aqi_type)
+        except weewx.CannotCalculate as exception:
+            raise weewx.CannotCalculate(obs_type) from exception
+
+        return aqi
+
+    def _get_scalar_epaaqi(self, obs_type, db_manager, timestamp, concentration):
+        aqi_type = self.aqi_fields[obs_type]['type']
+
+        try:
+            aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, timestamp, concentration, aqi_type)
+        except weewx.CannotCalculate as exception:
+            raise weewx.CannotCalculate(obs_type) from exception
+
+        return aqi
 
     def _get_series_nowcast(self, obs_type, _timespan, db_manager, aggregate_type, _aggregate_interval, **_option_dict):
         # For now the NOWCAST algorithm does not support 'series'
