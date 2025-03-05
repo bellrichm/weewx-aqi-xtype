@@ -35,8 +35,7 @@ def calculate_interval_average(full_data, interval_size):
 def random_string(length=32):
     return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
 
-# ToDo: is there a better way?
-def mock_calculate_effect(_1, _2, _3, _4):
+def mock_calculate_effect(*_args):
     return random.randint(1, 100)
 
 def setup_config(calculated_field, input_field, algorithm, aqi_type):
@@ -117,7 +116,7 @@ class TestNowcastCalculate(unittest.TestCase):
         # Only want the last 12 hours of the previous day, 20250220
         self.assertEqual(timestamps,
                          list(reversed(data.db_20250221_timestamps[11:len(data.db_20250221_timestamps)-12:12])) + \
-                         list(reversed((data.db__20250220_timestamps[143::12]))))
+                         list(reversed((data.db_20250220_timestamps[143::12]))))
         # Compute the hourly average of the pm2_5 data
         # Only want the last 12 hours of the previous day, 20250220
         self.assertEqual(concentrations,
@@ -170,27 +169,37 @@ class TestEPAAQICalculate(unittest.TestCase):
                               utils.data.db_20250221_pm2_5_values[i]))
             i += 1
 
-    # ToDo: move out of SQL tests and refactor to use mocks
+    # ToDo: move out of SQL tests
     def test_get_series_data(self):
         with mock.patch.object(user.aqitype.EPAAQI, 'calculate', side_effect=mock_calculate_effect) as mock_calculate:
             SUT = user.aqitype.AQIType(self.mock_logger, self.config)
 
+            db_records = []
+            i = 0
+            for timestamp in utils.data.db_20250221_timestamps:
+                db_records.append([timestamp,
+                                   utils.database.US_UNITS,
+                                   utils.database.ARCHIVE_INTERVAL_MINUTES,
+                                   utils.data.db_20250221_pm2_5_values[i]])
+                i += 1
+
             with mock.patch('weewx.units.getStandardUnitType', return_value=self.unit_group):
-                start_vec_t, stop_vec_t, _data_vec_t = SUT._get_series_epaaqi(self.calculated_field,
-                                                                              utils.database.timespan,
-                                                                              TestEPAAQICalculate.db_manager,
-                                                                              None,
-                                                                              None)
+                with mock.patch.object(user.aqitype.AQIType, '_get_concentration_data', return_value=db_records):
+                    start_vec_t, stop_vec_t, _data_vec_t = SUT._get_series_epaaqi(self.calculated_field,
+                                                                                utils.database.timespan,
+                                                                                TestEPAAQICalculate.db_manager,
+                                                                                None,
+                                                                                None)
 
-                mock_calculate.assert_called()
-                self.assertEqual(mock_calculate.call_count, archive_intervals_in_day)
+                    mock_calculate.assert_called()
+                    self.assertEqual(mock_calculate.call_count, archive_intervals_in_day)
 
-                i = 0
-                for call_arg in mock_calculate.call_args_list:
-                    self.assertEqual(call_arg[0][2], data.db_20250221_pm2_5_values[i])
-                    self.assertEqual(stop_vec_t[0][i], data.db_20250221_timestamps[i])
-                    self.assertEqual(start_vec_t[0][i], data.db_20250221_timestamps[i] - utils.database.ARCHIVE_INTERVAL_SECONDS)
-                    i += 1
+                    i = 0
+                    for call_arg in mock_calculate.call_args_list:
+                        self.assertEqual(call_arg[0][2], data.db_20250221_pm2_5_values[i])
+                        self.assertEqual(stop_vec_t[0][i], data.db_20250221_timestamps[i])
+                        self.assertEqual(start_vec_t[0][i], data.db_20250221_timestamps[i] - utils.database.ARCHIVE_INTERVAL_SECONDS)
+                        i += 1
 
     def test_get_aggregate_avg_data(self):
         SUT = user.aqitype.AQIType(self.mock_logger, self.config)

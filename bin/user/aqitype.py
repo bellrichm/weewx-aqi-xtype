@@ -172,7 +172,6 @@ class NOWCAST(AbstractCalculator):
         # ToDo: need to get this from the 'console'
         archive_interval = 300
 
-        # ToDo: This is duplicate code, refactor into a single routine
         sql_str = f'''
         SELECT
             MAX(dateTime) - 3600,

@@ -94,6 +94,7 @@ class TestEPAAQICalculate(unittest.TestCase):
             now = int(time.time() + 0.5)
             end_timestamp = (int(now / utils.database.ARCHIVE_INTERVAL_SECONDS) + 1) * utils.database.ARCHIVE_INTERVAL_SECONDS
 
+            # ToDo: - investigate this mock
             mock_db_manager.genSql.return_value =[(end_timestamp - utils.database.ARCHIVE_INTERVAL_SECONDS,
                                                    utils.database.US_UNITS,
                                                    utils.database.ARCHIVE_INTERVAL_MINUTES,

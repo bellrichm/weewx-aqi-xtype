@@ -33,7 +33,7 @@ timespan = weeutil.weeutil.TimeSpan(
 def _generate_records(pm2_5_column):
     ''' Generate records to be inserted into a WeeWX database. '''
     pm2_5_values =  data.db_20250220_pm2_5_values + data.db_20250221_pm2_5_values
-    timestamps = data.db__20250220_timestamps + data.db_20250221_timestamps
+    timestamps = data.db_20250220_timestamps + data.db_20250221_timestamps
     i = 0
     for date_time in timestamps:
         yield {
