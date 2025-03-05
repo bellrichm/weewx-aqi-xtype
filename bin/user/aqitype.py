@@ -258,7 +258,7 @@ class NOWCAST(AbstractCalculator):
         return aqi
 
     def calculate_series(self, db_manager, timespan, aqi_type):
-        # 02/26/2025 - not used
+        # 02/26/2025 - not used, yet (in development)
         self._logdbg(f"The time stamp is {timespan}.")
         self._logdbg(f"The type is '{aqi_type}'")
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
