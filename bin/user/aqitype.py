@@ -236,7 +236,7 @@ class NOWCAST(AbstractCalculator):
             raise CalculationError(error_message) from exception
 
     def calculate(self, db_manager, aqi_type, inputs):
-        (time_stamp, reading) = inputs
+        (time_stamp) = inputs
         self._logdbg(f"The time stamp is {time_stamp}.")
         self._logdbg(f"The type is '{aqi_type}'")
 
@@ -572,7 +572,7 @@ class AQIType(weewx.xtypes.XType):
 
         return aqi
 
-    def _get_scalar_epaaqi(self, obs_type, db_manager, timestamp, concentration):
+    def _get_scalar_epaaqi(self, obs_type, db_manager, _timestamp, concentration):
         aqi_type = self.aqi_fields[obs_type]['type']
 
         try:

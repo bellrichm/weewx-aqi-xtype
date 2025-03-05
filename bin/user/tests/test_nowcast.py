@@ -45,7 +45,7 @@ class NowCastTests(unittest.TestCase):
         with self.assertRaises(weewx.CannotCalculate):
             calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-            calculator.calculate(None, random_string(), (None, None))
+            calculator.calculate(None, random_string(), (None))
 
     def test_incomplete_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
