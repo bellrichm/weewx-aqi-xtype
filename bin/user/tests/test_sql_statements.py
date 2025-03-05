@@ -85,7 +85,7 @@ class TestNowcastSQL(unittest.TestCase):
 
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), utils.database.timespan.stop)
 
-        records_iter = SUT._get_concentration_data(self.db_manager, stop , utils.database.timespan.start - 43200)
+        records_iter = SUT._get_concentration_data_nowcast(self.db_manager, stop , utils.database.timespan.start - 43200)
         records = list(records_iter)
         timestamps = list(list(zip(*records))[0])
         concentrations = list(list(zip(*records))[1])
