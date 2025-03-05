@@ -557,6 +557,12 @@ class AQIType(weewx.xtypes.XType):
             raise weewx.UnknownType(obs_type)
         return self.aqi_fields[obs_type]['get_series'](obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict)
 
+    def get_aggregate(self, obs_type, timespan, aggregate_type, db_manager, **option_dict):
+        """ Compute the aggregate. """
+        if obs_type not in self.aqi_fields:
+            raise weewx.UnknownType(obs_type)
+        return self.aqi_fields[obs_type]['get_aggregate'](obs_type, timespan, aggregate_type, db_manager, **option_dict)
+
     def _get_series_nowcast(self, obs_type, _timespan, db_manager, aggregate_type, _aggregate_interval, **_option_dict):
         # For now the NOWCAST algorithm does not support 'series'
         # Because XTypeTable will also try, an empty 'set' of data is returned.
@@ -640,17 +646,6 @@ class AQIType(weewx.xtypes.XType):
                 ValueTuple(stop_list, 'unix_epoch', 'group_time'),
                 ValueTuple(aqi_list, unit, unit_group))
 
-    def _get_concentration_data(self, obs_type, timespan, db_manager):
-        dependent_field = self.aqi_fields[obs_type]['input']
-        sql_str = f'SELECT dateTime, usUnits, `interval`, {dependent_field} FROM {db_manager.table_name} WHERE dateTime > ? AND dateTime <= ?'
-
-        try:
-            records_iter = db_manager.genSql(sql_str, timespan)
-        except weedb.NoColumnError:
-            raise weewx.UnknownType(obs_type) from weedb.NoColumnError
-
-        return records_iter
-
     def _get_series_epaaqi(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict):
         aqi_type = self.aqi_fields[obs_type]['type']
         start_vec = []
@@ -708,12 +703,6 @@ class AQIType(weewx.xtypes.XType):
         return (ValueTuple(start_vec, 'unix_epoch', 'group_time'),
                 ValueTuple(stop_vec, 'unix_epoch', 'group_time'),
                 ValueTuple(data_vec, unit, unit_group))
-
-    def get_aggregate(self, obs_type, timespan, aggregate_type, db_manager, **option_dict):
-        """ Compute the aggregate. """
-        if obs_type not in self.aqi_fields:
-            raise weewx.UnknownType(obs_type)
-        return self.aqi_fields[obs_type]['get_aggregate'](obs_type, timespan, aggregate_type, db_manager, **option_dict)
 
     def _get_aggregate_nowcast(self, obs_type, timespan, aggregate_type, db_manager, **_option_dict):
        # For now the NOWCAST algorithm does not support 'aggregation'
@@ -832,6 +821,57 @@ class AQIType(weewx.xtypes.XType):
         unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
         return weewx.units.ValueTuple(aggregate_value, unit_type, group)
 
+    def _get_aggregate_epaaqi(self, obs_type, timespan, aggregate_type, db_manager, **_option_dict):
+        aqi_type = self.aqi_fields[obs_type]['type']
+        query_type, records_iter = self._get_aggregate_concentation_data(obs_type, timespan, aggregate_type, db_manager)
+
+        if query_type == 'aggregate':
+            input_values = []
+            aggregate_value = None
+            for row in records_iter:
+                try:
+                    input_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, row[0], aqi_type)
+                except weewx.CannotCalculate:
+                    input_value = None
+
+                if input_value is not None:
+                    input_values.append(input_value)
+
+            if input_values:
+                aggregate_value = sum(input_values)
+                if aggregate_type == 'avg':
+                    aggregate_value = round(aggregate_value / len(input_values))
+        else:
+            row = list(records_iter)[0]
+
+            if not row or None in row:
+                input_value = None
+            else:
+                input_value = row[0]
+
+            if query_type == 'simple':
+                aggregate_value = input_value
+            else:
+                try:
+                    aggregate_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
+                except weewx.CannotCalculate:
+                    aggregate_value = None
+
+        unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
+
+        return weewx.units.ValueTuple(aggregate_value, unit_type, group)
+
+    def _get_concentration_data(self, obs_type, timespan, db_manager):
+        dependent_field = self.aqi_fields[obs_type]['input']
+        sql_str = f'SELECT dateTime, usUnits, `interval`, {dependent_field} FROM {db_manager.table_name} WHERE dateTime > ? AND dateTime <= ?'
+
+        try:
+            records_iter = db_manager.genSql(sql_str, timespan)
+        except weedb.NoColumnError:
+            raise weewx.UnknownType(obs_type) from weedb.NoColumnError
+
+        return records_iter
+
     def _get_aggregate_concentation_data(self, obs_type, timespan, aggregate_type, db_manager):
         dependent_field = self.aqi_fields[obs_type]['input']
 
@@ -902,46 +942,6 @@ class AQIType(weewx.xtypes.XType):
             raise weewx.UnknownType(obs_type) from weedb.NoColumnError
 
         return query_type, records_iter
-
-    def _get_aggregate_epaaqi(self, obs_type, timespan, aggregate_type, db_manager, **_option_dict):
-        aqi_type = self.aqi_fields[obs_type]['type']
-        query_type, records_iter = self._get_aggregate_concentation_data(obs_type, timespan, aggregate_type, db_manager)
-
-        if query_type == 'aggregate':
-            input_values = []
-            aggregate_value = None
-            for row in records_iter:
-                try:
-                    input_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, row[0], aqi_type)
-                except weewx.CannotCalculate:
-                    input_value = None
-
-                if input_value is not None:
-                    input_values.append(input_value)
-
-            if input_values:
-                aggregate_value = sum(input_values)
-                if aggregate_type == 'avg':
-                    aggregate_value = round(aggregate_value / len(input_values))
-        else:
-            row = list(records_iter)[0]
-
-            if not row or None in row:
-                input_value = None
-            else:
-                input_value = row[0]
-
-            if query_type == 'simple':
-                aggregate_value = input_value
-            else:
-                try:
-                    aggregate_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
-                except weewx.CannotCalculate:
-                    aggregate_value = None
-
-        unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
-
-        return weewx.units.ValueTuple(aggregate_value, unit_type, group)
 
 class AQISearchList(weewx.cheetahgenerator.SearchList):
     """ Implement tags used by templates in the skin. """

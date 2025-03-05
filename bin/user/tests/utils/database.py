@@ -8,19 +8,13 @@
 Necessary functions to initialize a WeeWX database to be used for testing SQL statements.
 '''
 
-import random
-import string
-
 import weewx.manager
 import weeutil.weeutil
 
 from utils import data
+from utils import helpers
 
-def random_string(length=32):
-    ''' This is a random string with an alpha characater always as the first character. '''
-    return random.choice(string.ascii_letters) + ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
-
-PM2_5_INPUT_FIELD = random_string(5)
+PM2_5_INPUT_FIELD = helpers.random_string(5)
 
 US_UNITS = 1
 ARCHIVE_INTERVAL_MINUTES = 5

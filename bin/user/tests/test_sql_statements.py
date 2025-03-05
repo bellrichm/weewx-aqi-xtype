@@ -7,6 +7,7 @@
 # pylint: disable=wrong-import-order
 # pylint: disable=missing-docstring
 # pylint: disable=invalid-name
+
 import unittest
 import mock
 
@@ -48,7 +49,7 @@ def setup_config(calculated_field, input_field, algorithm, aqi_type):
     }
     return config_dict
 
-class TestNowcastCalculate(unittest.TestCase):
+class TestNowcastSQL(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.input_field = utils.database.PM2_5_INPUT_FIELD
@@ -67,42 +68,20 @@ class TestNowcastCalculate(unittest.TestCase):
         self.mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
     def test_get_concentration_data_stats(self):
-        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(),TestNowcastCalculate.input_field)
+        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(),TestNowcastSQL.input_field)
 
         # The timestamp in the template that I am using is 1740168300 (3:05 PM Eastern on 2/21/2025)
         timestamp_interval_start = weeutil.weeutil.startOfInterval(1740168300, 3600)
         stop = timestamp_interval_start + 3600
         start = stop - 43200
-        data_count, data_min, data_max = SUT._get_concentration_data_stats(TestNowcastCalculate.db_manager, stop, start)
+        data_count, data_min, data_max = SUT._get_concentration_data_stats(TestNowcastSQL.db_manager, stop, start)
 
         self.assertEqual(data_count, 12)
         self.assertEqual(data_min, 1.1982950191570885)
         self.assertEqual(data_max, 1.7157567049808427)
 
-    def test_calculate_series_prototype(self):
-        # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
-        #       Note, due to performance concerns, I am not sure the Nowcast algotithm will be supported.
-        #
-        sub_calculator = user.aqitype.EPAAQI(self.mock_logger, random.randint(1, 100), None, None)
-        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), sub_calculator, TestNowcastCalculate.input_field)
-
-        start_vec, stop_vec, aqi_vec = SUT.calculate_series(self.db_manager, utils.database.timespan, 'pm2_5')
-
-        self.assertEqual(start_vec,
-                         [1740114000, 1740117600, 1740121200, 1740124800, 1740128400, 1740132000,
-                          1740135600, 1740139200, 1740142800, 1740146400, 1740150000, 1740153600,
-                          1740157200, 1740160800, 1740164400, 1740168000, 1740171600, 1740175200,
-                          1740178800, 1740182400, 1740186000, 1740189600, 1740193200, 1740196800])
-        self.assertEqual(stop_vec,
-                         [1740117600, 1740121200, 1740124800, 1740128400, 1740132000, 1740135600,
-                          1740139200, 1740142800, 1740146400, 1740150000, 1740153600, 1740157200,
-                          1740160800, 1740164400, 1740168000, 1740171600, 1740175200, 1740178800,
-                          1740182400, 1740186000, 1740189600, 1740193200, 1740196800, 1740200400])
-        self.assertEqual(aqi_vec,
-                         [9, 8, 7, 8, 7, 7,7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 8])
-
     def test_get_concentration_data(self):
-        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(), TestNowcastCalculate.input_field)
+        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), random_string(), TestNowcastSQL.input_field)
 
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), utils.database.timespan.stop)
 
@@ -123,7 +102,7 @@ class TestNowcastCalculate(unittest.TestCase):
                          list(reversed(calculate_interval_average(data.db_20250221_pm2_5_values, 12))) + \
                          list(reversed(calculate_interval_average(data.db_20250220_pm2_5_values[144:], 12))))
 
-class TestEPAAQICalculate(unittest.TestCase):
+class TestEPASQL(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.algorithm = 'EPAAQI'
@@ -149,16 +128,16 @@ class TestEPAAQICalculate(unittest.TestCase):
         self.unit_group = [random_string(), random_string()]
 
         config_dict = setup_config(self.calculated_field,
-                                   TestEPAAQICalculate.input_field,
-                                   TestEPAAQICalculate.algorithm,
-                                   TestEPAAQICalculate.aqi_type)
+                                   TestEPASQL.input_field,
+                                   TestEPASQL.algorithm,
+                                   TestEPASQL.aqi_type)
         self.config = configobj.ConfigObj(config_dict)
 
     def test_get_concentration_data(self):
         SUT = user.aqitype.AQIType(self.mock_logger, self.config)
 
         #timespan = (1740114000, 1740200400)
-        records_iter = SUT._get_concentration_data(self.calculated_field, utils.database.timespan, TestEPAAQICalculate.db_manager)
+        records_iter = SUT._get_concentration_data(self.calculated_field, utils.database.timespan, TestEPASQL.db_manager)
 
         i = 0
         for record in records_iter:
@@ -169,45 +148,13 @@ class TestEPAAQICalculate(unittest.TestCase):
                               utils.data.db_20250221_pm2_5_values[i]))
             i += 1
 
-    # ToDo: move out of SQL tests
-    def test_get_series_data(self):
-        with mock.patch.object(user.aqitype.EPAAQI, 'calculate', side_effect=mock_calculate_effect) as mock_calculate:
-            SUT = user.aqitype.AQIType(self.mock_logger, self.config)
-
-            db_records = []
-            i = 0
-            for timestamp in utils.data.db_20250221_timestamps:
-                db_records.append([timestamp,
-                                   utils.database.US_UNITS,
-                                   utils.database.ARCHIVE_INTERVAL_MINUTES,
-                                   utils.data.db_20250221_pm2_5_values[i]])
-                i += 1
-
-            with mock.patch('weewx.units.getStandardUnitType', return_value=self.unit_group):
-                with mock.patch.object(user.aqitype.AQIType, '_get_concentration_data', return_value=db_records):
-                    start_vec_t, stop_vec_t, _data_vec_t = SUT._get_series_epaaqi(self.calculated_field,
-                                                                                utils.database.timespan,
-                                                                                TestEPAAQICalculate.db_manager,
-                                                                                None,
-                                                                                None)
-
-                    mock_calculate.assert_called()
-                    self.assertEqual(mock_calculate.call_count, archive_intervals_in_day)
-
-                    i = 0
-                    for call_arg in mock_calculate.call_args_list:
-                        self.assertEqual(call_arg[0][2], data.db_20250221_pm2_5_values[i])
-                        self.assertEqual(stop_vec_t[0][i], data.db_20250221_timestamps[i])
-                        self.assertEqual(start_vec_t[0][i], data.db_20250221_timestamps[i] - utils.database.ARCHIVE_INTERVAL_SECONDS)
-                        i += 1
-
     def test_get_aggregate_avg_data(self):
         SUT = user.aqitype.AQIType(self.mock_logger, self.config)
 
         query_type, records_iter = SUT._get_aggregate_concentation_data(self.calculated_field,
                                                                         utils.database.timespan,
                                                                         'avg',
-                                                                        TestEPAAQICalculate.db_manager)
+                                                                        TestEPASQL.db_manager)
 
         self.assertEqual(query_type, 'aggregate')
         i = 0
@@ -221,7 +168,7 @@ class TestEPAAQICalculate(unittest.TestCase):
         query_type, records_iter = SUT._get_aggregate_concentation_data(self.calculated_field,
                                                                         utils.database.timespan,
                                                                         'min',
-                                                                        TestEPAAQICalculate.db_manager)
+                                                                        TestEPASQL.db_manager)
 
         self.assertEqual(query_type, 'basic')
         concentration = list(records_iter)[0][0]
@@ -233,7 +180,7 @@ class TestEPAAQICalculate(unittest.TestCase):
         query_type, records_iter = SUT._get_aggregate_concentation_data(self.calculated_field,
                                                                         utils.database.timespan,
                                                                         'max',
-                                                                        TestEPAAQICalculate.db_manager)
+                                                                        TestEPASQL.db_manager)
 
         self.assertEqual(query_type, 'basic')
         concentration = list(records_iter)[0][0]
