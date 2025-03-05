@@ -88,7 +88,7 @@ class AbstractCalculator():
     """
     Abstract Calculator class.
     """
-    def calculate(self, db_manager, aqi_type, time_stamp, reading):
+    def calculate(self, db_manager, aqi_type, inputs):
         """
         Perform the calculation.
         """
@@ -235,7 +235,8 @@ class NOWCAST(AbstractCalculator):
             self._logerr(error_message)
             raise CalculationError(error_message) from exception
 
-    def calculate(self, db_manager, aqi_type, time_stamp, reading):
+    def calculate(self, db_manager, aqi_type, inputs):
+        (time_stamp, reading) = inputs
         self._logdbg(f"The time stamp is {time_stamp}.")
         self._logdbg(f"The type is '{aqi_type}'")
 
@@ -252,7 +253,7 @@ class NOWCAST(AbstractCalculator):
         timestamps, concentrations = zip(*records)
 
         concentration = self.calculate_concentration(time_stamp, data_count, data_min, data_max, timestamps, concentrations)
-        aqi = self.sub_calculator.calculate(None, None, concentration, aqi_type)
+        aqi = self.sub_calculator.calculate(None, aqi_type, (None, concentration))
         self._logdbg(f"The computed AQI is {aqi}")
 
         return aqi
@@ -305,7 +306,7 @@ class NOWCAST(AbstractCalculator):
                                                                   max_concentration,
                                                                   timestamps,
                                                                   concentrations)
-                    aqi = self.sub_calculator.calculate(None, aqi_type, None, concentration)
+                    aqi = self.sub_calculator.calculate(None, aqi_type, (None, concentration))
                     aqi_vec.append(aqi)
 
                 except weewx.CannotCalculate:
@@ -385,7 +386,7 @@ class EPAAQI(AbstractCalculator):
         if self.log_level <= 40:
             self.logger.logerr(f"(EPAAQI) {msg}")
 
-    def calculate(self, db_manager, aqi_type, time_stamp, reading):
+    def calculate(self, db_manager, aqi_type, inputs):
         '''
         Calculate the AQI.
         Additional information:
@@ -397,6 +398,7 @@ class EPAAQI(AbstractCalculator):
             https://www.airnow.gov/aqi/aqi-calculator-concentration/
         '''
 
+        (timestamp, reading) = inputs
         try:
             self._logdbg(f"The input value is {reading}.")
             self._logdbg(f"The type is '{aqi_type}'")
