@@ -134,62 +134,6 @@ class NOWCAST(AbstractCalculator):
         if self.log_level <= 40:
             self.logger.logerr(f"(NOWCAST) {msg}")
 
-    def _get_concentration_data_stats(self, db_manager, stop, start):
-        # Get the necessary concentration data to compute for a given time
-
-        # ToDo: need to get this from the 'console' (or the record?)
-        archive_interval = 300
-
-        stats_sql_str = f'''
-        Select COUNT(rowStats.avgConcentration) as rowCount,
-            MIN(rowStats.avgConcentration) as rowMin,
-            MAX(rowStats.avgConcentration) as rowMax
-        FROM (
-            SELECT avg({self.sub_field_name}) as avgConcentration
-            FROM archive
-            WHERE dateTime > {start}
-                AND dateTime <= {stop}
-            /* In WeeWX the first recording of an hour is the archival interval of the hour, typically 5 minutes.
-            This interval records the values from 0 to 5 minutes
-            In other words, assumning an archival interval of 5 minutes, the dateTimes will be
-            05, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 00 (of the following hour)
-            So, to get the correct grouping, the archive interval must deleted from dateTime in the database */
-            GROUP BY (dateTime - {archive_interval}) / 3600
-            ) AS rowStats
-        '''
-
-        try:
-            # Only one record is returned
-            record_stats = db_manager.getSql(stats_sql_str)
-        except weedb.NoColumnError:
-            raise weewx.UnknownType(self.sub_field_name) from weedb.NoColumnError
-
-        return record_stats[0], record_stats[1], record_stats[2]
-
-    def _get_concentration_data_nowcast(self, db_manager, stop, start):
-        # Get the necessary concentration data to compute for a given time
-
-        # ToDo: need to get this from the 'console'
-        archive_interval = 300
-
-        sql_str = f'''
-        SELECT
-            MAX(dateTime) - 3600,
-            avg({self.sub_field_name}) as avgConcentration
-        FROM archive
-        WHERE dateTime > {start}
-            AND dateTime <= {stop}
-        /* In WeeWX the first recording of an hour is the archival interval of the hour, typically 5 minutes.
-        This interval records the values from 0 to 5 minutes
-        In other words, assumning an archival interval of 5 minutes, the dateTimes will be
-        05, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 00 (of the following hour)
-        So, to get the correct grouping, the archive interval must deleted from dateTime in the database */
-        GROUP BY (dateTime - {archive_interval}) / 3600
-        ORDER BY dateTime DESC
-        '''
-
-        return db_manager.genSql(sql_str)
-
     def calculate_concentration(self, time_stamp, data_count, data_min, data_max, timestamps, concentrations):
         '''
         Calculate the nowcast concentration.
