@@ -262,7 +262,8 @@ class NOWCAST(AbstractCalculator):
         self._logdbg(f"The time stamp is {timespan}.")
         self._logdbg(f"The type is '{aqi_type}'")
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
-        start_time = timespan.start - 43200 + 3600 # todo ????
+        # 'Need' 11 hours of data after current hour to compute nowcast qai
+        start_time = timespan.start - 43200 + 3600
 
         records_iter = self._get_concentration_data(db_manager, stop , start_time)
 
