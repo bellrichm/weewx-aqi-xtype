@@ -94,29 +94,28 @@ class TestEPAAQICalculate(unittest.TestCase):
             now = int(time.time() + 0.5)
             end_timestamp = (int(now / utils.database.ARCHIVE_INTERVAL_SECONDS) + 1) * utils.database.ARCHIVE_INTERVAL_SECONDS
 
-            # ToDo: - investigate this mock
-            mock_db_manager.genSql.return_value =[(end_timestamp - utils.database.ARCHIVE_INTERVAL_SECONDS,
-                                                   utils.database.US_UNITS,
-                                                   utils.database.ARCHIVE_INTERVAL_MINUTES,
-                                                   random.randint(1, 50)),
-                                                  (end_timestamp,
-                                                   utils.database.US_UNITS,
-                                                   utils.database.ARCHIVE_INTERVAL_MINUTES,
-                                                   random.randint(1, 50))]
+            db_records = [(end_timestamp - utils.database.ARCHIVE_INTERVAL_SECONDS,
+                           utils.database.US_UNITS,
+                           utils.database.ARCHIVE_INTERVAL_MINUTES,
+                           random.randint(1, 50)),
+                          (end_timestamp,
+                           utils.database.US_UNITS,
+                           utils.database.ARCHIVE_INTERVAL_MINUTES,
+                           random.randint(1, 50))]
 
             with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
+                with mock.patch.object(user.aqitype.AQIType, '_get_concentration_data', return_value=db_records):
+                    start_vec_t, stop_vec_t, data_vec_t  = \
+                        SUT.get_series(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), mock_db_manager)
 
-                start_vec_t, stop_vec_t, data_vec_t  = \
-                    SUT.get_series(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), mock_db_manager)
-
-                self.assertEqual(start_vec_t,
-                                 ([end_timestamp - 2 * utils.database.ARCHIVE_INTERVAL_SECONDS,
-                                   end_timestamp - utils.database.ARCHIVE_INTERVAL_SECONDS],
-                                  'unix_epoch',
-                                  'group_time'))
-                self.assertEqual(stop_vec_t,
-                                 ([end_timestamp - utils.database.ARCHIVE_INTERVAL_SECONDS, end_timestamp], 'unix_epoch', 'group_time'))
-                self.assertEqual(data_vec_t, (aqi, unit, unit_group))
+                    self.assertEqual(start_vec_t,
+                                    ([end_timestamp - 2 * utils.database.ARCHIVE_INTERVAL_SECONDS,
+                                    end_timestamp - utils.database.ARCHIVE_INTERVAL_SECONDS],
+                                    'unix_epoch',
+                                    'group_time'))
+                    self.assertEqual(stop_vec_t,
+                                    ([end_timestamp - utils.database.ARCHIVE_INTERVAL_SECONDS, end_timestamp], 'unix_epoch', 'group_time'))
+                    self.assertEqual(data_vec_t, (aqi, unit, unit_group))
 
     def test_get_aggregation_avg_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
