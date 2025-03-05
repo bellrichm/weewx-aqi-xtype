@@ -252,15 +252,9 @@ class NOWCAST(AbstractCalculator):
 
         return aqi
 
-    def calculate_series(self, db_manager, timespan, aqi_type):
+    def calculate_series(self, aqi_type, records_iter):
         # 02/26/2025 - not used, yet (in development)
-        self._logdbg(f"The time stamp is {timespan}.")
         self._logdbg(f"The type is '{aqi_type}'")
-        stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
-        # 'Need' 11 hours of data after current hour to compute nowcast qai
-        start_time = timespan.start - 43200 + 3600
-
-        records_iter = self._get_concentration_data_nowcast(db_manager, stop , start_time)
 
         i = 1
         timestamps = []
@@ -626,7 +620,13 @@ class AQIType(weewx.xtypes.XType):
             #        ValueTuple([], unit, unit_group))
 
         aqi_type = self.aqi_fields[obs_type]['type']
-        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate_series(db_manager, timespan, aqi_type)
+        dependent_field = self.aqi_fields[obs_type]["input"]
+        stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
+        # 'Need' 11 hours of data after current hour to compute nowcast qai
+        start_time = timespan.start - 43200 + 3600
+        records_iter = self._get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
+
+        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate_series(aqi_type, records_iter)
 
         # ToDo: placeholder
         if aggregate_type in ['min']:
@@ -833,7 +833,7 @@ class AQIType(weewx.xtypes.XType):
             # ToDo: placeholder
             aqi_type = self.aqi_fields[obs_type]['type']
             _start_list, _stop_list, concentration_list =\
-                self.aqi_fields[obs_type]['calculator'].calculate_series(db_manager, timespan, aqi_type)
+                self.aqi_fields[obs_type]['calculator'].calculate_series(aqi_type, 'foo')
             print(len(concentration_list))
             aggregate_value = None
         else:
