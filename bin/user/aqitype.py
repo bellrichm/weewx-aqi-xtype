@@ -566,7 +566,7 @@ class AQIType(weewx.xtypes.XType):
         aqi_type = self.aqi_fields[obs_type]['type']
 
         try:
-            aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (timestamp, concentration))
+            aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (timestamp))
         except weewx.CannotCalculate as exception:
             raise weewx.CannotCalculate(obs_type) from exception
 
