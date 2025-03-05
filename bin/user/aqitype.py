@@ -253,7 +253,7 @@ class NOWCAST(AbstractCalculator):
         timestamps, concentrations = zip(*records)
 
         concentration = self.calculate_concentration(time_stamp, data_count, data_min, data_max, timestamps, concentrations)
-        aqi = self.sub_calculator.calculate(None, aqi_type, (None, concentration))
+        aqi = self.sub_calculator.calculate(None, aqi_type, (concentration))
         self._logdbg(f"The computed AQI is {aqi}")
 
         return aqi
@@ -306,7 +306,7 @@ class NOWCAST(AbstractCalculator):
                                                                   max_concentration,
                                                                   timestamps,
                                                                   concentrations)
-                    aqi = self.sub_calculator.calculate(None, aqi_type, (None, concentration))
+                    aqi = self.sub_calculator.calculate(None, aqi_type, (concentration))
                     aqi_vec.append(aqi)
 
                 except weewx.CannotCalculate:
@@ -398,7 +398,7 @@ class EPAAQI(AbstractCalculator):
             https://www.airnow.gov/aqi/aqi-calculator-concentration/
         '''
 
-        (timestamp, reading) = inputs
+        (reading) = inputs
         try:
             self._logdbg(f"The input value is {reading}.")
             self._logdbg(f"The type is '{aqi_type}'")
@@ -566,7 +566,7 @@ class AQIType(weewx.xtypes.XType):
         aqi_type = self.aqi_fields[obs_type]['type']
 
         try:
-            aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, timestamp, concentration, aqi_type)
+            aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (timestamp, concentration))
         except weewx.CannotCalculate as exception:
             raise weewx.CannotCalculate(obs_type) from exception
 
@@ -576,7 +576,7 @@ class AQIType(weewx.xtypes.XType):
         aqi_type = self.aqi_fields[obs_type]['type']
 
         try:
-            aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, timestamp, concentration, aqi_type)
+            aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (concentration))
         except weewx.CannotCalculate as exception:
             raise weewx.CannotCalculate(obs_type) from exception
 
@@ -709,7 +709,7 @@ class AQIType(weewx.xtypes.XType):
                     std_unit_system = unit_system
 
                 try:
-                    aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
+                    aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (input_value))
                 except weewx.CannotCalculate:
                     aqi = None
 
@@ -849,7 +849,7 @@ class AQIType(weewx.xtypes.XType):
             aggregate_value = None
             for row in records_iter:
                 try:
-                    input_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, row[0], aqi_type)
+                    input_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (row[0]))
                 except weewx.CannotCalculate:
                     input_value = None
 
@@ -872,7 +872,7 @@ class AQIType(weewx.xtypes.XType):
                 aggregate_value = input_value
             else:
                 try:
-                    aggregate_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
+                    aggregate_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (input_value))
                 except weewx.CannotCalculate:
                     aggregate_value = None
 
