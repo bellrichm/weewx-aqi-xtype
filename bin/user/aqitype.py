@@ -197,6 +197,7 @@ class NOWCAST(AbstractCalculator):
         return aqi
 
     def calculate_series(self, aqi_type, records_iter):
+        ''' Calculate a series of nowcast aqi values. '''
         # 02/26/2025 - not used, yet (in development)
         self._logdbg(f"The type is '{aqi_type}'")
 
@@ -504,8 +505,8 @@ class AQIType(weewx.xtypes.XType):
         timestamp_interval_start = weeutil.weeutil.startOfInterval(timestamp, 3600)
         stop = timestamp_interval_start + 3600
         start = stop - 43200
-        record_stats = self._get_concentration_data_stats(db_manager, dependent_field, stop, start)
-        records_iter = self._get_concentration_data_nowcast(db_manager, dependent_field, stop, start)
+        record_stats = self.get_concentration_data_stats(db_manager, dependent_field, stop, start)
+        records_iter = self.get_concentration_data_nowcast(db_manager, dependent_field, stop, start)
 
         try:
             aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (timestamp, record_stats, records_iter))
@@ -568,7 +569,7 @@ class AQIType(weewx.xtypes.XType):
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
         # 'Need' 11 hours of data after current hour to compute nowcast qai
         start_time = timespan.start - 43200 + 3600
-        records_iter = self._get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
+        records_iter = self.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
 
         start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate_series(aqi_type, records_iter)
 
@@ -645,7 +646,7 @@ class AQIType(weewx.xtypes.XType):
                 data_vec.append(agg_vt[0])
         else:
             std_unit_system = None
-            records_iter = self._get_concentration_data(obs_type, timespan, db_manager)
+            records_iter = self.get_concentration_data(obs_type, timespan, db_manager)
 
             for record in records_iter:
                 aqi = None
@@ -790,7 +791,7 @@ class AQIType(weewx.xtypes.XType):
 
     def _get_aggregate_epaaqi(self, obs_type, timespan, aggregate_type, db_manager, **_option_dict):
         aqi_type = self.aqi_fields[obs_type]['type']
-        query_type, records_iter = self._get_aggregate_concentation_data(obs_type, timespan, aggregate_type, db_manager)
+        query_type, records_iter = self.get_aggregate_concentation_data(obs_type, timespan, aggregate_type, db_manager)
 
         if query_type == 'aggregate':
             input_values = []
@@ -827,8 +828,8 @@ class AQIType(weewx.xtypes.XType):
         unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
         return weewx.units.ValueTuple(aggregate_value, unit_type, group)
 
-    def _get_concentration_data_stats(self, db_manager, dependent_field, stop, start):
-        # Get the necessary concentration data to compute for a given time
+    def get_concentration_data_stats(self, db_manager, dependent_field, stop, start):
+        ''' Get the necessary concentration data to compute for a given time. '''
 
         # ToDo: need to get this from the 'console' (or the record?)
         archive_interval = 300
@@ -859,8 +860,8 @@ class AQIType(weewx.xtypes.XType):
 
         return record_stats
 
-    def _get_concentration_data_nowcast(self, db_manager, dependent_field, stop, start):
-        # Get the necessary concentration data to compute for a given time
+    def get_concentration_data_nowcast(self, db_manager, dependent_field, stop, start):
+        ''' Get the necessary concentration data to compute for a given time. '''
 
         # ToDo: need to get this from the 'console'
         archive_interval = 300
@@ -883,9 +884,19 @@ class AQIType(weewx.xtypes.XType):
 
         return db_manager.genSql(sql_str)
 
-    def _get_concentration_data(self, dependent_field, timespan, db_manager):
+    def get_concentration_data(self, dependent_field, timespan, db_manager):
+        ''' Get the concentration data necessary to compute AQI. '''
         dependent_field = self.aqi_fields[dependent_field]['input']
-        sql_str = f'SELECT dateTime, usUnits, `interval`, {dependent_field} FROM {db_manager.table_name} WHERE dateTime > ? AND dateTime <= ?'
+        sql_str = f'''
+        SELECT 
+            dateTime, 
+            usUnits, 
+            `interval`, 
+            {dependent_field} 
+        FROM 
+            {db_manager.table_name} 
+        WHERE dateTime > ? AND dateTime <= ?
+        '''
 
         try:
             records_iter = db_manager.genSql(sql_str, timespan)
@@ -894,7 +905,8 @@ class AQIType(weewx.xtypes.XType):
 
         return records_iter
 
-    def _get_aggregate_concentation_data(self, obs_type, timespan, aggregate_type, db_manager):
+    def get_aggregate_concentation_data(self, obs_type, timespan, aggregate_type, db_manager):
+        ''' Get the concentration data to compute aggregated AQI values. '''
         dependent_field = self.aqi_fields[obs_type]['input']
 
         simple_sql_stmts = {

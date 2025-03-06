@@ -70,7 +70,7 @@ class TestGetScalar(unittest.TestCase):
                 self.assertEqual(value_tuple[0], aqi)
                 self.assertEqual(value_tuple[1], unit)
                 self.assertEqual(value_tuple[2], unit_group)
-    
+
 class TestGetSeries(unittest.TestCase):
     def test_get_series_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
@@ -107,7 +107,7 @@ class TestGetSeries(unittest.TestCase):
                            random.randint(1, 50))]
 
             with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
-                with mock.patch.object(user.aqitype.AQIType, '_get_concentration_data', return_value=db_records):
+                with mock.patch.object(user.aqitype.AQIType, 'get_concentration_data', return_value=db_records):
                     start_vec_t, stop_vec_t, data_vec_t  = \
                         SUT.get_series(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), mock_db_manager)
 
@@ -147,7 +147,7 @@ class TestGetAggregate(unittest.TestCase):
             end_timestamp = (int(now / utils.database.ARCHIVE_INTERVAL_SECONDS) + 1) * utils.database.ARCHIVE_INTERVAL_SECONDS
 
             mock_data  = 'aggregate', [[random.randint(11, 100)], [random.randint(11, 100)]]
-            with mock.patch.object(user.aqitype.AQIType, '_get_aggregate_concentation_data', return_value=mock_data):
+            with mock.patch.object(user.aqitype.AQIType, 'get_aggregate_concentation_data', return_value=mock_data):
                 with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
 
                     value_tuple  = \
@@ -182,7 +182,7 @@ class TestGetAggregate(unittest.TestCase):
             end_timestamp = (int(now / utils.database.ARCHIVE_INTERVAL_SECONDS) + 1) * utils.database.ARCHIVE_INTERVAL_SECONDS
 
             mock_data  = random_string(), [[random.random()],]
-            with mock.patch.object(user.aqitype.AQIType, '_get_aggregate_concentation_data', return_value=mock_data):
+            with mock.patch.object(user.aqitype.AQIType, 'get_aggregate_concentation_data', return_value=mock_data):
                 with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
 
                     value_tuple  = \

@@ -87,7 +87,7 @@ class TestSQL(unittest.TestCase):
         timestamp_interval_start = weeutil.weeutil.startOfInterval(1740168300, 3600)
         stop = timestamp_interval_start + 3600
         start = stop - 43200
-        data_count, data_min, data_max = SUT._get_concentration_data_stats(TestSQL.db_manager, TestSQL.input_field, stop, start)
+        data_count, data_min, data_max = SUT.get_concentration_data_stats(TestSQL.db_manager, TestSQL.input_field, stop, start)
 
         self.assertEqual(data_count, 12)
         self.assertEqual(data_min, 1.1982950191570885)
@@ -98,7 +98,7 @@ class TestSQL(unittest.TestCase):
 
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), utils.database.timespan.stop)
 
-        records_iter = SUT._get_concentration_data_nowcast(self.db_manager, TestSQL.input_field, stop , utils.database.timespan.start - 43200)
+        records_iter = SUT.get_concentration_data_nowcast(self.db_manager, TestSQL.input_field, stop , utils.database.timespan.start - 43200)
         records = list(records_iter)
         timestamps = list(list(zip(*records))[0])
         concentrations = list(list(zip(*records))[1])
@@ -119,7 +119,7 @@ class TestSQL(unittest.TestCase):
         SUT = user.aqitype.AQIType(self.mock_logger, self.config)
 
         #timespan = (1740114000, 1740200400)
-        records_iter = SUT._get_concentration_data(self.calculated_field, utils.database.timespan, TestSQL.db_manager)
+        records_iter = SUT.get_concentration_data(self.calculated_field, utils.database.timespan, TestSQL.db_manager)
 
         i = 0
         for record in records_iter:
@@ -133,7 +133,7 @@ class TestSQL(unittest.TestCase):
     def test_get_aggregate_avg_data(self):
         SUT = user.aqitype.AQIType(self.mock_logger, self.config)
 
-        query_type, records_iter = SUT._get_aggregate_concentation_data(self.calculated_field,
+        query_type, records_iter = SUT.get_aggregate_concentation_data(self.calculated_field,
                                                                         utils.database.timespan,
                                                                         'avg',
                                                                         TestSQL.db_manager)
@@ -147,7 +147,7 @@ class TestSQL(unittest.TestCase):
     def test_get_aggregate_min_data(self):
         SUT = user.aqitype.AQIType(self.mock_logger, self.config)
 
-        query_type, records_iter = SUT._get_aggregate_concentation_data(self.calculated_field,
+        query_type, records_iter = SUT.get_aggregate_concentation_data(self.calculated_field,
                                                                         utils.database.timespan,
                                                                         'min',
                                                                         TestSQL.db_manager)
@@ -159,7 +159,7 @@ class TestSQL(unittest.TestCase):
     def test_get_aggregate_max_data(self):
         SUT = user.aqitype.AQIType(self.mock_logger, self.config)
 
-        query_type, records_iter = SUT._get_aggregate_concentation_data(self.calculated_field,
+        query_type, records_iter = SUT.get_aggregate_concentation_data(self.calculated_field,
                                                                         utils.database.timespan,
                                                                         'max',
                                                                         TestSQL.db_manager)
