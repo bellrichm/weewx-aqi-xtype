@@ -88,28 +88,40 @@ class TestNowcastDevelopment(unittest.TestCase):
     def setUp(self):
         self.mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
-    @unittest.skip('ToDo: needs updating')
     def test_calculate_series_prototype(self):
         # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
         #       Note, due to performance concerns, I am not sure the Nowcast algotithm will be supported.
         #
-        sub_calculator = user.aqitype.EPAAQI(self.mock_logger, random.randint(1, 100), None, None)
-        SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), sub_calculator, TestNowcastDevelopment.input_field)
+        #sub_calculator = user.aqitype.EPAAQI(self.mock_logger, random.randint(1, 100), None, None)
+        #SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), sub_calculator, TestNowcastDevelopment.input_field)
 
-        start_vec, stop_vec, aqi_vec = SUT.calculate_series('pm2_5', 'foo')
+        algorithm = 'NOWCAST'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = utils.database.PM2_5_INPUT_FIELD
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+
+        SUT = user.aqitype.AQIType(self.mock_logger, config)
+        start_vec, stop_vec, aqi_vec = SUT.get_series(calculated_field, utils.database.timespan, TestNowcastDevelopment.db_manager)
 
         self.assertEqual(start_vec,
-                         [1740114000, 1740117600, 1740121200, 1740124800, 1740128400, 1740132000,
-                          1740135600, 1740139200, 1740142800, 1740146400, 1740150000, 1740153600,
-                          1740157200, 1740160800, 1740164400, 1740168000, 1740171600, 1740175200,
-                          1740178800, 1740182400, 1740186000, 1740189600, 1740193200, 1740196800])
+                         ([1740114000, 1740117600, 1740121200, 1740124800, 1740128400, 1740132000,
+                           1740135600, 1740139200, 1740142800, 1740146400, 1740150000, 1740153600,
+                           1740157200, 1740160800, 1740164400, 1740168000, 1740171600, 1740175200,
+                           1740178800, 1740182400, 1740186000, 1740189600, 1740193200, 1740196800],
+                          'unix_epoch', 'group_time'))
         self.assertEqual(stop_vec,
-                         [1740117600, 1740121200, 1740124800, 1740128400, 1740132000, 1740135600,
-                          1740139200, 1740142800, 1740146400, 1740150000, 1740153600, 1740157200,
-                          1740160800, 1740164400, 1740168000, 1740171600, 1740175200, 1740178800,
-                          1740182400, 1740186000, 1740189600, 1740193200, 1740196800, 1740200400])
+                         ([1740117600, 1740121200, 1740124800, 1740128400, 1740132000, 1740135600,
+                           1740139200, 1740142800, 1740146400, 1740150000, 1740153600, 1740157200,
+                           1740160800, 1740164400, 1740168000, 1740171600, 1740175200, 1740178800,
+                           1740182400, 1740186000, 1740189600, 1740193200, 1740196800, 1740200400],
+                          'unix_epoch', 'group_time'))                           
         self.assertEqual(aqi_vec,
-                         [9, 8, 7, 8, 7, 7,7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 8])
+                         ([9, 8, 7, 8, 7, 7,7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 8],
+                          None, None))
 
 if __name__ == '__main__':
 
