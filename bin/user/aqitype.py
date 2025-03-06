@@ -88,7 +88,7 @@ class AbstractCalculator():
     """
     Abstract Calculator class.
     """
-    def calculate(self, db_manager, time_stamp, reading, aqi_type):
+    def calculate(self, db_manager, aqi_type, inputs):
         """
         Perform the calculation.
         """
@@ -133,62 +133,6 @@ class NOWCAST(AbstractCalculator):
     def _logerr(self, msg):
         if self.log_level <= 40:
             self.logger.logerr(f"(NOWCAST) {msg}")
-
-    def _get_concentration_data_stats(self, db_manager, stop, start):
-        # Get the necessary concentration data to compute for a given time
-
-        # ToDo: need to get this from the 'console' (or the record?)
-        archive_interval = 300
-
-        stats_sql_str = f'''
-        Select COUNT(rowStats.avgConcentration) as rowCount,
-            MIN(rowStats.avgConcentration) as rowMin,
-            MAX(rowStats.avgConcentration) as rowMax
-        FROM (
-            SELECT avg({self.sub_field_name}) as avgConcentration
-            FROM archive
-            WHERE dateTime > {start}
-                AND dateTime <= {stop}
-            /* In WeeWX the first recording of an hour is the archival interval of the hour, typically 5 minutes.
-            This interval records the values from 0 to 5 minutes
-            In other words, assumning an archival interval of 5 minutes, the dateTimes will be
-            05, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 00 (of the following hour)
-            So, to get the correct grouping, the archive interval must deleted from dateTime in the database */
-            GROUP BY (dateTime - {archive_interval}) / 3600
-            ) AS rowStats
-        '''
-
-        try:
-            # Only one record is returned
-            record_stats = db_manager.getSql(stats_sql_str)
-        except weedb.NoColumnError:
-            raise weewx.UnknownType(self.sub_field_name) from weedb.NoColumnError
-
-        return record_stats[0], record_stats[1], record_stats[2]
-
-    def _get_concentration_data(self, db_manager, stop, start):
-        # Get the necessary concentration data to compute for a given time
-
-        # ToDo: need to get this from the 'console'
-        archive_interval = 300
-
-        sql_str = f'''
-        SELECT
-            MAX(dateTime) - 3600,
-            avg({self.sub_field_name}) as avgConcentration
-        FROM archive
-        WHERE dateTime > {start}
-            AND dateTime <= {stop}
-        /* In WeeWX the first recording of an hour is the archival interval of the hour, typically 5 minutes.
-        This interval records the values from 0 to 5 minutes
-        In other words, assumning an archival interval of 5 minutes, the dateTimes will be
-        05, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 00 (of the following hour)
-        So, to get the correct grouping, the archive interval must deleted from dateTime in the database */
-        GROUP BY (dateTime - {archive_interval}) / 3600
-        ORDER BY dateTime DESC
-        '''
-
-        return db_manager.genSql(sql_str)
 
     def calculate_concentration(self, time_stamp, data_count, data_min, data_max, timestamps, concentrations):
         '''
@@ -235,37 +179,26 @@ class NOWCAST(AbstractCalculator):
             self._logerr(error_message)
             raise CalculationError(error_message) from exception
 
-    def calculate(self, db_manager, time_stamp, reading, aqi_type):
-        self._logdbg(f"The time stamp is {time_stamp}.")
+    def calculate(self, db_manager, aqi_type, inputs):
+        (timestamp, record_stats, records_iter) = inputs
+        self._logdbg(f"The time stamp is {timestamp}.")
+        self._logdbg(f"record_stats is {record_stats}.")
         self._logdbg(f"The type is '{aqi_type}'")
 
-        if time_stamp is None:
-            raise weewx.CannotCalculate()
-
-        timestamp_interval_start = weeutil.weeutil.startOfInterval(time_stamp, 3600)
-        stop = timestamp_interval_start + 3600
-        start = stop - 43200
-        data_count, data_min, data_max = self._get_concentration_data_stats(db_manager, stop, start)
-        records_iter = self._get_concentration_data(db_manager, stop, start)
+        data_count, data_min, data_max = record_stats
 
         records = list(records_iter)
         timestamps, concentrations = zip(*records)
 
-        concentration = self.calculate_concentration(time_stamp, data_count, data_min, data_max, timestamps, concentrations)
-        aqi = self.sub_calculator.calculate(None, None, concentration, aqi_type)
+        concentration = self.calculate_concentration(timestamp, data_count, data_min, data_max, timestamps, concentrations)
+        aqi = self.sub_calculator.calculate(None, aqi_type, (concentration))
         self._logdbg(f"The computed AQI is {aqi}")
 
         return aqi
 
-    def calculate_series(self, db_manager, timespan, aqi_type):
+    def calculate_series(self, aqi_type, records_iter):
         # 02/26/2025 - not used, yet (in development)
-        self._logdbg(f"The time stamp is {timespan}.")
         self._logdbg(f"The type is '{aqi_type}'")
-        stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
-        # 'Need' 11 hours of data after current hour to compute nowcast qai
-        start_time = timespan.start - 43200 + 3600
-
-        records_iter = self._get_concentration_data(db_manager, stop , start_time)
 
         i = 1
         timestamps = []
@@ -305,7 +238,7 @@ class NOWCAST(AbstractCalculator):
                                                                   max_concentration,
                                                                   timestamps,
                                                                   concentrations)
-                    aqi = self.sub_calculator.calculate(None, None, concentration, aqi_type)
+                    aqi = self.sub_calculator.calculate(None, aqi_type, (concentration))
                     aqi_vec.append(aqi)
 
                 except weewx.CannotCalculate:
@@ -385,7 +318,7 @@ class EPAAQI(AbstractCalculator):
         if self.log_level <= 40:
             self.logger.logerr(f"(EPAAQI) {msg}")
 
-    def calculate(self, db_manager, time_stamp, reading, aqi_type):
+    def calculate(self, db_manager, aqi_type, inputs):
         '''
         Calculate the AQI.
         Additional information:
@@ -397,6 +330,7 @@ class EPAAQI(AbstractCalculator):
             https://www.airnow.gov/aqi/aqi-calculator-concentration/
         '''
 
+        (reading) = inputs
         try:
             self._logdbg(f"The input value is {reading}.")
             self._logdbg(f"The type is '{aqi_type}'")
@@ -509,6 +443,7 @@ class AQIType(weewx.xtypes.XType):
                 sub_field_name = field_option['input']
                 field_option['get_aggregate'] = self._get_aggregate_nowcast
                 field_option['get_series'] = self._get_series_nowcast
+                field_option['get_scalar'] = self._get_scalar_nowcast
             else:
                 if field_option['type'] not in EPAAQI.readings:
                     raise ValueError(f"Algorithm 'EPAAQI' is not supported for pollutant '{field_option['type']}'")
@@ -516,6 +451,7 @@ class AQIType(weewx.xtypes.XType):
                 field_option['support_series'] = True
                 field_option['get_aggregate'] = self._get_aggregate_epaaqi
                 field_option['get_series'] = self._get_series_epaaqi
+                field_option['get_scalar'] = self._get_scalar_epaaqi
             field_option['calculator']  = \
                   getattr(sys.modules[__name__], field_option['algorithm'])(self.logger, log_level, sub_calculator, sub_field_name)
 
@@ -541,12 +477,7 @@ class AQIType(weewx.xtypes.XType):
         if record[dependent_field] is None:
             raise weewx.CannotCalculate(obs_type)
 
-        aqi_type = self.aqi_fields[obs_type]['type']
-
-        try:
-            aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, record['dateTime'], record[dependent_field], aqi_type)
-        except weewx.CannotCalculate as exception:
-            raise weewx.CannotCalculate(obs_type) from exception
+        aqi = self.aqi_fields[obs_type]['get_scalar'](obs_type, db_manager, record['dateTime'], record[dependent_field])
 
         unit_type, group = weewx.units.getStandardUnitType(record['usUnits'], obs_type)
         return weewx.units.ValueTuple(aqi, unit_type, group)
@@ -562,6 +493,36 @@ class AQIType(weewx.xtypes.XType):
         if obs_type not in self.aqi_fields:
             raise weewx.UnknownType(obs_type)
         return self.aqi_fields[obs_type]['get_aggregate'](obs_type, timespan, aggregate_type, db_manager, **option_dict)
+
+    def _get_scalar_nowcast(self, obs_type, db_manager, timestamp, _concentration):
+        aqi_type = self.aqi_fields[obs_type]['type']
+        dependent_field = self.aqi_fields[obs_type]["input"]
+
+        if timestamp is None:
+            raise weewx.CannotCalculate()
+
+        timestamp_interval_start = weeutil.weeutil.startOfInterval(timestamp, 3600)
+        stop = timestamp_interval_start + 3600
+        start = stop - 43200
+        record_stats = self._get_concentration_data_stats(db_manager, dependent_field, stop, start)
+        records_iter = self._get_concentration_data_nowcast(db_manager, dependent_field, stop, start)
+
+        try:
+            aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (timestamp, record_stats, records_iter))
+        except weewx.CannotCalculate as exception:
+            raise weewx.CannotCalculate(obs_type) from exception
+
+        return aqi
+
+    def _get_scalar_epaaqi(self, obs_type, db_manager, _timestamp, concentration):
+        aqi_type = self.aqi_fields[obs_type]['type']
+
+        try:
+            aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (concentration))
+        except weewx.CannotCalculate as exception:
+            raise weewx.CannotCalculate(obs_type) from exception
+
+        return aqi
 
     def _get_series_nowcast(self, obs_type, _timespan, db_manager, aggregate_type, _aggregate_interval, **_option_dict):
         # For now the NOWCAST algorithm does not support 'series'
@@ -603,7 +564,13 @@ class AQIType(weewx.xtypes.XType):
             #        ValueTuple([], unit, unit_group))
 
         aqi_type = self.aqi_fields[obs_type]['type']
-        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate_series(db_manager, timespan, aqi_type)
+        dependent_field = self.aqi_fields[obs_type]["input"]
+        stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
+        # 'Need' 11 hours of data after current hour to compute nowcast qai
+        start_time = timespan.start - 43200 + 3600
+        records_iter = self._get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
+
+        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate_series(aqi_type, records_iter)
 
         # ToDo: placeholder
         if aggregate_type in ['min']:
@@ -690,7 +657,7 @@ class AQIType(weewx.xtypes.XType):
                     std_unit_system = unit_system
 
                 try:
-                    aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
+                    aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (input_value))
                 except weewx.CannotCalculate:
                     aqi = None
 
@@ -810,7 +777,7 @@ class AQIType(weewx.xtypes.XType):
             # ToDo: placeholder
             aqi_type = self.aqi_fields[obs_type]['type']
             _start_list, _stop_list, concentration_list =\
-                self.aqi_fields[obs_type]['calculator'].calculate_series(db_manager, timespan, aqi_type)
+                self.aqi_fields[obs_type]['calculator'].calculate_series(aqi_type, 'foo')
             print(len(concentration_list))
             aggregate_value = None
         else:
@@ -830,7 +797,7 @@ class AQIType(weewx.xtypes.XType):
             aggregate_value = None
             for row in records_iter:
                 try:
-                    input_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, row[0], aqi_type)
+                    input_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (row[0]))
                 except weewx.CannotCalculate:
                     input_value = None
 
@@ -853,22 +820,77 @@ class AQIType(weewx.xtypes.XType):
                 aggregate_value = input_value
             else:
                 try:
-                    aggregate_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, None, input_value, aqi_type)
+                    aggregate_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (input_value))
                 except weewx.CannotCalculate:
                     aggregate_value = None
 
         unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
-
         return weewx.units.ValueTuple(aggregate_value, unit_type, group)
 
-    def _get_concentration_data(self, obs_type, timespan, db_manager):
-        dependent_field = self.aqi_fields[obs_type]['input']
+    def _get_concentration_data_stats(self, db_manager, dependent_field, stop, start):
+        # Get the necessary concentration data to compute for a given time
+
+        # ToDo: need to get this from the 'console' (or the record?)
+        archive_interval = 300
+
+        stats_sql_str = f'''
+        Select COUNT(rowStats.avgConcentration) as rowCount,
+            MIN(rowStats.avgConcentration) as rowMin,
+            MAX(rowStats.avgConcentration) as rowMax
+        FROM (
+            SELECT avg({dependent_field}) as avgConcentration
+            FROM archive
+            WHERE dateTime > {start}
+                AND dateTime <= {stop}
+            /* In WeeWX the first recording of an hour is the archival interval of the hour, typically 5 minutes.
+            This interval records the values from 0 to 5 minutes
+            In other words, assumning an archival interval of 5 minutes, the dateTimes will be
+            05, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 00 (of the following hour)
+            So, to get the correct grouping, the archive interval must deleted from dateTime in the database */
+            GROUP BY (dateTime - {archive_interval}) / 3600
+            ) AS rowStats
+        '''
+
+        try:
+            # Only one record is returned
+            record_stats = db_manager.getSql(stats_sql_str)
+        except weedb.NoColumnError:
+            raise weewx.UnknownType(dependent_field) from weedb.NoColumnError
+
+        return record_stats
+
+    def _get_concentration_data_nowcast(self, db_manager, dependent_field, stop, start):
+        # Get the necessary concentration data to compute for a given time
+
+        # ToDo: need to get this from the 'console'
+        archive_interval = 300
+
+        sql_str = f'''
+        SELECT
+            MAX(dateTime) - 3600,
+            avg({dependent_field}) as avgConcentration
+        FROM archive
+        WHERE dateTime > {start}
+            AND dateTime <= {stop}
+        /* In WeeWX the first recording of an hour is the archival interval of the hour, typically 5 minutes.
+        This interval records the values from 0 to 5 minutes
+        In other words, assumning an archival interval of 5 minutes, the dateTimes will be
+        05, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 00 (of the following hour)
+        So, to get the correct grouping, the archive interval must deleted from dateTime in the database */
+        GROUP BY (dateTime - {archive_interval}) / 3600
+        ORDER BY dateTime DESC
+        '''
+
+        return db_manager.genSql(sql_str)
+
+    def _get_concentration_data(self, dependent_field, timespan, db_manager):
+        dependent_field = self.aqi_fields[dependent_field]['input']
         sql_str = f'SELECT dateTime, usUnits, `interval`, {dependent_field} FROM {db_manager.table_name} WHERE dateTime > ? AND dateTime <= ?'
 
         try:
             records_iter = db_manager.genSql(sql_str, timespan)
         except weedb.NoColumnError:
-            raise weewx.UnknownType(obs_type) from weedb.NoColumnError
+            raise weewx.UnknownType(dependent_field) from weedb.NoColumnError
 
         return records_iter
 
@@ -942,6 +964,7 @@ class AQIType(weewx.xtypes.XType):
             raise weewx.UnknownType(obs_type) from weedb.NoColumnError
 
         return query_type, records_iter
+
 
 class AQISearchList(weewx.cheetahgenerator.SearchList):
     """ Implement tags used by templates in the skin. """
