@@ -35,6 +35,42 @@ def setup_config(calculated_field, input_field, algorithm, aqi_type):
     }
     return config_dict
 
+class TestGetScalar(unittest.TestCase):
+    def test_get_scalar_valid_inputs(self):
+        mock_logger = mock.Mock(spec=user.aqitype.Logger)
+
+        calculator = user.aqitype.EPAAQI
+        algorithm = 'EPAAQI'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = random_string()
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+
+        aqi = random.randint(11, 100)
+        with mock.patch.object(calculator, 'calculate', return_value=aqi):
+            SUT = user.aqitype.AQIType(mock_logger, config)
+
+            unit = random_string()
+            unit_group = random_string()
+
+            record = {
+                'usUnits': utils.database.US_UNITS,
+                'interval': utils.database.ARCHIVE_INTERVAL_MINUTES,
+                'dateTime': time.time(),
+                input_field: random.randint(0, 10),
+            }
+
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
+
+                value_tuple = SUT.get_scalar(calculated_field, record)
+
+                self.assertEqual(value_tuple[0], aqi)
+                self.assertEqual(value_tuple[1], unit)
+                self.assertEqual(value_tuple[2], unit_group)
+    
 class TestGetSeries(unittest.TestCase):
     def test_get_series_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
