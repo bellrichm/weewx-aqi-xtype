@@ -72,6 +72,43 @@ class TestGetScalarNowcast(unittest.TestCase):
                 self.assertEqual(value_tuple[1], unit)
                 self.assertEqual(value_tuple[2], unit_group)
 
+    def test_get_series_valid_inputs(self):
+        mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_db_manager = mock.Mock()
+
+        calculator = user.aqitype.NOWCAST
+        algorithm = 'NOWCAST'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = utils.database.PM2_5_INPUT_FIELD
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+
+        mock_start_vec = []
+        mock_stop_vec = []
+        mock_aqi_vec = []
+        for _ in range(random.randint(2, 11)):
+            mock_start_vec.append(random.randint(101,200))
+            mock_start_vec.append(random.randint(201,300))
+            mock_aqi_vec.append(random.randint(1,100))
+
+        with mock.patch.object(calculator, 'calculate_series', return_value=(mock_start_vec, mock_stop_vec, mock_aqi_vec)):
+            SUT = user.aqitype.AQIType(mock_logger, config)
+
+            unit = random_string()
+            unit_group = random_string()
+
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
+                start_vec, stop_vec, aqi_vec = SUT.get_series(calculated_field, utils.database.timespan, mock_db_manager)
+
+                self.assertEqual(start_vec, (mock_start_vec, 'unix_epoch', 'group_time'))
+                self.assertEqual(stop_vec, (mock_stop_vec, 'unix_epoch', 'group_time'))
+                self.assertEqual(aqi_vec, (mock_aqi_vec, unit, unit_group))
+
+        print("done")
+
     def test_get_series_timespan_too_short(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
         mock_db_manager = mock.Mock()
