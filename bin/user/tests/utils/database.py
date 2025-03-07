@@ -11,7 +11,6 @@ Necessary functions to initialize a WeeWX database to be used for testing SQL st
 import weewx.manager
 import weeutil.weeutil
 
-#from utils import helpers
 import data
 import helpers
 
