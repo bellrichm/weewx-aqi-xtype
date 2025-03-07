@@ -525,14 +525,47 @@ class AQIType(weewx.xtypes.XType):
 
         return aqi
 
-    def _get_series_nowcast(self, obs_type, _timespan, db_manager, aggregate_type, _aggregate_interval, **_option_dict):
-        # For now the NOWCAST algorithm does not support 'series'
-        # Because XTypeTable will also try, an empty 'set' of data is returned.
+    def _get_series_nowcast(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **_option_dict):
         unit, unit_group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
 
-        return (ValueTuple([], 'unix_epoch', 'group_time'),
-                ValueTuple([], 'unix_epoch', 'group_time'),
-                ValueTuple([], unit, unit_group))
+        # Because other XTypes will also try, an empty 'set' of data is returned.
+        if timespan.stop - timespan.start < 3600:
+            #raise weewx.UnknownAggregation
+            self._logerr("Series less than a hour are not supported.")
+            return (ValueTuple([], 'unix_epoch', 'group_time'),
+                    ValueTuple([], 'unix_epoch', 'group_time'),
+                    ValueTuple([], unit, unit_group))
+
+        # Because other XTypes will also try, an empty 'set' of data is returned.
+        # ToDo: placeholder
+        if aggregate_type:
+            #raise weewx.UnknownAggregation
+            self._logerr(f"Agregate type '{aggregate_type}' is not supported.")
+            return (ValueTuple([], 'unix_epoch', 'group_time'),
+                    ValueTuple([], 'unix_epoch', 'group_time'),
+                    ValueTuple([], unit, unit_group))
+
+        # Because other XTypes will also try, an empty 'set' of data is returned.
+        # ToDo: what is valid? (possibly divisible by an hour, 3600 seconds)
+        if aggregate_interval:
+            #raise weewx.UnknownAggregation
+            self._logerr(f"Agregate interval '{aggregate_interval}' is not supported.")
+            return (ValueTuple([], 'unix_epoch', 'group_time'),
+                    ValueTuple([], 'unix_epoch', 'group_time'),
+                    ValueTuple([], unit, unit_group))
+
+        aqi_type = self.aqi_fields[obs_type]['type']
+        dependent_field = self.aqi_fields[obs_type]["input"]
+        stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
+        # 'Need' 11 hours of data after current hour to compute nowcast qai
+        start_time = timespan.start - 43200 + 3600
+        records_iter = self.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
+
+        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate_series(aqi_type, records_iter)
+
+        return (ValueTuple(start_list, 'unix_epoch', 'group_time'),
+                ValueTuple(stop_list, 'unix_epoch', 'group_time'),
+                ValueTuple(aqi_list, unit, unit_group))
 
     def _get_series_nowcast_prototype(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **_option_dict):
         aggregate_interval_seconds = weeutil.weeutil.nominal_spans(aggregate_interval)
@@ -1034,5 +1067,5 @@ class AQISearchList(weewx.cheetahgenerator.SearchList):
         return index
 
 # The following is to develop series support for nowcast
-AQIType._get_series_nowcast = AQIType._get_series_nowcast_prototype # pylint: disable=protected-access
+#AQIType._get_series_nowcast = AQIType._get_series_nowcast_prototype # pylint: disable=protected-access
 #AQIType._get_aggregate_nowcast = AQIType._get_aggregate_nowcast_prototype # pylint: disable=protected-access

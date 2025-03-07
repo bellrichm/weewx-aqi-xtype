@@ -96,7 +96,63 @@ class TestGetScalarNowcast(unittest.TestCase):
             start_vec, stop_vec, aqi_vec = SUT.get_series(calculated_field, timespan, mock_db_manager)
 
             self.assertEqual(start_vec, ([], 'unix_epoch', 'group_time'))
-            self.assertEqual(stop_vec, ([], 'unix_epoch', 'group_time'))                     
+            self.assertEqual(stop_vec, ([], 'unix_epoch', 'group_time'))
+            self.assertEqual(aqi_vec, ([], unit, unit_group))
+
+    def test_get_series_aggregate_type_specified(self):
+        mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_db_manager = mock.Mock()
+
+        algorithm = 'NOWCAST'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = utils.database.PM2_5_INPUT_FIELD
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+
+        SUT = user.aqitype.AQIType(mock_logger, config)
+
+        unit = random_string()
+        unit_group = random_string()
+
+        with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
+            start_vec, stop_vec, aqi_vec = SUT.get_series(calculated_field,
+                                                          utils.database.timespan,
+                                                          mock_db_manager,
+                                                          aggregate_type=random_string())
+
+            self.assertEqual(start_vec, ([], 'unix_epoch', 'group_time'))
+            self.assertEqual(stop_vec, ([], 'unix_epoch', 'group_time'))
+            self.assertEqual(aqi_vec, ([], unit, unit_group))
+
+    def test_get_series_aggregate_interval_specified(self):
+        mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_db_manager = mock.Mock()
+
+        algorithm = 'NOWCAST'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = utils.database.PM2_5_INPUT_FIELD
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+
+        SUT = user.aqitype.AQIType(mock_logger, config)
+
+        unit = random_string()
+        unit_group = random_string()
+
+        with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
+            start_vec, stop_vec, aqi_vec = SUT.get_series(calculated_field,
+                                                          utils.database.timespan,
+                                                          mock_db_manager,
+                                                          aggregate_interval=random.randint(1, 100))
+
+            self.assertEqual(start_vec, ([], 'unix_epoch', 'group_time'))
+            self.assertEqual(stop_vec, ([], 'unix_epoch', 'group_time'))
             self.assertEqual(aqi_vec, ([], unit, unit_group))
 
 class TestNowcastDevelopment(unittest.TestCase):
