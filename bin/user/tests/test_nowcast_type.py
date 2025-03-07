@@ -15,6 +15,8 @@ import random
 import string
 import time
 
+import weeutil
+
 import user.aqitype
 
 import utils.database
@@ -70,6 +72,33 @@ class TestGetScalarNowcast(unittest.TestCase):
                 self.assertEqual(value_tuple[1], unit)
                 self.assertEqual(value_tuple[2], unit_group)
 
+    def test_get_series_timespan_too_short(self):
+        mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_db_manager = mock.Mock()
+
+        algorithm = 'NOWCAST'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = utils.database.PM2_5_INPUT_FIELD
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+        timespan = weeutil.weeutil.TimeSpan(utils.database.timespan.start,
+                                            utils.database.timespan.start + 3600 - 5)
+
+        SUT = user.aqitype.AQIType(mock_logger, config)
+
+        unit = random_string()
+        unit_group = random_string()
+
+        with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
+            start_vec, stop_vec, aqi_vec = SUT.get_series(calculated_field, timespan, mock_db_manager)
+
+            self.assertEqual(start_vec, ([], 'unix_epoch', 'group_time'))
+            self.assertEqual(stop_vec, ([], 'unix_epoch', 'group_time'))                     
+            self.assertEqual(aqi_vec, ([], unit, unit_group))
+
 class TestNowcastDevelopment(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -124,7 +153,6 @@ class TestNowcastDevelopment(unittest.TestCase):
     def test_calculate_series_prototype02(self):
         # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
         #  Using this one will allow 'test_calculate_series_prototype' to stay 'pristine'
-        import weeutil # want to ensure not accidentally used in other methods pylint: disable=import-outside-toplevel
 
         algorithm = 'NOWCAST'
         aqi_type = 'pm2_5'
@@ -135,7 +163,7 @@ class TestNowcastDevelopment(unittest.TestCase):
         config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
         config = configobj.ConfigObj(config_dict)
         timespan = weeutil.weeutil.TimeSpan(utils.database.timespan.start,
-                                            utils.database.timespan.start + 3600 - 5)
+                                            utils.database.timespan.start + 3600)
 
         SUT = user.aqitype.AQIType(self.mock_logger, config)
         ret_value = SUT.get_series(calculated_field, timespan, TestNowcastDevelopment.db_manager)
@@ -145,8 +173,8 @@ class TestNowcastDevelopment(unittest.TestCase):
         print("done")
 
 if __name__ == '__main__':
-    test_suite = unittest.TestSuite()
-    test_suite.addTest(TestNowcastDevelopment('test_calculate_series_prototype02'))
-    unittest.TextTestRunner().run(test_suite)
+    #test_suite = unittest.TestSuite()
+    #test_suite.addTest(TestNowcastDevelopment('test_calculate_series_prototype02'))
+    #unittest.TextTestRunner().run(test_suite)
 
-    #unittest.main(exit=False)
+    unittest.main(exit=False)
