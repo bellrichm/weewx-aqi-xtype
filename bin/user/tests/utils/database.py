@@ -11,8 +11,10 @@ Necessary functions to initialize a WeeWX database to be used for testing SQL st
 import weewx.manager
 import weeutil.weeutil
 
+# not sure why I am getting this error in vscode, but its annoying. pylint: disable=import-error
 from utils import data
 from utils import helpers
+# pylint: enable=import-error
 
 PM2_5_INPUT_FIELD = helpers.random_string(5)
 
