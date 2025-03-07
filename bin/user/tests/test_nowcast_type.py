@@ -92,8 +92,6 @@ class TestNowcastDevelopment(unittest.TestCase):
         # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
         #       Note, due to performance concerns, I am not sure the Nowcast algotithm will be supported.
         #
-        #sub_calculator = user.aqitype.EPAAQI(self.mock_logger, random.randint(1, 100), None, None)
-        #SUT = user.aqitype.NOWCAST(self.mock_logger, random.randint(1, 100), sub_calculator, TestNowcastDevelopment.input_field)
 
         algorithm = 'NOWCAST'
         aqi_type = 'pm2_5'
@@ -123,6 +121,32 @@ class TestNowcastDevelopment(unittest.TestCase):
                          ([9, 8, 7, 8, 7, 7,7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 8],
                           None, None))
 
-if __name__ == '__main__':
+    def test_calculate_series_prototype02(self):
+        # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
+        #  Using this one will allow 'test_calculate_series_prototype' to stay 'pristine'
+        import weeutil # want to ensure not accidentally used in other methods pylint: disable=import-outside-toplevel
 
-    unittest.main(exit=False)
+        algorithm = 'NOWCAST'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = utils.database.PM2_5_INPUT_FIELD
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+        timespan = weeutil.weeutil.TimeSpan(utils.database.timespan.start,
+                                            utils.database.timespan.start + 3600 - 5)
+
+        SUT = user.aqitype.AQIType(self.mock_logger, config)
+        ret_value = SUT.get_series(calculated_field, timespan, TestNowcastDevelopment.db_manager)
+
+        print(ret_value)
+
+        print("done")
+
+if __name__ == '__main__':
+    test_suite = unittest.TestSuite()
+    test_suite.addTest(TestNowcastDevelopment('test_calculate_series_prototype02'))
+    unittest.TextTestRunner().run(test_suite)
+
+    #unittest.main(exit=False)
