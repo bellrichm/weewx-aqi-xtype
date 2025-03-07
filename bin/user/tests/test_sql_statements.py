@@ -172,7 +172,6 @@ if __name__ == '__main__':
     #test_suite = unittest.TestSuite()
     #test_suite.addTest(TestNowcastCalculate('test_get_concentration_data_stats'))
     #test_suite.addTest(TestNowcastCalculate('test_get_concentration_data'))
-    #test_suite.addTest(TestNowcastCalculate('test_calculate_series_prototype'))
     #unittest.TextTestRunner().run(test_suite)
 
     unittest.main(exit=False)

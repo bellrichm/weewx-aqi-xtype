@@ -210,7 +210,7 @@ class TestNowcastDevelopment(unittest.TestCase):
     def setUp(self):
         self.mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
-    def test_calculate_series_prototype(self):
+    def test_get_series_prototype(self):
         # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
         #       Note, due to performance concerns, I am not sure the Nowcast algotithm will be supported.
         #
@@ -243,9 +243,9 @@ class TestNowcastDevelopment(unittest.TestCase):
                          ([9, 8, 7, 8, 7, 7,7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 8],
                           None, None))
 
-    def test_calculate_series_prototype02(self):
+    def test_get_series_prototype02(self):
         # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
-        #  Using this one will allow 'test_calculate_series_prototype' to stay 'pristine'
+        #  Using this one will allow 'test_get_series_prototype' to stay 'pristine'
 
         algorithm = 'NOWCAST'
         aqi_type = 'pm2_5'
@@ -266,8 +266,8 @@ class TestNowcastDevelopment(unittest.TestCase):
         print("done")
 
 if __name__ == '__main__':
-    #test_suite = unittest.TestSuite()
-    #test_suite.addTest(TestNowcastDevelopment('test_calculate_series_prototype02'))
-    #unittest.TextTestRunner().run(test_suite)
+    test_suite = unittest.TestSuite()
+    test_suite.addTest(TestNowcastDevelopment('test_get_series_prototype02'))
+    unittest.TextTestRunner().run(test_suite)
 
-    unittest.main(exit=False)
+    #unittest.main(exit=False)
