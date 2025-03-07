@@ -539,8 +539,8 @@ class AQIType(weewx.xtypes.XType):
         unit, unit_group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
 
         # Because other XTypes will also try, an empty 'set' of data is returned.
-        if timespan.stop - timespan.start < 86400:
-            self._logerr("Series less than a day are not supported.")
+        if timespan.stop - timespan.start < 3600:
+            self._logerr("Series less than a hour are not supported.")
             return (ValueTuple([], 'unix_epoch', 'group_time'),
                     ValueTuple([], 'unix_epoch', 'group_time'),
                     ValueTuple([], unit, unit_group))
