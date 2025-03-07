@@ -11,8 +11,8 @@ Necessary functions to initialize a WeeWX database to be used for testing SQL st
 import weewx.manager
 import weeutil.weeutil
 
-import data
-import helpers
+from utils import data
+from utils import helpers
 
 PM2_5_INPUT_FIELD = helpers.random_string(5)
 
