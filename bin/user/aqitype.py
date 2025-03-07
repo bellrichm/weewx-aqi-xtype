@@ -556,7 +556,7 @@ class AQIType(weewx.xtypes.XType):
                     ValueTuple([], unit, unit_group))
 
         # Because other XTypes will also try, an empty 'set' of data is returned.
-        # ToDo: what is valid?
+        # ToDo: what is valid? (possibly divisible by an hour, 3600 seconds)
         if aggregate_interval_seconds and aggregate_interval_seconds != 3600:
             #raise weewx.UnknownAggregation
             self._logerr(f"Agregate interval '{aggregate_interval}' is not supported.")
