@@ -607,6 +607,7 @@ class AQIType(weewx.xtypes.XType):
 
     def __init__(self, logger, config_dict):
         self.logger = logger
+        self.sql_executor = SQLExecutor(self.logger)
         self.aqi_fields = {}
         for field in config_dict.sections:
             self.aqi_fields[field] = config_dict[field]
@@ -686,8 +687,8 @@ class AQIType(weewx.xtypes.XType):
         timestamp_interval_start = weeutil.weeutil.startOfInterval(timestamp, 3600)
         stop = timestamp_interval_start + 3600
         start = stop - 43200
-        record_stats = self.get_concentration_data_stats(db_manager, dependent_field, stop, start)
-        records_iter = self.get_concentration_data_nowcast(db_manager, dependent_field, stop, start)
+        record_stats = self.sql_executor.get_concentration_data_stats(db_manager, dependent_field, stop, start)
+        records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop, start)
 
         try:
             aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (timestamp, record_stats, records_iter))
@@ -740,7 +741,7 @@ class AQIType(weewx.xtypes.XType):
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
         # 'Need' 11 hours of data after current hour to compute nowcast qai
         start_time = timespan.start - 43200 + 3600
-        records_iter = self.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
+        records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
 
         start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate_series(aqi_type, records_iter)
 
@@ -783,7 +784,7 @@ class AQIType(weewx.xtypes.XType):
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
         # 'Need' 11 hours of data after current hour to compute nowcast qai
         start_time = timespan.start - 43200 + 3600
-        records_iter = self.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
+        records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
 
         start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate_series(aqi_type, records_iter)
 
@@ -830,6 +831,8 @@ class AQIType(weewx.xtypes.XType):
 
     def _get_series_epaaqi(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict):
         aqi_type = self.aqi_fields[obs_type]['type']
+        dependent_field = self.aqi_fields[obs_type]['input']
+
         start_vec = []
         stop_vec = []
         data_vec = []
@@ -860,7 +863,7 @@ class AQIType(weewx.xtypes.XType):
                 data_vec.append(agg_vt[0])
         else:
             std_unit_system = None
-            records_iter = self.get_concentration_data(obs_type, timespan, db_manager)
+            records_iter = self.sql_executor.get_concentration_data(dependent_field, timespan, db_manager)
 
             for record in records_iter:
                 aqi = None
@@ -1005,7 +1008,9 @@ class AQIType(weewx.xtypes.XType):
 
     def _get_aggregate_epaaqi(self, obs_type, timespan, aggregate_type, db_manager, **_option_dict):
         aqi_type = self.aqi_fields[obs_type]['type']
-        query_type, records_iter = self.get_aggregate_concentation_data(obs_type, timespan, aggregate_type, db_manager)
+        dependent_field = self.aqi_fields[obs_type]['input']
+
+        query_type, records_iter = self.sql_executor.get_aggregate_concentation_data(dependent_field, timespan, aggregate_type, db_manager)
 
         if query_type == 'aggregate':
             input_values = []
@@ -1041,155 +1046,6 @@ class AQIType(weewx.xtypes.XType):
 
         unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
         return weewx.units.ValueTuple(aggregate_value, unit_type, group)
-
-    def get_concentration_data_stats(self, db_manager, dependent_field, stop, start):
-        ''' Get the necessary concentration data to compute for a given time. '''
-
-        # ToDo: need to get this from the 'console' (or the record?)
-        archive_interval = 300
-
-        stats_sql_str = f'''
-        Select MIN(rowStats.avgConcentration) as rowMin,
-            MAX(rowStats.avgConcentration) as rowMax
-        FROM (
-            SELECT avg({dependent_field}) as avgConcentration
-            FROM archive
-            WHERE dateTime > {start}
-                AND dateTime <= {stop}
-            /* In WeeWX the first recording of an hour is the archival interval of the hour, typically 5 minutes.
-            This interval records the values from 0 to 5 minutes
-            In other words, assumning an archival interval of 5 minutes, the dateTimes will be
-            05, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 00 (of the following hour)
-            So, to get the correct grouping, the archive interval must deleted from dateTime in the database */
-            GROUP BY (dateTime - {archive_interval}) / 3600
-            ) AS rowStats
-        '''
-
-        try:
-            # Only one record is returned
-            record_stats = db_manager.getSql(stats_sql_str)
-        except weedb.NoColumnError:
-            raise weewx.UnknownType(dependent_field) from weedb.NoColumnError
-
-        return record_stats
-
-    def get_concentration_data_nowcast(self, db_manager, dependent_field, stop, start):
-        ''' Get the necessary concentration data to compute for a given time. '''
-
-        # ToDo: need to get this from the 'console'
-        archive_interval = 300
-
-        sql_str = f'''
-        SELECT
-            MAX(dateTime) - 3600,
-            avg({dependent_field}) as avgConcentration
-        FROM archive
-        WHERE dateTime > {start}
-            AND dateTime <= {stop}
-        /* In WeeWX the first recording of an hour is the archival interval of the hour, typically 5 minutes.
-        This interval records the values from 0 to 5 minutes
-        In other words, assumning an archival interval of 5 minutes, the dateTimes will be
-        05, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 00 (of the following hour)
-        So, to get the correct grouping, the archive interval must deleted from dateTime in the database */
-        GROUP BY (dateTime - {archive_interval}) / 3600
-        ORDER BY dateTime DESC
-        '''
-
-        return db_manager.genSql(sql_str)
-
-    def get_concentration_data(self, dependent_field, timespan, db_manager):
-        ''' Get the concentration data necessary to compute AQI. '''
-        dependent_field = self.aqi_fields[dependent_field]['input']
-        sql_str = f'''
-        SELECT 
-            dateTime, 
-            usUnits, 
-            `interval`, 
-            {dependent_field} 
-        FROM 
-            {db_manager.table_name} 
-        WHERE dateTime > ? AND dateTime <= ?
-        '''
-
-        try:
-            records_iter = db_manager.genSql(sql_str, timespan)
-        except weedb.NoColumnError:
-            raise weewx.UnknownType(dependent_field) from weedb.NoColumnError
-
-        return records_iter
-
-    def get_aggregate_concentation_data(self, obs_type, timespan, aggregate_type, db_manager):
-        ''' Get the concentration data to compute aggregated AQI values. '''
-        dependent_field = self.aqi_fields[obs_type]['input']
-
-        simple_sql_stmts = {
-        'count': "SELECT COUNT(dateTime) FROM {table_name} "
-                 "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
-        'firsttime': "SELECT MIN(dateTime) FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-               "ORDER BY dateTime ASC LIMIT 1;",
-        'lasttime': "SELECT MAX(dateTime) FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-               "ORDER BY dateTime DESC LIMIT 1;",                 
-        'maxtime': "SELECT dateTime FROM {table_name} "
-                   "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-                   "ORDER BY {input} DESC LIMIT 1", 
-        'mintime': "SELECT dateTime FROM {table_name} "
-                   "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-                   "ORDER BY {input} ASC LIMIT 1",
-        'not_null': "SELECT 1 FROM {table_name} "
-                    "WHERE dateTime > {start} AND dateTime <= {stop} "
-                    "AND {input} IS NOT NULL LIMIT 1",                   
-        }
-
-        aggregate_sql_stmts = {
-        'avg': "SELECT {input} FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
-        'sum': "SELECT {input} FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
-        }
-
-        basic_sql_stmts = {
-        'first': "SELECT {input} FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-               "ORDER BY dateTime ASC LIMIT 1;",
-        'last': "SELECT {input} FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-               "ORDER BY dateTime DESC LIMIT 1;",
-        'min': "SELECT {input} FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-               "ORDER BY {input} ASC LIMIT 1;",
-        'max': "SELECT {input} FROM {table_name} "
-               "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-               "ORDER BY {input} DESC LIMIT 1;",
-        }
-
-        sql_stmts = ChainMap(aggregate_sql_stmts, simple_sql_stmts, basic_sql_stmts)
-        if aggregate_type not in sql_stmts:
-            raise weewx.UnknownAggregation(aggregate_type)
-
-        if aggregate_type in simple_sql_stmts:
-            query_type = 'simple'
-        elif aggregate_type in aggregate_sql_stmts:
-            query_type = 'aggregate'
-        else:
-            query_type = 'basic'
-
-        interpolation_dict = {
-            'start': timespan.start,
-            'stop': timespan.stop,
-            'table_name': db_manager.table_name,
-            'input': dependent_field
-        }
-
-        sql_stmt = sql_stmts[aggregate_type].format(**interpolation_dict)
-
-        try:
-            records_iter = db_manager.genSql(sql_stmt)
-        except weedb.NoColumnError:
-            raise weewx.UnknownType(obs_type) from weedb.NoColumnError
-
-        return query_type, records_iter
 
 class AQISearchList(weewx.cheetahgenerator.SearchList):
     """ Implement tags used by templates in the skin. """
