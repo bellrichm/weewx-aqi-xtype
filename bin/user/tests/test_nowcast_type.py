@@ -65,9 +65,9 @@ class TestGetScalarNowcast(unittest.TestCase):
             }
 
             data_stats = (random.random(), random.random())
+            mock_sql_executor.get_concentration_data_stats.return_value = data_stats
             with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
-                with mock.patch.object(user.aqitype.SQLExecutor, 'get_concentration_data_stats', return_value=data_stats):
-                    value_tuple = SUT.get_scalar(calculated_field, record, mock_db_manager)
+                value_tuple = SUT.get_scalar(calculated_field, record, mock_db_manager)
 
                 self.assertEqual(value_tuple[0], aqi)
                 self.assertEqual(value_tuple[1], unit)
