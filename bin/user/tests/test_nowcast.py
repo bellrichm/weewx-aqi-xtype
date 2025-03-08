@@ -185,6 +185,5 @@ class NowCastTests(unittest.TestCase):
 
         print("done")
 
-
 if __name__ == '__main__':
     unittest.main(exit=False)
