@@ -134,10 +134,11 @@ class NOWCAST(AbstractCalculator):
         if self.log_level <= 40:
             self.logger.logerr(f"(NOWCAST) {msg}")
 
-    def calculate_concentration(self, time_stamp, data_count, data_min, data_max, timestamps, concentrations):
+    def calculate_concentration(self, time_stamp, data_min, data_max, timestamps, concentrations):
         '''
         Calculate the nowcast concentration.
         '''
+        data_count = len(concentrations)
         current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
 
         try:
@@ -185,12 +186,12 @@ class NOWCAST(AbstractCalculator):
         self._logdbg(f"record_stats is {record_stats}.")
         self._logdbg(f"The type is '{aqi_type}'")
 
-        data_count, data_min, data_max = record_stats
+        data_min, data_max = record_stats
 
         records = list(records_iter)
         timestamps, concentrations = zip(*records)
 
-        concentration = self.calculate_concentration(timestamp, data_count, data_min, data_max, timestamps, concentrations)
+        concentration = self.calculate_concentration(timestamp, data_min, data_max, timestamps, concentrations)
         aqi = self.sub_calculator.calculate(None, aqi_type, (concentration))
         self._logdbg(f"The computed AQI is {aqi}")
 
@@ -234,7 +235,6 @@ class NOWCAST(AbstractCalculator):
             if concentrations[0] is not None:
                 try:
                     concentration = self.calculate_concentration(timestamps[0],
-                                                                 len(concentrations),
                                                                   min_concentration,
                                                                   max_concentration,
                                                                   timestamps,
@@ -868,8 +868,7 @@ class AQIType(weewx.xtypes.XType):
         archive_interval = 300
 
         stats_sql_str = f'''
-        Select COUNT(rowStats.avgConcentration) as rowCount,
-            MIN(rowStats.avgConcentration) as rowMin,
+        Select MIN(rowStats.avgConcentration) as rowMin,
             MAX(rowStats.avgConcentration) as rowMax
         FROM (
             SELECT avg({dependent_field}) as avgConcentration

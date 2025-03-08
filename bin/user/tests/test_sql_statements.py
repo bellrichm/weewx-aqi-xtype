@@ -87,9 +87,8 @@ class TestSQL(unittest.TestCase):
         timestamp_interval_start = weeutil.weeutil.startOfInterval(1740168300, 3600)
         stop = timestamp_interval_start + 3600
         start = stop - 43200
-        data_count, data_min, data_max = SUT.get_concentration_data_stats(TestSQL.db_manager, TestSQL.input_field, stop, start)
+        data_min, data_max = SUT.get_concentration_data_stats(TestSQL.db_manager, TestSQL.input_field, stop, start)
 
-        self.assertEqual(data_count, 12)
         self.assertEqual(data_min, 1.1982950191570885)
         self.assertEqual(data_max, 1.7157567049808427)
 

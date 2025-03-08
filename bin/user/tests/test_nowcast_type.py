@@ -63,7 +63,7 @@ class TestGetScalarNowcast(unittest.TestCase):
                 input_field: random.randint(0, 10),
             }
 
-            data_stats = (random.randint(8, 12), random.random(), random.random())
+            data_stats = (random.random(), random.random())
             with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
                 with mock.patch.object(user.aqitype.AQIType, 'get_concentration_data_stats', return_value=data_stats):
                     value_tuple = SUT.get_scalar(calculated_field, record, mock_db_manager)
