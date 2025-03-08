@@ -38,6 +38,7 @@ def setup_config(calculated_field, input_field, algorithm, aqi_type):
 class TestGetScalar(unittest.TestCase):
     def test_get_scalar_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_sql_executor = mock.Mock()
 
         calculator = user.aqitype.EPAAQI
         algorithm = 'EPAAQI'
@@ -51,7 +52,7 @@ class TestGetScalar(unittest.TestCase):
 
         aqi = random.randint(11, 100)
         with mock.patch.object(calculator, 'calculate', return_value=aqi):
-            SUT = user.aqitype.AQIType(mock_logger, config)
+            SUT = user.aqitype.AQIType(mock_logger, mock_sql_executor, config)
 
             unit = random_string()
             unit_group = random_string()
@@ -74,6 +75,7 @@ class TestGetScalar(unittest.TestCase):
 class TestGetSeries(unittest.TestCase):
     def test_get_series_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_sql_executor = mock.Mock()
         mock_db_manager = mock.Mock()
 
         calculator = user.aqitype.EPAAQI
@@ -90,7 +92,7 @@ class TestGetSeries(unittest.TestCase):
                random.randint(11, 100)]
         with mock.patch.object(calculator, 'calculate', side_effect=aqi):
 
-            SUT = user.aqitype.AQIType(mock_logger, config)
+            SUT = user.aqitype.AQIType(mock_logger, mock_sql_executor, config)
 
             unit = random_string()
             unit_group = random_string()
@@ -106,23 +108,25 @@ class TestGetSeries(unittest.TestCase):
                            utils.database.ARCHIVE_INTERVAL_MINUTES,
                            random.randint(1, 50))]
 
-            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
-                with mock.patch.object(user.aqitype.SQLExecutor, 'get_concentration_data', return_value=db_records):
-                    start_vec_t, stop_vec_t, data_vec_t  = \
-                        SUT.get_series(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), mock_db_manager)
+            mock_sql_executor.get_concentration_data.return_value = db_records
 
-                    self.assertEqual(start_vec_t,
-                                    ([end_timestamp - 2 * utils.database.ARCHIVE_INTERVAL_SECONDS,
-                                    end_timestamp - utils.database.ARCHIVE_INTERVAL_SECONDS],
-                                    'unix_epoch',
-                                    'group_time'))
-                    self.assertEqual(stop_vec_t,
-                                    ([end_timestamp - utils.database.ARCHIVE_INTERVAL_SECONDS, end_timestamp], 'unix_epoch', 'group_time'))
-                    self.assertEqual(data_vec_t, (aqi, unit, unit_group))
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
+                start_vec_t, stop_vec_t, data_vec_t  = \
+                    SUT.get_series(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), mock_db_manager)
+
+                self.assertEqual(start_vec_t,
+                                ([end_timestamp - 2 * utils.database.ARCHIVE_INTERVAL_SECONDS,
+                                end_timestamp - utils.database.ARCHIVE_INTERVAL_SECONDS],
+                                'unix_epoch',
+                                'group_time'))
+                self.assertEqual(stop_vec_t,
+                                ([end_timestamp - utils.database.ARCHIVE_INTERVAL_SECONDS, end_timestamp], 'unix_epoch', 'group_time'))
+                self.assertEqual(data_vec_t, (aqi, unit, unit_group))
 
 class TestGetAggregate(unittest.TestCase):
     def test_get_aggregation_avg_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_sql_executor = mock.Mock()
         mock_db_manager = mock.Mock()
 
         calculator = user.aqitype.EPAAQI
@@ -138,8 +142,7 @@ class TestGetAggregate(unittest.TestCase):
         aqi = [random.randint(11, 100),
                random.randint(11, 100)]
         with mock.patch.object(calculator, 'calculate', side_effect=aqi):
-
-            SUT = user.aqitype.AQIType(mock_logger, config)
+            SUT = user.aqitype.AQIType(mock_logger, mock_sql_executor, config)
 
             unit = random_string()
             unit_group = random_string()
@@ -147,18 +150,20 @@ class TestGetAggregate(unittest.TestCase):
             end_timestamp = (int(now / utils.database.ARCHIVE_INTERVAL_SECONDS) + 1) * utils.database.ARCHIVE_INTERVAL_SECONDS
 
             mock_data  = 'aggregate', [[random.randint(11, 100)], [random.randint(11, 100)]]
-            with mock.patch.object(user.aqitype.SQLExecutor, 'get_aggregate_concentation_data', return_value=mock_data):
-                with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
+            mock_sql_executor.get_aggregate_concentation_data.return_value = mock_data
 
-                    value_tuple  = \
-                        SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'avg', mock_db_manager)
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
 
-                    self.assertEqual(value_tuple[0], round(sum(aqi) / len(aqi)))
-                    self.assertEqual(value_tuple[1], unit)
-                    self.assertEqual(value_tuple[2], unit_group)
+                value_tuple  = \
+                    SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'avg', mock_db_manager)
+
+                self.assertEqual(value_tuple[0], round(sum(aqi) / len(aqi)))
+                self.assertEqual(value_tuple[1], unit)
+                self.assertEqual(value_tuple[2], unit_group)
 
     def test_get_aggregation_min_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_sql_executor= mock.Mock()
         mock_db_manager = mock.Mock()
 
         calculator = user.aqitype.EPAAQI
@@ -173,8 +178,7 @@ class TestGetAggregate(unittest.TestCase):
 
         aqi = random.randint(11, 100)
         with mock.patch.object(calculator, 'calculate', return_value=aqi):
-
-            SUT = user.aqitype.AQIType(mock_logger, config)
+            SUT = user.aqitype.AQIType(mock_logger, mock_sql_executor, config)
 
             unit = random_string()
             unit_group = random_string()
@@ -182,18 +186,20 @@ class TestGetAggregate(unittest.TestCase):
             end_timestamp = (int(now / utils.database.ARCHIVE_INTERVAL_SECONDS) + 1) * utils.database.ARCHIVE_INTERVAL_SECONDS
 
             mock_data  = random_string(), [[random.random()],]
-            with mock.patch.object(user.aqitype.SQLExecutor, 'get_aggregate_concentation_data', return_value=mock_data):
-                with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
+            mock_sql_executor.get_aggregate_concentation_data.return_value = mock_data
 
-                    value_tuple  = \
-                        SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'min', mock_db_manager)
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
 
-                    self.assertEqual(value_tuple[0], aqi)
-                    self.assertEqual(value_tuple[1], unit)
-                    self.assertEqual(value_tuple[2], unit_group)
+                value_tuple  = \
+                    SUT.get_aggregate(calculated_field, weeutil.weeutil.TimeSpan(end_timestamp-3600, end_timestamp), 'min', mock_db_manager)
+
+                self.assertEqual(value_tuple[0], aqi)
+                self.assertEqual(value_tuple[1], unit)
+                self.assertEqual(value_tuple[2], unit_group)
 
     def test_get_aggregated_series_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_sql_executor = mock.Mock()
         mock_db_manager = mock.Mock()
 
         algorithm = 'EPAAQI'
@@ -205,7 +211,7 @@ class TestGetAggregate(unittest.TestCase):
         config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
         config = configobj.ConfigObj(config_dict)
 
-        SUT = user.aqitype.AQIType(mock_logger, config)
+        SUT = user.aqitype.AQIType(mock_logger, mock_sql_executor (), config)
 
         unit = random_string()
         unit_group = random_string()

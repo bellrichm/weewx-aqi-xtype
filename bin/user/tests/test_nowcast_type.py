@@ -37,6 +37,7 @@ def setup_config(calculated_field, input_field, algorithm, aqi_type):
 class TestGetScalarNowcast(unittest.TestCase):
     def test_get_scalar_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_sql_executor = mock.Mock()
         mock_db_manager = mock.Mock()
 
         calculator = user.aqitype.NOWCAST
@@ -51,7 +52,7 @@ class TestGetScalarNowcast(unittest.TestCase):
 
         aqi = random.randint(11, 100)
         with mock.patch.object(calculator, 'calculate', return_value=aqi):
-            SUT = user.aqitype.AQIType(mock_logger, config)
+            SUT = user.aqitype.AQIType(mock_logger, mock_sql_executor, config)
 
             unit = random_string()
             unit_group = random_string()
@@ -74,6 +75,7 @@ class TestGetScalarNowcast(unittest.TestCase):
 
     def test_get_series_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_sql_executor = mock.Mock()
         mock_db_manager = mock.Mock()
 
         calculator = user.aqitype.NOWCAST
@@ -95,7 +97,7 @@ class TestGetScalarNowcast(unittest.TestCase):
             mock_aqi_vec.append(random.randint(1,100))
 
         with mock.patch.object(calculator, 'calculate_series', return_value=(mock_start_vec, mock_stop_vec, mock_aqi_vec)):
-            SUT = user.aqitype.AQIType(mock_logger, config)
+            SUT = user.aqitype.AQIType(mock_logger, mock_sql_executor, config)
 
             unit = random_string()
             unit_group = random_string()
@@ -111,6 +113,7 @@ class TestGetScalarNowcast(unittest.TestCase):
 
     def test_get_series_timespan_too_short(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_sql_executor = mock.Mock()
         mock_db_manager = mock.Mock()
 
         algorithm = 'NOWCAST'
@@ -124,7 +127,7 @@ class TestGetScalarNowcast(unittest.TestCase):
         timespan = weeutil.weeutil.TimeSpan(utils.database.timespan.start,
                                             utils.database.timespan.start + 3600 - 5)
 
-        SUT = user.aqitype.AQIType(mock_logger, config)
+        SUT = user.aqitype.AQIType(mock_logger, mock_sql_executor, config)
 
         unit = random_string()
         unit_group = random_string()
@@ -138,6 +141,7 @@ class TestGetScalarNowcast(unittest.TestCase):
 
     def test_get_series_aggregate_type_specified(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_sql_executor = mock.Mock()
         mock_db_manager = mock.Mock()
 
         algorithm = 'NOWCAST'
@@ -149,7 +153,7 @@ class TestGetScalarNowcast(unittest.TestCase):
         config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
         config = configobj.ConfigObj(config_dict)
 
-        SUT = user.aqitype.AQIType(mock_logger, config)
+        SUT = user.aqitype.AQIType(mock_logger, mock_sql_executor, config)
 
         unit = random_string()
         unit_group = random_string()
@@ -166,6 +170,7 @@ class TestGetScalarNowcast(unittest.TestCase):
 
     def test_get_series_aggregate_interval_specified(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_sql_executor = mock.Mock()
         mock_db_manager = mock.Mock()
 
         algorithm = 'NOWCAST'
@@ -177,7 +182,7 @@ class TestGetScalarNowcast(unittest.TestCase):
         config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
         config = configobj.ConfigObj(config_dict)
 
-        SUT = user.aqitype.AQIType(mock_logger, config)
+        SUT = user.aqitype.AQIType(mock_logger, mock_sql_executor, config)
 
         unit = random_string()
         unit_group = random_string()
@@ -224,7 +229,7 @@ class TestNowcastDevelopment(unittest.TestCase):
         config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
         config = configobj.ConfigObj(config_dict)
 
-        SUT = user.aqitype.AQIType(self.mock_logger, config)
+        SUT = user.aqitype.AQIType(self.mock_logger, user.aqitype.SQLExecutor(self.mock_logger), config)
         start_vec, stop_vec, aqi_vec = SUT.get_series(calculated_field, utils.database.timespan, TestNowcastDevelopment.db_manager)
 
         self.assertEqual(start_vec,
@@ -258,7 +263,7 @@ class TestNowcastDevelopment(unittest.TestCase):
         timespan = weeutil.weeutil.TimeSpan(utils.database.timespan.start,
                                             utils.database.timespan.start + 3600)
 
-        SUT = user.aqitype.AQIType(self.mock_logger, config)
+        SUT = user.aqitype.AQIType(self.mock_logger, user.aqitype.SQLExecutor(self.mock_logger), config)
         ret_value = SUT.get_series(calculated_field, timespan, TestNowcastDevelopment.db_manager)
 
         print(ret_value)
@@ -266,8 +271,8 @@ class TestNowcastDevelopment(unittest.TestCase):
         print("done")
 
 if __name__ == '__main__':
-    test_suite = unittest.TestSuite()
-    test_suite.addTest(TestNowcastDevelopment('test_get_series_prototype02'))
-    unittest.TextTestRunner().run(test_suite)
+    #test_suite = unittest.TestSuite()
+    #test_suite.addTest(TestNowcastDevelopment('test_get_series_prototype02'))
+    #unittest.TextTestRunner().run(test_suite)
 
-    #unittest.main(exit=False)
+    unittest.main(exit=False)

@@ -60,7 +60,7 @@ class AQITypeManager(StdService):
         self._setup(config_dict['aqitype'])
 
         self.logger.loginf("Adding AQI type to the XTypes pipeline.")
-        self.aqi = AQIType(self.logger, config_dict['aqitype'])
+        self.aqi = AQIType(self.logger, SQLExecutor(self.logger), config_dict['aqitype'])
         if to_bool(config_dict['aqitype'].get('prepend', True)):
             weewx.xtypes.xtypes.insert(0, self.aqi)
         else:
@@ -605,9 +605,9 @@ class AQIType(weewx.xtypes.XType):
     the pm2_5 value.
     """
 
-    def __init__(self, logger, config_dict):
+    def __init__(self, logger, sql_executor, config_dict):
         self.logger = logger
-        self.sql_executor = SQLExecutor(self.logger)
+        self.sql_executor = sql_executor
         self.aqi_fields = {}
         for field in config_dict.sections:
             self.aqi_fields[field] = config_dict[field]
