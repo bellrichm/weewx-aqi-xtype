@@ -81,7 +81,7 @@ class TestSQL(unittest.TestCase):
         self.config = configobj.ConfigObj(config_dict)
 
     def test_get_concentration_data_stats(self):
-        SUT = user.aqitype.AQIType(self.mock_logger, self.config)
+        SUT = user.aqitype.SQLExecutor(self.mock_logger)
 
         # The timestamp in the template that I am using is 1740168300 (3:05 PM Eastern on 2/21/2025)
         timestamp_interval_start = weeutil.weeutil.startOfInterval(1740168300, 3600)
@@ -93,7 +93,7 @@ class TestSQL(unittest.TestCase):
         self.assertEqual(data_max, 1.7157567049808427)
 
     def test_get_concentration_data_nowcast(self):
-        SUT = user.aqitype.AQIType(self.mock_logger, self.config)
+        SUT = user.aqitype.SQLExecutor(self.mock_logger)
 
         stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), utils.database.timespan.stop)
 
@@ -115,10 +115,10 @@ class TestSQL(unittest.TestCase):
                          list(reversed(calculate_interval_average(data.db_20250220_pm2_5_values[144:], 12))))
 
     def test_get_concentration_data(self):
-        SUT = user.aqitype.AQIType(self.mock_logger, self.config)
+        SUT = user.aqitype.SQLExecutor(self.mock_logger)
 
         #timespan = (1740114000, 1740200400)
-        records_iter = SUT.get_concentration_data(self.calculated_field, utils.database.timespan, TestSQL.db_manager)
+        records_iter = SUT.get_concentration_data(TestSQL.input_field, utils.database.timespan, TestSQL.db_manager)
 
         i = 0
         for record in records_iter:
@@ -130,9 +130,9 @@ class TestSQL(unittest.TestCase):
             i += 1
 
     def test_get_aggregate_avg_data(self):
-        SUT = user.aqitype.AQIType(self.mock_logger, self.config)
+        SUT = user.aqitype.SQLExecutor(self.mock_logger)
 
-        query_type, records_iter = SUT.get_aggregate_concentation_data(self.calculated_field,
+        query_type, records_iter = SUT.get_aggregate_concentation_data(TestSQL.input_field,
                                                                         utils.database.timespan,
                                                                         'avg',
                                                                         TestSQL.db_manager)
@@ -144,9 +144,9 @@ class TestSQL(unittest.TestCase):
             i += 1
 
     def test_get_aggregate_min_data(self):
-        SUT = user.aqitype.AQIType(self.mock_logger, self.config)
+        SUT = user.aqitype.SQLExecutor(self.mock_logger)
 
-        query_type, records_iter = SUT.get_aggregate_concentation_data(self.calculated_field,
+        query_type, records_iter = SUT.get_aggregate_concentation_data(TestSQL.input_field,
                                                                         utils.database.timespan,
                                                                         'min',
                                                                         TestSQL.db_manager)
@@ -156,9 +156,9 @@ class TestSQL(unittest.TestCase):
         self.assertEqual(concentration, min(data.db_20250221_pm2_5_values))
 
     def test_get_aggregate_max_data(self):
-        SUT = user.aqitype.AQIType(self.mock_logger, self.config)
+        SUT = user.aqitype.SQLExecutor(self.mock_logger)
 
-        query_type, records_iter = SUT.get_aggregate_concentation_data(self.calculated_field,
+        query_type, records_iter = SUT.get_aggregate_concentation_data(TestSQL.input_field,
                                                                         utils.database.timespan,
                                                                         'max',
                                                                         TestSQL.db_manager)
@@ -169,8 +169,7 @@ class TestSQL(unittest.TestCase):
 
 if __name__ == '__main__':
     #test_suite = unittest.TestSuite()
-    #test_suite.addTest(TestNowcastCalculate('test_get_concentration_data_stats'))
-    #test_suite.addTest(TestNowcastCalculate('test_get_concentration_data'))
+    #test_suite.addTest(TestSQL('test_get_concentration_data_nowcast'))
     #unittest.TextTestRunner().run(test_suite)
 
     unittest.main(exit=False)
