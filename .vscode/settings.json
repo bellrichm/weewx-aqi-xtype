@@ -2,12 +2,17 @@
     "sqltools.useNodeRuntime": true,
     "sqltools.sessionFilesFolder": "sql",
     "sqltools.connections": [
-
         {
             "previewLimit": 50,
             "driver": "SQLite",
             "database": "bin/user/tests/utils/pm2_5.sdb",
             "name": "test-pm"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "bin/user/tests/utils/test_nowcast_calculate.sdb",
+            "name": "test_nowcast_calculate
         },
         {
             "previewLimit": 50,
