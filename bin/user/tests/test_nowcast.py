@@ -19,13 +19,13 @@ def random_string(length=32):
     return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
 
 def min_max(values):
-    min_value = values[0]
-    max_value = values[0]
+    min_value = float('inf')
+    max_value = -float('inf')
     for value in values:
         if value is not None:
             if value < min_value:
                 min_value = value
-            elif value > max_value:
+            if value > max_value:
                 max_value = value
     return min_value, max_value
 
@@ -103,17 +103,18 @@ class NowCastTests(unittest.TestCase):
         with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval, return_value=current_hour):
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
                 with self.assertRaises(weewx.CannotCalculate):
-                    data = [random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700),
-                                random.uniform(0, 700), random.uniform(0, 700)]
+                    data = [random.uniform(0, 700),
+                            random.uniform(0, 700),
+                            random.uniform(0, 700),
+                            None,
+                            None]
                     data.reverse()
+                    min_value, max_value = min_max(data)
                     timestamps = self._populate_time_stamps(current_hour, len(data))
-                    # remove  1 and 2 hours ago data
-                    del data[:2]
-                    del timestamps[:2]
 
                     calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                    calculator.calculate_concentration(now, min(data), max(data), timestamps, data)
+                    calculator.calculate_concentration(now, min_value, max_value, timestamps, data)
 
     def test_none_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
