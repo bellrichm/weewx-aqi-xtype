@@ -66,35 +66,13 @@ class NowCastTests(unittest.TestCase):
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
                 with self.assertRaises(weewx.CannotCalculate):
                     data = [random.uniform(0, 700)]
-                    data.reverse()
                     timestamps = self._populate_time_stamps(current_hour, len(data))
 
                     calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
                     calculator.calculate_concentration(now, min(data), max(data), timestamps, data)
 
-    def test_old_minimum_data(self):
-        mock_logger = mock.Mock(spec=user.aqitype.Logger)
-
-        now = time.time()
-        current_hour =  int(now / 3600) * 3600
-
-        with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval, return_value=current_hour):
-            with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
-                with self.assertRaises(weewx.CannotCalculate):
-                    data = [random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700)]
-                    timestamps = self._populate_time_stamps(current_hour, len(data))
-                    # remove  1 and 2 hours ago data
-                    del data[1:3]
-                    del timestamps[1:3]
-
-                    data.reverse()
-
-                    calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
-
-                    calculator.calculate_concentration(now, min(data), max(data), timestamps, data)
-
-    def test_old_data(self):
+    def test_missing_necessary_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
         now = time.time()

@@ -323,9 +323,8 @@ class NOWCAST(AbstractCalculator):
         current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
 
         try:
-            # Missing data: 2 of the last 3 hours of data must be valid for a NowCast calculation.
-            if data_count < 3:
-                self._logdbg(f"Less than 3 readings ({data_count} {concentrations}).")
+            if data_count < 2:
+                self._logdbg(f"Less than 2 readings ({data_count} {concentrations}).")
                 raise weewx.CannotCalculate()
 
             if concentrations[0:3].count(None) > 1:
