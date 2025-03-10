@@ -333,6 +333,10 @@ class NOWCAST(AbstractCalculator):
                 self._logdbg(f"Less than 2 readings ({data_count} {concentrations}).")
                 raise weewx.CannotCalculate()
 
+            if timestamps[1] <= current_hour - 7200:
+                self._logdbg(f"{data_count} readings, at least need to be within the last 2 hours ")
+                raise weewx.CannotCalculate()
+
             if concentrations[0:3].count(None) > 1:
                 self._logdbg(f"Need at at least 2 valid concentations in the first 3 readings {concentrations}.")
                 raise weewx.CannotCalculate()
