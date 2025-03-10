@@ -102,6 +102,8 @@ class SQLExecutor():
         ) AS rowStats
     '''
 
+    # If there are no records in the grouping, no record will be returned for that group.
+    # Stated a different way, there can be gaps in the list of records.
     sql_concentration_grouped_str = '''
     SELECT
         MAX(dateTime) - 3600 as startTimestamp,
@@ -200,7 +202,9 @@ class SQLExecutor():
         return record_stats
 
     def get_concentration_data_nowcast(self, db_manager, dependent_field, stop, start):
-        ''' Get the necessary concentration data to compute for a given time. '''
+        ''' Get the necessary concentration data to compute for a given time. 
+            The data returned may contain None values for the concentration.
+            It also may have missing records (gaps)'''
 
         # ToDo: need to get this from the 'console'
         archive_interval = 300
