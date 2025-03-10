@@ -104,8 +104,10 @@ class SQLExecutor():
 
     sql_concentration_grouped_str = '''
     SELECT
-        MAX(dateTime) - 3600,
-        avg({input}) as avgConcentration
+        MAX(dateTime) - 3600 as startTimestamp,
+        avg({input}) as avgConcentration,
+        /* The following is not used in the code, but is convenient when debugging */ 
+        datetime(MAX(dateTime) - 3600, 'unixepoch', 'localtime') as startDateTime
     FROM archive
     WHERE dateTime > {start}
         AND dateTime <= {stop}
@@ -367,7 +369,7 @@ class NOWCAST(AbstractCalculator):
         data_min, data_max = record_stats
 
         records = list(records_iter)
-        timestamps, concentrations = zip(*records)
+        timestamps, concentrations, _start_time = zip(*records)
 
         concentration = self.calculate_concentration(timestamp, data_min, data_max, timestamps, concentrations)
         aqi = self.sub_calculator.calculate(None, aqi_type, (concentration))

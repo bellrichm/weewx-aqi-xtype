@@ -99,18 +99,17 @@ class TestSQL(unittest.TestCase):
 
         records_iter = SUT.get_concentration_data_nowcast(self.db_manager, TestSQL.input_field, stop , utils.database.timespan.start - 43200)
         records = list(records_iter)
-        timestamps = list(list(zip(*records))[0])
-        concentrations = list(list(zip(*records))[1])
+        timestamps, concentrations, _start_time = zip(*records)
 
         self.assertEqual(len(records), 36)
         # Get every 12th timestamp. These are the hour timestamps
         # Only want the last 12 hours of the previous day, 20250220
-        self.assertEqual(timestamps,
+        self.assertEqual(list(timestamps),
                          list(reversed(data.db_20250221_timestamps[11:len(data.db_20250221_timestamps)-12:12])) + \
                          list(reversed((data.db_20250220_timestamps[143::12]))))
         # Compute the hourly average of the pm2_5 data
         # Only want the last 12 hours of the previous day, 20250220
-        self.assertEqual(concentrations,
+        self.assertEqual(list(concentrations),
                          list(reversed(calculate_interval_average(data.db_20250221_pm2_5_values, 12))) + \
                          list(reversed(calculate_interval_average(data.db_20250220_pm2_5_values[144:], 12))))
 

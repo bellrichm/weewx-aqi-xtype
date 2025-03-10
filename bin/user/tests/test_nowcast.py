@@ -49,7 +49,7 @@ class NowCastTests(unittest.TestCase):
         calculator = user.aqitype.NOWCAST(mock_logger, 0, mock_calculator, None)
 
         records_min_max = (random.randint(1, 10), random.randint(11, 20))
-        records = [[random.randint(1, 100), random.random()]]
+        records = [[random.randint(1, 100), random.random(), random_string()]]
 
         with mock.patch.object(user.aqitype.NOWCAST, 'calculate_concentration', return_value=random.random()):
             ret_value = calculator.calculate(mock_db_manager, random_string(), (time.time(), records_min_max, records))
