@@ -87,8 +87,6 @@ class NowCastTests(unittest.TestCase):
                     del data[1:3]
                     del timestamps[1:3]
 
-                    #data.reverse()
-
                     calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
                     calculator.calculate_concentration(now, min(data), max(data), timestamps, data)
@@ -101,9 +99,8 @@ class NowCastTests(unittest.TestCase):
 
         with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval, return_value=current_hour):
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
-                data = [711.8, 734.0, 744.6, 763.8, None, None, None, None, None, 238.6, 149.9, 149.5]
+                data = [149.5, 149.9, 238.6, None, None, None, None, None, 763.8, 744.6, 734.0, 711.8]
                 timestamps = self._populate_time_stamps(current_hour, len(data))
-                data.reverse()
                 i = len(data) - 1
                 while i >= 0 :
                     if data[i] is None:
@@ -125,12 +122,11 @@ class NowCastTests(unittest.TestCase):
         with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval, return_value=current_hour):
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
                 with self.assertRaises(weewx.CannotCalculate):
-                    data = [random.uniform(0, 700),
-                            random.uniform(0, 700),
-                            random.uniform(0, 700),
+                    data = [None,
                             None,
-                            None]
-                    data.reverse()
+                            random.uniform(0, 700),
+                            random.uniform(0, 700),
+                            random.uniform(0, 700)]
                     min_value, max_value = min_max(data)
                     timestamps = self._populate_time_stamps(current_hour, len(data))
 
@@ -146,11 +142,9 @@ class NowCastTests(unittest.TestCase):
 
         with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval, return_value=current_hour):
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
-                data = [711.8, 734.0, 744.6, 763.8, None, None, None, None, None, 238.6, 149.9, 149.5]
+                data = [149.5, 149.9, 238.6, None, None, None, None, None, 763.8, 744.6, 734.0, 711.8]
                 min_value, max_value = min_max(data)
                 timestamps  = self._populate_time_stamps(current_hour, len(data))
-
-                data.reverse()
 
                 calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
                 concentration = calculator.calculate_concentration(now, min_value, max_value, timestamps, data)
@@ -164,8 +158,7 @@ class NowCastTests(unittest.TestCase):
 
         with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval, return_value=current_hour):
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
-                data = [123.3, 80.2, 49.3, 101.8, 93.7, 143.2, 215.4, 130.6, 129.2, 59.8, 27.4, 46.3]
-                data.reverse()
+                data = [46.3, 27.4, 59.8, 129.2, 130.6, 215.4, 143.2, 93.7, 101.8, 49.3, 80.2, 123.3]
                 timestamps = self._populate_time_stamps(current_hour, len(data))
 
                 calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
