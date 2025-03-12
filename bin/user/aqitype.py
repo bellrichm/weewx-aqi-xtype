@@ -85,6 +85,9 @@ class AQITypeManager(StdService):
         weewx.xtypes.xtypes.remove(self.aqi)
 
 class SQLExecutor():
+    ''' Class to execute SQL statements.
+        This is a very thin layer. 
+        Its primary purpose is to make testing easier. '''
     stats_sql_str = '''
     Select MIN(rowStats.avgConcentration) as rowMin,
         MAX(rowStats.avgConcentration) as rowMax
