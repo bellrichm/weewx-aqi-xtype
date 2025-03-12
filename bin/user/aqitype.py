@@ -401,9 +401,9 @@ class NOWCAST(AbstractCalculator):
         for record in records_iter:
             timestamps.append(record[0])
             concentrations.append(record[1])
-            if record[1] < min_concentration:
+            if record[1] is not None and  record[1] < min_concentration:
                 min_concentration = record[1]
-            if record[1] > max_concentration:
+            if record[1] is not None and record[1] > max_concentration:
                 max_concentration = record[1]
 
             if i >= 11:
