@@ -413,33 +413,47 @@ class NOWCAST(AbstractCalculator):
 
         aqi_vec = []
         start_vec = []
-        for record in records_iter:
-            timestamps.append(record[0])
-            concentrations.append(record[1])
+        if i < 11:
             start_vec.append(timestamps[0])
-            if record[1] < min_concentration:
-                min_concentration = record[1]
-            if record[1] > max_concentration:
-                max_concentration = record[1]
+            try:
+                concentration = self.calculate_concentration(timestamps[0],
+                                                            min_concentration,
+                                                            max_concentration,
+                                                            timestamps,
+                                                            concentrations)
+                aqi = self.sub_calculator.calculate(None, aqi_type, (concentration))
+                aqi_vec.append(aqi)
 
-            # ToDo: Research this if statement
-            if concentrations[0] is not None:
-                try:
-                    concentration = self.calculate_concentration(timestamps[0],
-                                                                  min_concentration,
-                                                                  max_concentration,
-                                                                  timestamps,
-                                                                  concentrations)
-                    aqi = self.sub_calculator.calculate(None, aqi_type, (concentration))
-                    aqi_vec.append(aqi)
-
-                except weewx.CannotCalculate:
-                    aqi_vec.append(None)
-            else:
+            except weewx.CannotCalculate:
                 aqi_vec.append(None)
+        else:
+            for record in records_iter:
+                timestamps.append(record[0])
+                concentrations.append(record[1])
+                if record[1] < min_concentration:
+                    min_concentration = record[1]
+                if record[1] > max_concentration:
+                    max_concentration = record[1]
 
-            del timestamps[0]
-            del concentrations[0]
+                start_vec.append(timestamps[0])
+                # ToDo: Research this if statement
+                if concentrations[0] is not None:
+                    try:
+                        concentration = self.calculate_concentration(timestamps[0],
+                                                                    min_concentration,
+                                                                    max_concentration,
+                                                                    timestamps,
+                                                                    concentrations)
+                        aqi = self.sub_calculator.calculate(None, aqi_type, (concentration))
+                        aqi_vec.append(aqi)
+
+                    except weewx.CannotCalculate:
+                        aqi_vec.append(None)
+                else:
+                    aqi_vec.append(None)
+
+                del timestamps[0]
+                del concentrations[0]
 
         start_vec.reverse()
         stop_vec = start_vec[1:]
