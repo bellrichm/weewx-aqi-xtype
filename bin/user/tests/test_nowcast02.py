@@ -61,7 +61,7 @@ class NowCastTests(unittest.TestCase):
 
                 calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                start_vec, stop_vec, aqi_vec = calculator.calculate_series(aqi_type, iter(records))
+                start_vec, stop_vec, aqi_vec = calculator.calculate(None, aqi_type, iter(records))
 
                 self.assertEqual(start_vec, [timestamps[0]])
                 self.assertEqual(stop_vec, [timestamps[0] + 3600])
@@ -93,7 +93,7 @@ class NowCastTests(unittest.TestCase):
 
                 calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                start_vec, stop_vec, aqi_vec = calculator.calculate_series(aqi_type, iter(records))
+                start_vec, stop_vec, aqi_vec = calculator.calculate(None, aqi_type, iter(records))
 
                 self.assertEqual(start_vec, [timestamps[0]])
                 self.assertEqual(stop_vec, [timestamps[0] + 3600])
@@ -129,7 +129,7 @@ class NowCastTests(unittest.TestCase):
                 sub_calculator = user.aqitype.EPAAQI(mock_logger, 0, None, None)
                 calculator = user.aqitype.NOWCAST(mock_logger, 0, sub_calculator, None)
 
-                start_vec, stop_vec, aqi_vec = calculator.calculate_series(aqi_type, iter(records))
+                start_vec, stop_vec, aqi_vec = calculator.calculate(None, aqi_type, iter(records))
 
                 self.assertEqual(start_vec, [timestamps[0]])
                 self.assertEqual(stop_vec, [timestamps[0] + 3600])
@@ -162,7 +162,7 @@ class NowCastTests(unittest.TestCase):
 
                 calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-                start_vec, stop_vec, aqi_vec = calculator.calculate_series(aqi_type, iter(records))
+                start_vec, stop_vec, aqi_vec = calculator.calculate(None, aqi_type, iter(records))
 
                 self.assertEqual(start_vec, [timestamps[0]])
                 self.assertEqual(stop_vec, [timestamps[0] + 3600])
@@ -192,7 +192,7 @@ class NowCastTests(unittest.TestCase):
                 sub_calculator = user.aqitype.EPAAQI(mock_logger, 0, None, None)
                 calculator = user.aqitype.NOWCAST(mock_logger, 0, sub_calculator, None)
 
-                start_vec, stop_vec, aqi_vec = calculator.calculate_series(aqi_type, iter(records))
+                start_vec, stop_vec, aqi_vec = calculator.calculate(None, aqi_type, iter(records))
 
                 self.assertEqual(start_vec, [timestamps[0]])
                 self.assertEqual(stop_vec, [timestamps[0] + 3600])
@@ -222,7 +222,7 @@ class NowCastTests(unittest.TestCase):
                 sub_calculator = user.aqitype.EPAAQI(mock_logger, 0, None, None)
                 calculator = user.aqitype.NOWCAST(mock_logger, 0, sub_calculator, None)
 
-                start_vec, stop_vec, aqi_vec = calculator.calculate_series(aqi_type, iter(records))
+                start_vec, stop_vec, aqi_vec = calculator.calculate(None, aqi_type, iter(records))
 
                 self.assertEqual(start_vec, [timestamps[0]])
                 self.assertEqual(stop_vec, [timestamps[0] + 3600])

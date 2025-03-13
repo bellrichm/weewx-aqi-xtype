@@ -80,18 +80,6 @@ class TestSQL(unittest.TestCase):
                                    TestSQL.aqi_type)
         self.config = configobj.ConfigObj(config_dict)
 
-    def test_get_concentration_data_stats(self):
-        SUT = user.aqitype.SQLExecutor(self.mock_logger)
-
-        # The timestamp in the template that I am using is 1740168300 (3:05 PM Eastern on 2/21/2025)
-        timestamp_interval_start = weeutil.weeutil.startOfInterval(1740168300, 3600)
-        stop = timestamp_interval_start + 3600
-        start = stop - 43200
-        data_min, data_max = SUT.get_concentration_data_stats(TestSQL.db_manager, TestSQL.input_field, stop, start)
-
-        self.assertEqual(data_min, 1.1982950191570885)
-        self.assertEqual(data_max, 1.7157567049808427)
-
     def test_get_concentration_data_nowcast(self):
         SUT = user.aqitype.SQLExecutor(self.mock_logger)
 

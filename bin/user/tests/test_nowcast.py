@@ -41,20 +41,30 @@ class NowCastTests(unittest.TestCase):
 
     def test_calculate_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
-        mock_db_manager = mock.Mock()
         mock_calculator = mock.Mock()
         aqi = random.randint(1, 400)
         mock_calculator.calculate.return_value = aqi
 
+        now = time.time()
+        current_hour =  int(now / 3600) * 3600
+
         calculator = user.aqitype.NOWCAST(mock_logger, 0, mock_calculator, None)
 
-        records_min_max = (random.randint(1, 10), random.randint(11, 20))
-        records = [[random.randint(1, 100), random.random(), random_string()]]
+        data = [random.uniform(0, 700)]
+        timestamps = self._populate_time_stamps(current_hour, len(data))
+
+        aqi_type = random_string()
+        # ToDo: optimize. Eliminate need _populate_time_stamps call (above)?
+        records = []
+        i = 0
+        for concentration in data:
+            records.append((timestamps[i], concentration))
+            i += 1
 
         with mock.patch.object(user.aqitype.NOWCAST, 'calculate_concentration', return_value=random.random()):
-            ret_value = calculator.calculate(mock_db_manager, random_string(), (time.time(), records_min_max, records))
+            ret_value = calculator.calculate(None, aqi_type, iter(records))
 
-            self.assertEqual(ret_value, aqi)
+            self.assertEqual(ret_value, ([timestamps[0]], [timestamps[0] + 3600], [aqi]))
 
     def test_incomplete_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
@@ -172,7 +182,7 @@ class NowCastTests(unittest.TestCase):
 
         calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-        result = calculator.calculate_series('foo', [])
+        result = calculator.calculate(None, 'foo', [])
 
         print(result)
 

@@ -88,22 +88,6 @@ class SQLExecutor():
     ''' Class to execute SQL statements.
         This is a very thin layer. 
         Its primary purpose is to make testing easier. '''
-    stats_sql_str = '''
-    Select MIN(rowStats.avgConcentration) as rowMin,
-        MAX(rowStats.avgConcentration) as rowMax
-    FROM (
-        SELECT avg({input}) as avgConcentration
-        FROM archive
-        WHERE dateTime > {start}
-            AND dateTime <= {stop}
-        /* In WeeWX the first recording of an hour is the archival interval of the hour, typically 5 minutes.
-        This interval records the values from 0 to 5 minutes
-        In other words, assumning an archival interval of 5 minutes, the dateTimes will be
-        05, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 00 (of the following hour)
-        So, to get the correct grouping, the archive interval must deleted from dateTime in the database */
-        GROUP BY (dateTime - {archive_interval}) / 3600
-        ) AS rowStats
-    '''
 
     # If there are no records in the grouping, no record will be returned for that group.
     # Stated a different way, there can be gaps in the list of records.
@@ -180,29 +164,6 @@ class SQLExecutor():
 
     def __init__(self, logger):
         self.logger = logger
-
-    def get_concentration_data_stats(self, db_manager, dependent_field, stop, start):
-        ''' Get the necessary concentration data to compute for a given time. '''
-
-        # ToDo: need to get this from the 'console' (or the record?)
-        archive_interval = 300
-
-        interpolation_dict = {
-            'start': start,
-            'stop': stop,
-            'archive_interval': archive_interval,
-            'input': dependent_field
-        }
-
-        sql_str = SQLExecutor.stats_sql_str.format(**interpolation_dict)
-
-        try:
-            # Only one record is returned
-            record_stats = db_manager.getSql(sql_str)
-        except weedb.NoColumnError:
-            raise weewx.UnknownType(dependent_field) from weedb.NoColumnError
-
-        return record_stats
 
     def get_concentration_data_nowcast(self, db_manager, dependent_field, stop, start):
         ''' Get the necessary concentration data to compute for a given time. 
@@ -371,27 +332,10 @@ class NOWCAST(AbstractCalculator):
             self._logerr(error_message)
             raise CalculationError(error_message) from exception
 
-    def calculate(self, db_manager, aqi_type, inputs):
-        (timestamp, record_stats, records_iter) = inputs
-        self._logdbg(f"The time stamp is {timestamp}.")
-        self._logdbg(f"record_stats is {record_stats}.")
-        self._logdbg(f"The type is '{aqi_type}'")
-
-        data_min, data_max = record_stats
-
-        records = list(records_iter)
-        timestamps, concentrations, _start_time = zip(*records)
-
-        concentration = self.calculate_concentration(timestamp, data_min, data_max, timestamps, concentrations)
-        aqi = self.sub_calculator.calculate(None, aqi_type, (concentration))
-        self._logdbg(f"The computed AQI is {aqi}")
-
-        return aqi
-
-    def calculate_series(self, aqi_type, records_iter):
-        ''' Calculate a series of nowcast aqi values. '''
+    def calculate(self, _db_manager, aqi_type, inputs):
         # 02/26/2025 - not used, yet (in development)
         self._logdbg(f"The type is '{aqi_type}'")
+        records_iter = inputs
 
         i = 1
         timestamps = []
@@ -708,15 +652,13 @@ class AQIType(weewx.xtypes.XType):
         timestamp_interval_start = weeutil.weeutil.startOfInterval(timestamp, 3600)
         stop = timestamp_interval_start + 3600
         start = stop - 43200
-        record_stats = self.sql_executor.get_concentration_data_stats(db_manager, dependent_field, stop, start)
+
         records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop, start)
+        _start_list, _stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(None, aqi_type, records_iter)
+        if aqi_list[0] is None:
+            raise weewx.CannotCalculate(obs_type)
 
-        try:
-            aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (timestamp, record_stats, records_iter))
-        except weewx.CannotCalculate as exception:
-            raise weewx.CannotCalculate(obs_type) from exception
-
-        return aqi
+        return aqi_list[0]
 
     def _get_scalar_epaaqi(self, obs_type, db_manager, _timestamp, concentration):
         aqi_type = self.aqi_fields[obs_type]['type']
@@ -764,7 +706,7 @@ class AQIType(weewx.xtypes.XType):
         start_time = timespan.start - 43200 + 3600
         records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
 
-        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate_series(aqi_type, records_iter)
+        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(None, aqi_type, records_iter)
 
         return (ValueTuple(start_list, 'unix_epoch', 'group_time'),
                 ValueTuple(stop_list, 'unix_epoch', 'group_time'),
@@ -807,7 +749,7 @@ class AQIType(weewx.xtypes.XType):
         start_time = timespan.start - 43200 + 3600
         records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
 
-        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate_series(aqi_type, records_iter)
+        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(None, aqi_type, records_iter)
 
         # ToDo: placeholder
         if aggregate_type in ['min']:
@@ -1016,7 +958,7 @@ class AQIType(weewx.xtypes.XType):
             # ToDo: placeholder
             aqi_type = self.aqi_fields[obs_type]['type']
             _start_list, _stop_list, concentration_list =\
-                self.aqi_fields[obs_type]['calculator'].calculate_series(aqi_type, 'foo')
+                self.aqi_fields[obs_type]['calculator'].calculate(None, aqi_type, 'foo')
             print(len(concentration_list))
             aggregate_value = None
         else:

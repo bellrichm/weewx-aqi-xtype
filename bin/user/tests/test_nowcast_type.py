@@ -51,7 +51,7 @@ class TestGetScalarNowcast(unittest.TestCase):
         config = configobj.ConfigObj(config_dict)
 
         aqi = random.randint(11, 100)
-        with mock.patch.object(calculator, 'calculate', return_value=aqi):
+        with mock.patch.object(calculator, 'calculate', return_value=([], [], [aqi])):
             SUT = user.aqitype.AQIType(mock_logger, mock_sql_executor, config)
 
             unit = random_string()
@@ -64,8 +64,7 @@ class TestGetScalarNowcast(unittest.TestCase):
                 input_field: random.randint(0, 10),
             }
 
-            data_stats = (random.random(), random.random())
-            mock_sql_executor.get_concentration_data_stats.return_value = data_stats
+            mock_sql_executor.get_concentration_data_nowcast.return_value = iter([])
             with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
                 value_tuple = SUT.get_scalar(calculated_field, record, mock_db_manager)
 
@@ -96,7 +95,7 @@ class TestGetScalarNowcast(unittest.TestCase):
             mock_start_vec.append(random.randint(201,300))
             mock_aqi_vec.append(random.randint(1,100))
 
-        with mock.patch.object(calculator, 'calculate_series', return_value=(mock_start_vec, mock_stop_vec, mock_aqi_vec)):
+        with mock.patch.object(calculator, 'calculate', return_value=(mock_start_vec, mock_stop_vec, mock_aqi_vec)):
             SUT = user.aqitype.AQIType(mock_logger, mock_sql_executor, config)
 
             unit = random_string()
