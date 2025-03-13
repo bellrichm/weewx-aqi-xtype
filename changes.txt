@@ -18,7 +18,7 @@ Fixes:
 
 V1.1.0
 Enhancements:
-- Add support for Nowcast calculation.
+- Add support for NowCast calculation.
 
 V1.2.0
 Breaking change in behavior:

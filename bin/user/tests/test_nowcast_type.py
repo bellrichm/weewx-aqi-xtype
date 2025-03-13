@@ -34,7 +34,7 @@ def setup_config(calculated_field, input_field, algorithm, aqi_type):
     }
     return config_dict
 
-class TestGetScalarNowcast(unittest.TestCase):
+class TestGetScalarNowCast(unittest.TestCase):
     def test_get_scalar_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
         mock_sql_executor = mock.Mock()
@@ -198,7 +198,7 @@ class TestGetScalarNowcast(unittest.TestCase):
 
 if __name__ == '__main__':
     #test_suite = unittest.TestSuite()
-    #test_suite.addTest(TestNowcastDevelopment('test_get_series_prototype02'))
+    #test_suite.addTest(TestNowCastDevelopment('test_get_series_prototype02'))
     #unittest.TextTestRunner().run(test_suite)
 
     unittest.main(exit=False)

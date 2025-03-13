@@ -247,7 +247,7 @@ class AbstractCalculator():
 
 class NOWCAST(AbstractCalculator):
     """
-    Class for calculating the Nowcast AQI.
+    Class for calculating the NowCast AQI.
     Additional information:
     https://usepa.servicenowservices.com/airnow?id=kb_article_view&sys_id=bb8b65ef1b06bc10028420eae54bcb98&spa=1
 
@@ -324,7 +324,7 @@ class NOWCAST(AbstractCalculator):
         except weewx.CannotCalculate as exception:
             raise exception
         except Exception as exception: # (want to catch all - at least for now) pylint: disable=broad-except
-            error_message = f"Error Calculating Nowcast with a data_count of {data_count}, data_max is {data_max}, data_min is {data_min}, "
+            error_message = f"Error Calculating NowCast with a data_count of {data_count}, data_max is {data_max}, data_min is {data_min}, "
             error_message += f"weight_factor is {weight_factor}.\n"
             error_message += f"index is {i}, hours_ago is {hours_ago}, concentration is {concentrations[i]}\n"
             error_message += f"There are {len(timestamps)} with values of {timestamps}.\n"

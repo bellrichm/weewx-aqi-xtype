@@ -16,7 +16,7 @@ EXTENSION_CONFIG = """
         [[[Labels]]]
             [[[[Generic]]]]
                 pm2_5_aqi = AQI
-                pm2_5_aqi_nowcast = AQI (Nowcast)
+                pm2_5_aqi_nowcast = AQI (NowCast)
 
 [StdWXCalculate]
     [[Calculations]]

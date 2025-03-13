@@ -33,7 +33,7 @@ def setup_config(calculated_field, input_field, algorithm, aqi_type):
     }
     return config_dict
 
-class TestNowcastDevelopment(unittest.TestCase):
+class TestNowCastDevelopment(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.input_field = utils.database.PM2_5_INPUT_FIELD
@@ -52,8 +52,8 @@ class TestNowcastDevelopment(unittest.TestCase):
         self.mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
     def test_get_series_prototype(self):
-        # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
-        #       Note, due to performance concerns, I am not sure the Nowcast algotithm will be supported.
+        # ToDo: This 'test' will be used to develop series support for the NowCast algorithm.
+        #       Note, due to performance concerns, I am not sure the NowCast algotithm will be supported.
         #
 
         algorithm = 'NOWCAST'
@@ -66,7 +66,7 @@ class TestNowcastDevelopment(unittest.TestCase):
         config = configobj.ConfigObj(config_dict)
 
         SUT = user.aqitype.AQIType(self.mock_logger, user.aqitype.SQLExecutor(self.mock_logger), config)
-        start_vec, stop_vec, aqi_vec = SUT.get_series(calculated_field, utils.database.timespan, TestNowcastDevelopment.db_manager)
+        start_vec, stop_vec, aqi_vec = SUT.get_series(calculated_field, utils.database.timespan, TestNowCastDevelopment.db_manager)
 
         self.assertEqual(start_vec,
                          ([1740114000, 1740117600, 1740121200, 1740124800, 1740128400, 1740132000,
@@ -85,7 +85,7 @@ class TestNowcastDevelopment(unittest.TestCase):
                           None, None))
 
     def test_get_series_prototype02(self):
-        # ToDo: This 'test' will be used to develop series support for the Nowcast algorithm.
+        # ToDo: This 'test' will be used to develop series support for the NowCast algorithm.
         #  Using this one will allow 'test_get_series_prototype' to stay 'pristine'
 
         algorithm = 'NOWCAST'
@@ -102,7 +102,7 @@ class TestNowcastDevelopment(unittest.TestCase):
 
         SUT = user.aqitype.AQIType(self.mock_logger, user.aqitype.SQLExecutor(self.mock_logger), config)
 
-        ret_value = SUT.get_series(calculated_field, timespan, TestNowcastDevelopment.db_manager)
+        ret_value = SUT.get_series(calculated_field, timespan, TestNowCastDevelopment.db_manager)
 
         print(ret_value)
 
@@ -110,7 +110,7 @@ class TestNowcastDevelopment(unittest.TestCase):
 
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()
-    test_suite.addTest(TestNowcastDevelopment('test_get_series_prototype02'))
+    test_suite.addTest(TestNowCastDevelopment('test_get_series_prototype02'))
     unittest.TextTestRunner().run(test_suite)
 
     #unittest.main(exit=False)

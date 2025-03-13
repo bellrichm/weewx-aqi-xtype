@@ -66,7 +66,7 @@ Prior to making any updates/changes, always make a backup.
 ## Customizing
 
 The installation of weewx-aqi-xtype configures it so that will work with the WeeWX 'extended schema.'
-It will calculate the Instacast AQI and Nowcast AQI for the value of pm 2.5.
+It will calculate the Instacast AQI and NowCast AQI for the value of pm 2.5.
 To do this three sections of weewx configuration are updated.
 The first is `[[[Generic]]]` section of `[StdReport][[Labels]]`.
 Here the default label is added.
@@ -79,7 +79,7 @@ Here the default label is added.
             .
             .
             pm2_5_aqi = AQI
-            pm2_5_aqi_nowcast = AQI (Nowcast)
+            pm2_5_aqi_nowcast = AQI (NowCast)
 ```
 
 The second is the `[[Calculations]]` section of `[StdWXCalculate]`.
@@ -137,8 +137,8 @@ The result should look something like this.
             .
             pm2_5_aqi = Inside AQI
             pm2_5_aqi = Outside AQI
-            pm2_5_aqi_nowcast = Inside AQI (Nowcast)
-            pm2_51_aqi_nowcast = Outside AQI (Nowcast)
+            pm2_5_aqi_nowcast = Inside AQI (NowCast)
+            pm2_51_aqi_nowcast = Outside AQI (NowCast)
 ```
 
 ```Text
@@ -201,7 +201,7 @@ If for some reason it is desired to add it to the end, set `prepend = False`
 
 Now the calculated value, pm2_5_aqi can be used like any built-in WeeWX type.
 
-Note: Nowcast values are only available with the $current and $latest tags.
+Note: NowCast values are only available with the $current and $latest tags.
 It does not support aggregation nor series.
 
 ### Display values
