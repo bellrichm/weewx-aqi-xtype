@@ -48,7 +48,7 @@ class TestNowCast(unittest.TestCase):
         now = time.time()
         current_hour =  int(now / 3600) * 3600
 
-        calculator = user.aqitype.NOWCAST(mock_logger, 0, mock_calculator, None)
+        calculator = user.aqitype.NowCast(mock_logger, 0, mock_calculator, None)
 
         data = [random.uniform(0, 700)]
         timestamps = self._populate_time_stamps(current_hour, len(data))
@@ -61,7 +61,7 @@ class TestNowCast(unittest.TestCase):
             records.append((timestamps[i], concentration))
             i += 1
 
-        with mock.patch.object(user.aqitype.NOWCAST, 'calculate_concentration', return_value=random.random()):
+        with mock.patch.object(user.aqitype.NowCast, 'calculate_concentration', return_value=random.random()):
             ret_value = calculator.calculate(aqi_type, iter(records))
 
             self.assertEqual(ret_value, ([timestamps[0]], [timestamps[0] + 3600], [aqi]))
@@ -78,7 +78,7 @@ class TestNowCast(unittest.TestCase):
                     data = [random.uniform(0, 700)]
                     timestamps = self._populate_time_stamps(current_hour, len(data))
 
-                    calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
+                    calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
 
                     calculator.calculate_concentration(now, min(data), max(data), timestamps, data)
 
@@ -97,7 +97,7 @@ class TestNowCast(unittest.TestCase):
                     del data[1:3]
                     del timestamps[1:3]
 
-                    calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
+                    calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
 
                     calculator.calculate_concentration(now, min(data), max(data), timestamps, data)
 
@@ -118,7 +118,7 @@ class TestNowCast(unittest.TestCase):
                         del timestamps[i]
                     i -= 1
 
-                calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
+                calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
 
                 concentration = calculator.calculate_concentration(now, min(data), max(data), timestamps, data)
                 self.assertEqual(concentration, 164.7)
@@ -140,7 +140,7 @@ class TestNowCast(unittest.TestCase):
                     min_value, max_value = min_max(data)
                     timestamps = self._populate_time_stamps(current_hour, len(data))
 
-                    calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
+                    calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
 
                     calculator.calculate_concentration(now, min_value, max_value, timestamps, data)
 
@@ -156,7 +156,7 @@ class TestNowCast(unittest.TestCase):
                 min_value, max_value = min_max(data)
                 timestamps  = self._populate_time_stamps(current_hour, len(data))
 
-                calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
+                calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
                 concentration = calculator.calculate_concentration(now, min_value, max_value, timestamps, data)
                 self.assertEqual(concentration, 164.7)
 
@@ -171,7 +171,7 @@ class TestNowCast(unittest.TestCase):
                 data = [46.3, 27.4, 59.8, 129.2, 130.6, 215.4, 143.2, 93.7, 101.8, 49.3, 80.2, 123.3]
                 timestamps = self._populate_time_stamps(current_hour, len(data))
 
-                calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
+                calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
 
                 concentration = calculator.calculate_concentration(now, min(data), max(data), timestamps, data)
                 self.assertEqual(concentration, 54.8)
@@ -180,7 +180,7 @@ class TestNowCast(unittest.TestCase):
     def test_calculate_series(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
-        calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
+        calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
 
         result = calculator.calculate('foo', [])
 

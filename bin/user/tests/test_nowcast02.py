@@ -59,7 +59,7 @@ class TestNowCast(unittest.TestCase):
                     records.append((timestamps[i], concentration))
                     i += 1
 
-                calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
+                calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
 
                 start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 
@@ -91,7 +91,7 @@ class TestNowCast(unittest.TestCase):
                     records.append((timestamps[i], concentration))
                     i += 1
 
-                calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
+                calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
 
                 start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 
@@ -127,7 +127,7 @@ class TestNowCast(unittest.TestCase):
                     i += 1
 
                 sub_calculator = user.aqitype.EPAAQI(mock_logger, 0, None, None)
-                calculator = user.aqitype.NOWCAST(mock_logger, 0, sub_calculator, None)
+                calculator = user.aqitype.NowCast(mock_logger, 0, sub_calculator, None)
 
                 start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 
@@ -160,7 +160,7 @@ class TestNowCast(unittest.TestCase):
                     records.append((timestamps[i], concentration))
                     i += 1
 
-                calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
+                calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
 
                 start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 
@@ -190,7 +190,7 @@ class TestNowCast(unittest.TestCase):
                     i += 1
 
                 sub_calculator = user.aqitype.EPAAQI(mock_logger, 0, None, None)
-                calculator = user.aqitype.NOWCAST(mock_logger, 0, sub_calculator, None)
+                calculator = user.aqitype.NowCast(mock_logger, 0, sub_calculator, None)
 
                 start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 
@@ -220,7 +220,7 @@ class TestNowCast(unittest.TestCase):
                     i += 1
 
                 sub_calculator = user.aqitype.EPAAQI(mock_logger, 0, None, None)
-                calculator = user.aqitype.NOWCAST(mock_logger, 0, sub_calculator, None)
+                calculator = user.aqitype.NowCast(mock_logger, 0, sub_calculator, None)
 
                 start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 

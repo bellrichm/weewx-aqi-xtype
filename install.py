@@ -31,7 +31,7 @@ EXTENSION_CONFIG = """
         # The name of the WeeWX observation to be used in the calculation.
         input = pm2_5
         # The name of the algorithm.
-        # Supported values: EPAAQI, NOWCAST
+        # Supported values: EPAAQI, NowCast
         algorithm = EPAAQI
         # If the algorithm supports different pollutants(pm 2.5, pm 10, etc)
         # Supported values: pm2_5, pm10
@@ -40,8 +40,8 @@ EXTENSION_CONFIG = """
         # The name of the WeeWX observation to be used in the calculation.
         input = pm2_5
         # The name of the algorithm.
-        # Supported values: EPAAQI, NOWCAST
-        algorithm = NOWCAST
+        # Supported values: EPAAQI, NowCast
+        algorithm = NowCast
         # If the algorithm supports different pollutants(pm 2.5, pm 10, etc)
         # Supported values: pm2_5, pm10
         type = pm2_5                          

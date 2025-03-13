@@ -245,7 +245,7 @@ class AbstractCalculator():
         """
         raise NotImplementedError
 
-class NOWCAST(AbstractCalculator):
+class NowCast(AbstractCalculator):
     """
     Class for calculating the NowCast AQI.
     Additional information:
@@ -275,15 +275,15 @@ class NOWCAST(AbstractCalculator):
 
     def  _logdbg(self, msg):
         if self.log_level <= 10:
-            self.logger.logdbg(f"(NOWCAST) {msg}")
+            self.logger.logdbg(f"(NowCast) {msg}")
 
     def _loginf(self, msg):
         if self.log_level <= 20:
-            self.logger.loginf(f"(NOWCAST) {msg}")
+            self.logger.loginf(f"(NowCast) {msg}")
 
     def _logerr(self, msg):
         if self.log_level <= 40:
-            self.logger.logerr(f"(NOWCAST) {msg}")
+            self.logger.logerr(f"(NowCast) {msg}")
 
     def calculate_concentration(self, time_stamp, data_min, data_max, timestamps, concentrations):
         '''
@@ -582,9 +582,9 @@ class AQIType(weewx.xtypes.XType):
             sub_calculator = None
             sub_field_name = None
             log_level = to_int(config_dict[field].get('log_level', default_log_level))
-            if field_option['algorithm'] == 'NOWCAST':
-                if field_option['type'] not in NOWCAST.readings:
-                    raise ValueError(f"Algorithm 'NOWCAST' is not supported for pollutant '{field_option['type']}'")
+            if field_option['algorithm'] == 'NowCast':
+                if field_option['type'] not in NowCast.readings:
+                    raise ValueError(f"Algorithm 'NowCast' is not supported for pollutant '{field_option['type']}'")
                 field_option['support_aggregation'] = False
                 field_option['support_series'] = False
                 sub_calculator = getattr(sys.modules[__name__], 'EPAAQI')(self.logger, log_level, None, None)
@@ -853,7 +853,7 @@ class AQIType(weewx.xtypes.XType):
                 ValueTuple(data_vec, unit, unit_group))
 
     def _get_aggregate_nowcast(self, obs_type, timespan, aggregate_type, db_manager, **_option_dict):
-       # For now the NOWCAST algorithm does not support 'aggregation'
+       # For now the NowCast algorithm does not support 'aggregation'
         # Because XTypeTable will also try, 'None' is returned.
         if aggregate_type != 'not_null':
             aggregate_value = None
@@ -869,7 +869,7 @@ class AQIType(weewx.xtypes.XType):
             }
 
             # This is not accurate
-            # Just because there is one concentration reading does not mean NOWCAST can be computed
+            # Just because there is one concentration reading does not mean NowCast can be computed
             simple_sql_stmts = {
             'count': "SELECT COUNT(dateTime) FROM {table_name} "
                     "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
@@ -905,7 +905,7 @@ class AQIType(weewx.xtypes.XType):
         return weewx.units.ValueTuple(aggregate_value, unit_type, group)
 
     def _get_aggregate_nowcast_prototype(self, obs_type, timespan, aggregate_type, db_manager, **_option_dict):
-       # For now the NOWCAST algorithm does not support 'aggregation'
+       # For now the NowCast algorithm does not support 'aggregation'
         # Because other XTypes will also try, 'None' is returned.
         # ToDo: example placeholder
         if timespan.stop - timespan.start < 86400:
@@ -923,7 +923,7 @@ class AQIType(weewx.xtypes.XType):
             }
 
             # This is not accurate
-            # Just because there is one concentration reading does not mean NOWCAST can be computed
+            # Just because there is one concentration reading does not mean NowCast can be computed
             simple_sql_stmts = {
             'count': "SELECT COUNT(dateTime) FROM {table_name} "
                     "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",

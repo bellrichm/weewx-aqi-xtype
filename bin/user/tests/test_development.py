@@ -56,7 +56,7 @@ class TestNowCastDevelopment(unittest.TestCase):
         #       Note, due to performance concerns, I am not sure the NowCast algotithm will be supported.
         #
 
-        algorithm = 'NOWCAST'
+        algorithm = 'NowCast'
         aqi_type = 'pm2_5'
 
         calculated_field = random_string()
@@ -88,7 +88,7 @@ class TestNowCastDevelopment(unittest.TestCase):
         # ToDo: This 'test' will be used to develop series support for the NowCast algorithm.
         #  Using this one will allow 'test_get_series_prototype' to stay 'pristine'
 
-        algorithm = 'NOWCAST'
+        algorithm = 'NowCast'
         aqi_type = 'pm2_5'
 
         calculated_field = random_string()

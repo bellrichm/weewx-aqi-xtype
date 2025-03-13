@@ -40,8 +40,8 @@ class TestGetScalarNowCast(unittest.TestCase):
         mock_sql_executor = mock.Mock()
         mock_db_manager = mock.Mock()
 
-        calculator = user.aqitype.NOWCAST
-        algorithm = 'NOWCAST'
+        calculator = user.aqitype.NowCast
+        algorithm = 'NowCast'
         aqi_type = 'pm2_5'
 
         calculated_field = random_string()
@@ -77,8 +77,8 @@ class TestGetScalarNowCast(unittest.TestCase):
         mock_sql_executor = mock.Mock()
         mock_db_manager = mock.Mock()
 
-        calculator = user.aqitype.NOWCAST
-        algorithm = 'NOWCAST'
+        calculator = user.aqitype.NowCast
+        algorithm = 'NowCast'
         aqi_type = 'pm2_5'
 
         calculated_field = random_string()
@@ -115,7 +115,7 @@ class TestGetScalarNowCast(unittest.TestCase):
         mock_sql_executor = mock.Mock()
         mock_db_manager = mock.Mock()
 
-        algorithm = 'NOWCAST'
+        algorithm = 'NowCast'
         aqi_type = 'pm2_5'
 
         calculated_field = random_string()
@@ -143,7 +143,7 @@ class TestGetScalarNowCast(unittest.TestCase):
         mock_sql_executor = mock.Mock()
         mock_db_manager = mock.Mock()
 
-        algorithm = 'NOWCAST'
+        algorithm = 'NowCast'
         aqi_type = 'pm2_5'
 
         calculated_field = random_string()
@@ -172,7 +172,7 @@ class TestGetScalarNowCast(unittest.TestCase):
         mock_sql_executor = mock.Mock()
         mock_db_manager = mock.Mock()
 
-        algorithm = 'NOWCAST'
+        algorithm = 'NowCast'
         aqi_type = 'pm2_5'
 
         calculated_field = random_string()
