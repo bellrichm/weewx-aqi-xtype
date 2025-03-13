@@ -582,7 +582,8 @@ class AQIType(weewx.xtypes.XType):
             sub_calculator = None
             sub_field_name = None
             log_level = to_int(config_dict[field].get('log_level', default_log_level))
-            if field_option['algorithm'] == 'NowCast':
+            if field_option['algorithm'] == 'NowCast' or field_option['algorithm'] == 'NOWCAST':
+                field_option['algorithm'] = 'NowCast'
                 if field_option['type'] not in NowCast.readings:
                     raise ValueError(f"Algorithm 'NowCast' is not supported for pollutant '{field_option['type']}'")
                 field_option['support_aggregation'] = False
