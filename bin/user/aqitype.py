@@ -626,7 +626,11 @@ class AQIType(weewx.xtypes.XType):
         if record[dependent_field] is None:
             raise weewx.CannotCalculate(obs_type)
 
+        start_timestamp = time.time()
         aqi = self.aqi_fields[obs_type]['get_scalar'](obs_type, db_manager, record['dateTime'], record[dependent_field])
+        end_timestamp = time.time()
+        running_timestamp = end_timestamp - start_timestamp
+        self._loginf(f"(performance) For {obs_type} (scalar) calcuation took, {running_timestamp}")
 
         unit_type, group = weewx.units.getStandardUnitType(record['usUnits'], obs_type)
         return weewx.units.ValueTuple(aqi, unit_type, group)
@@ -635,13 +639,27 @@ class AQIType(weewx.xtypes.XType):
         """ Calculate the series. """
         if obs_type not in self.aqi_fields:
             raise weewx.UnknownType(obs_type)
-        return self.aqi_fields[obs_type]['get_series'](obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict)
+
+        start_timestamp = time.time()
+        return_value = self.aqi_fields[obs_type]['get_series'](obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict)
+        end_timestamp = time.time()
+        running_timestamp = end_timestamp - start_timestamp
+        self._loginf(f"(performance) For {obs_type} (series) calcuation took, {running_timestamp}")
+
+        return return_value
 
     def get_aggregate(self, obs_type, timespan, aggregate_type, db_manager, **option_dict):
         """ Compute the aggregate. """
         if obs_type not in self.aqi_fields:
             raise weewx.UnknownType(obs_type)
-        return self.aqi_fields[obs_type]['get_aggregate'](obs_type, timespan, aggregate_type, db_manager, **option_dict)
+
+        start_timestamp = time.time()
+        return_value = self.aqi_fields[obs_type]['get_aggregate'](obs_type, timespan, aggregate_type, db_manager, **option_dict)
+        end_timestamp = time.time()
+        running_timestamp = end_timestamp - start_timestamp
+        self._loginf(f"(performance) For {obs_type} (aggregate) calcuation took, {running_timestamp}")
+
+        return return_value
 
     def _get_scalar_nowcast(self, obs_type, db_manager, timestamp, _concentration):
         aqi_type = self.aqi_fields[obs_type]['type']
@@ -661,11 +679,11 @@ class AQIType(weewx.xtypes.XType):
 
         return aqi_list[0]
 
-    def _get_scalar_epaaqi(self, obs_type, db_manager, _timestamp, concentration):
+    def _get_scalar_epaaqi(self, obs_type, _db_manager, _timestamp, concentration):
         aqi_type = self.aqi_fields[obs_type]['type']
 
         try:
-            aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (concentration))
+            aqi = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, (concentration))
         except weewx.CannotCalculate as exception:
             raise weewx.CannotCalculate(obs_type) from exception
 
@@ -839,7 +857,7 @@ class AQIType(weewx.xtypes.XType):
                     std_unit_system = unit_system
 
                 try:
-                    aqi = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (input_value))
+                    aqi = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, (input_value))
                 except weewx.CannotCalculate:
                     aqi = None
 
@@ -981,7 +999,7 @@ class AQIType(weewx.xtypes.XType):
             aggregate_value = None
             for row in records_iter:
                 try:
-                    input_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (row[0]))
+                    input_value = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, (row[0]))
                 except weewx.CannotCalculate:
                     input_value = None
 
@@ -1004,7 +1022,7 @@ class AQIType(weewx.xtypes.XType):
                 aggregate_value = input_value
             else:
                 try:
-                    aggregate_value = self.aqi_fields[obs_type]['calculator'].calculate(db_manager, aqi_type, (input_value))
+                    aggregate_value = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, (input_value))
                 except weewx.CannotCalculate:
                     aggregate_value = None
 
