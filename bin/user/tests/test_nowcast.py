@@ -62,7 +62,7 @@ class NowCastTests(unittest.TestCase):
             i += 1
 
         with mock.patch.object(user.aqitype.NOWCAST, 'calculate_concentration', return_value=random.random()):
-            ret_value = calculator.calculate(None, aqi_type, iter(records))
+            ret_value = calculator.calculate(aqi_type, iter(records))
 
             self.assertEqual(ret_value, ([timestamps[0]], [timestamps[0] + 3600], [aqi]))
 
@@ -182,7 +182,7 @@ class NowCastTests(unittest.TestCase):
 
         calculator = user.aqitype.NOWCAST(mock_logger, 0, None, None)
 
-        result = calculator.calculate(None, 'foo', [])
+        result = calculator.calculate('foo', [])
 
         print(result)
 

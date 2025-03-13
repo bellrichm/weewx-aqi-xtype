@@ -239,7 +239,7 @@ class AbstractCalculator():
     """
     Abstract Calculator class.
     """
-    def calculate(self, db_manager, aqi_type, inputs):
+    def calculate(self, aqi_type, inputs):
         """
         Perform the calculation.
         """
@@ -332,7 +332,7 @@ class NOWCAST(AbstractCalculator):
             self._logerr(error_message)
             raise CalculationError(error_message) from exception
 
-    def calculate(self, _db_manager, aqi_type, inputs):
+    def calculate(self, aqi_type, inputs):
         # 02/26/2025 - not used, yet (in development)
         self._logdbg(f"The type is '{aqi_type}'")
         records_iter = inputs
@@ -366,7 +366,7 @@ class NOWCAST(AbstractCalculator):
                                                             max_concentration,
                                                             timestamps,
                                                             concentrations)
-                aqi = self.sub_calculator.calculate(None, aqi_type, (concentration))
+                aqi = self.sub_calculator.calculate(aqi_type, (concentration))
                 aqi_vec.append(aqi)
 
             except weewx.CannotCalculate:
@@ -387,7 +387,7 @@ class NOWCAST(AbstractCalculator):
                                                                 max_concentration,
                                                                 timestamps,
                                                                 concentrations)
-                    aqi = self.sub_calculator.calculate(None, aqi_type, (concentration))
+                    aqi = self.sub_calculator.calculate(aqi_type, (concentration))
                     aqi_vec.append(aqi)
 
                 except weewx.CannotCalculate:
@@ -465,7 +465,7 @@ class EPAAQI(AbstractCalculator):
         if self.log_level <= 40:
             self.logger.logerr(f"(EPAAQI) {msg}")
 
-    def calculate(self, db_manager, aqi_type, inputs):
+    def calculate(self, aqi_type, inputs):
         '''
         Calculate the AQI.
         Additional information:
@@ -654,7 +654,7 @@ class AQIType(weewx.xtypes.XType):
         start = stop - 43200
 
         records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop, start)
-        _start_list, _stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(None, aqi_type, records_iter)
+        _start_list, _stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, records_iter)
         if aqi_list[0] is None:
             raise weewx.CannotCalculate(obs_type)
 
@@ -706,7 +706,7 @@ class AQIType(weewx.xtypes.XType):
         start_time = timespan.start - 43200 + 3600
         records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
 
-        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(None, aqi_type, records_iter)
+        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, records_iter)
 
         return (ValueTuple(start_list, 'unix_epoch', 'group_time'),
                 ValueTuple(stop_list, 'unix_epoch', 'group_time'),
@@ -749,7 +749,7 @@ class AQIType(weewx.xtypes.XType):
         start_time = timespan.start - 43200 + 3600
         records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
 
-        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(None, aqi_type, records_iter)
+        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, records_iter)
 
         # ToDo: placeholder
         if aggregate_type in ['min']:
@@ -958,7 +958,7 @@ class AQIType(weewx.xtypes.XType):
             # ToDo: placeholder
             aqi_type = self.aqi_fields[obs_type]['type']
             _start_list, _stop_list, concentration_list =\
-                self.aqi_fields[obs_type]['calculator'].calculate(None, aqi_type, 'foo')
+                self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, 'foo')
             print(len(concentration_list))
             aggregate_value = None
         else:

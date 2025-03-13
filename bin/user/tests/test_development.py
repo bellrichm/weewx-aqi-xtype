@@ -96,10 +96,12 @@ class TestNowcastDevelopment(unittest.TestCase):
 
         config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
         config = configobj.ConfigObj(config_dict)
-        timespan = weeutil.weeutil.TimeSpan(utils.database.timespan.start,
-                                            utils.database.timespan.start + 3600)
+        start = utils.data.db_20250219_timestamps[0] - utils.database.ARCHIVE_INTERVAL_SECONDS
+        stop = start + 3600
+        timespan = weeutil.weeutil.TimeSpan(start, stop)
 
         SUT = user.aqitype.AQIType(self.mock_logger, user.aqitype.SQLExecutor(self.mock_logger), config)
+
         ret_value = SUT.get_series(calculated_field, timespan, TestNowcastDevelopment.db_manager)
 
         print(ret_value)
@@ -107,8 +109,8 @@ class TestNowcastDevelopment(unittest.TestCase):
         print("done")
 
 if __name__ == '__main__':
-    #test_suite = unittest.TestSuite()
-    #test_suite.addTest(TestNowcastDevelopment('test_get_series_prototype02'))
-    #unittest.TextTestRunner().run(test_suite)
+    test_suite = unittest.TestSuite()
+    test_suite.addTest(TestNowcastDevelopment('test_get_series_prototype02'))
+    unittest.TextTestRunner().run(test_suite)
 
-    unittest.main(exit=False)
+    #unittest.main(exit=False)
