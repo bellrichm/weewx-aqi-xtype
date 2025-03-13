@@ -477,7 +477,7 @@ class EPAAQI(AbstractCalculator):
             https://www.airnow.gov/aqi/aqi-calculator-concentration/
         '''
 
-        (reading) = inputs
+        reading = inputs
         try:
             self._logdbg(f"The input value is {reading}.")
             self._logdbg(f"The type is '{aqi_type}'")
