@@ -14,7 +14,7 @@ import user.aqitype
 def random_string(length=32):
     return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable
 
-class EPAAQITests(unittest.TestCase):
+class TestEPAAQI(unittest.TestCase):
     def test_pm2_5_calculation(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
         calculator = user.aqitype.EPAAQIDeprecatedV0(mock_logger, 0, None, None)

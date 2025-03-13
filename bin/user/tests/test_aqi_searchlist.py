@@ -7,7 +7,7 @@ import unittest
 
 import user.aqitype
 
-class AQISearchListTests(unittest.TestCase):
+class TestAQISearchList(unittest.TestCase):
     def test_get_aqi_color_epa(self):
         searchlist = user.aqitype.AQISearchList({})
         self.assertEqual(searchlist.get_aqi_color(0.0, 'EPAAQI'), '00e400')

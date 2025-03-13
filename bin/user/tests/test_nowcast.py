@@ -29,7 +29,7 @@ def min_max(values):
                 max_value = value
     return min_value, max_value
 
-class NowCastTests(unittest.TestCase):
+class TestNowcast(unittest.TestCase):
     def _populate_time_stamps(self, current_hour, count):
         time_stamps = []
         index = 0
