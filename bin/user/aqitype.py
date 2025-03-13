@@ -366,7 +366,7 @@ class NowCast(AbstractCalculator):
                                                             max_concentration,
                                                             timestamps,
                                                             concentrations)
-                aqi = self.sub_calculator.calculate(aqi_type, (concentration))
+                aqi = self.sub_calculator.calculate(aqi_type, concentration)
                 aqi_vec.append(aqi)
 
             except weewx.CannotCalculate:
@@ -387,7 +387,7 @@ class NowCast(AbstractCalculator):
                                                                 max_concentration,
                                                                 timestamps,
                                                                 concentrations)
-                    aqi = self.sub_calculator.calculate(aqi_type, (concentration))
+                    aqi = self.sub_calculator.calculate(aqi_type, concentration)
                     aqi_vec.append(aqi)
 
                 except weewx.CannotCalculate:
