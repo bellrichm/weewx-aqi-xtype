@@ -1011,7 +1011,11 @@ class AQIType(weewx.xtypes.XType):
                 if aggregate_type == 'avg':
                     aggregate_value = round(aggregate_value / len(input_values))
         else:
-            row = list(records_iter)[0]
+            rows = list(records_iter)
+            if len(rows) == 0:
+                row = None
+            else:
+                row = rows[0]
 
             if not row or None in row:
                 input_value = None
