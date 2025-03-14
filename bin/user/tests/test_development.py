@@ -109,8 +109,8 @@ class TestNowCastDevelopment(unittest.TestCase):
         print("done")
 
 if __name__ == '__main__':
-    test_suite = unittest.TestSuite()
-    test_suite.addTest(TestNowCastDevelopment('test_get_series_prototype02'))
-    unittest.TextTestRunner().run(test_suite)
+    #test_suite = unittest.TestSuite()
+    #test_suite.addTest(TestNowCastDevelopment('test_get_series_prototype02'))
+    #unittest.TextTestRunner().run(test_suite)
 
-    #unittest.main(exit=False)
+    unittest.main(exit=False)
