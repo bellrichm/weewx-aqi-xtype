@@ -285,12 +285,11 @@ class NowCast(AbstractCalculator):
         if self.log_level <= 40:
             self.logger.logerr(f"(NowCast) {msg}")
 
-    def calculate_concentration(self, time_stamp, data_min, data_max, timestamps, concentrations):
+    def calculate_concentration(self, current_hour, data_min, data_max, timestamps, concentrations):
         '''
         Calculate the nowcast concentration.
         '''
         data_count = len(concentrations)
-        current_hour = weeutil.weeutil.startOfInterval(time_stamp, 3600)
 
         try:
             if data_count < 2:
@@ -350,29 +349,31 @@ class NowCast(AbstractCalculator):
             if record[1] is not None and record[1] > max_concentration:
                 max_concentration = record[1]
 
-            if i >= 11:
+            if i >= 12:
                 break
 
             i += 1
 
         aqi_vec = []
         start_vec = []
-        # ToDo: See if this can be simplified. Maybe call calculate_concentration at end of loop
-        if i < 11:
-            start_vec.append(timestamps[0])
-            try:
-                concentration = self.calculate_concentration(timestamps[0],
-                                                            min_concentration,
-                                                            max_concentration,
-                                                            timestamps,
-                                                            concentrations)
-                aqi = self.sub_calculator.calculate(aqi_type, concentration)
-                aqi_vec.append(aqi)
+        start_vec.append(timestamps[0])
+        current_hour = weeutil.weeutil.startOfInterval(timestamps[0], 3600)
+        try:
+            concentration = self.calculate_concentration(current_hour,
+                                                        min_concentration,
+                                                        max_concentration,
+                                                        timestamps,
+                                                        concentrations)
+            aqi = self.sub_calculator.calculate(aqi_type, concentration)
+            aqi_vec.append(aqi)
+        except weewx.CannotCalculate:
+            aqi_vec.append(None)
 
-            except weewx.CannotCalculate:
-                aqi_vec.append(None)
-        else:
+        if i >= 12:
             for record in records_iter:
+                del timestamps[0]
+                del concentrations[0]
+
                 timestamps.append(record[0])
                 concentrations.append(record[1])
                 if record[1] < min_concentration:
@@ -381,8 +382,9 @@ class NowCast(AbstractCalculator):
                     max_concentration = record[1]
 
                 start_vec.append(timestamps[0])
+                current_hour = weeutil.weeutil.startOfInterval(timestamps[0], 3600)
                 try:
-                    concentration = self.calculate_concentration(timestamps[0],
+                    concentration = self.calculate_concentration(current_hour,
                                                                 min_concentration,
                                                                 max_concentration,
                                                                 timestamps,
@@ -392,9 +394,6 @@ class NowCast(AbstractCalculator):
 
                 except weewx.CannotCalculate:
                     aqi_vec.append(None)
-
-                del timestamps[0]
-                del concentrations[0]
 
         start_vec.reverse()
         stop_vec = start_vec[1:]

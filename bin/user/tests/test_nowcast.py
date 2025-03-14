@@ -185,7 +185,7 @@ class TestNowCastCalculateConcentration(unittest.TestCase):
 
                     calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
 
-                    calculator.calculate_concentration(now, min(data), max(data), timestamps, data)
+                    calculator.calculate_concentration(current_hour, min(data), max(data), timestamps, data)
 
     def test_beginning_missing_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
@@ -204,7 +204,7 @@ class TestNowCastCalculateConcentration(unittest.TestCase):
 
                     calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
 
-                    calculator.calculate_concentration(now, min(data), max(data), timestamps, data)
+                    calculator.calculate_concentration(current_hour, min(data), max(data), timestamps, data)
 
     def test_missing_middle_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
@@ -225,7 +225,7 @@ class TestNowCastCalculateConcentration(unittest.TestCase):
 
                 calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
 
-                concentration = calculator.calculate_concentration(now, min(data), max(data), timestamps, data)
+                concentration = calculator.calculate_concentration(current_hour, min(data), max(data), timestamps, data)
                 self.assertEqual(concentration, 164.7)
 
     def test_beginning_none_data(self):
@@ -247,7 +247,7 @@ class TestNowCastCalculateConcentration(unittest.TestCase):
 
                     calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
 
-                    calculator.calculate_concentration(now, min_value, max_value, timestamps, data)
+                    calculator.calculate_concentration(current_hour, min_value, max_value, timestamps, data)
 
     def test_middle_none_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
@@ -262,7 +262,7 @@ class TestNowCastCalculateConcentration(unittest.TestCase):
                 timestamps  = populate_time_stamps(current_hour, len(data))
 
                 calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
-                concentration = calculator.calculate_concentration(now, min_value, max_value, timestamps, data)
+                concentration = calculator.calculate_concentration(current_hour, min_value, max_value, timestamps, data)
                 self.assertEqual(concentration, 164.7)
 
     def test_calculate_concentration(self):
@@ -278,7 +278,7 @@ class TestNowCastCalculateConcentration(unittest.TestCase):
 
                 calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
 
-                concentration = calculator.calculate_concentration(now, min(data), max(data), timestamps, data)
+                concentration = calculator.calculate_concentration(current_hour, min(data), max(data), timestamps, data)
                 self.assertEqual(concentration, 54.8)
 
     @unittest.skip("placeholder")
