@@ -357,9 +357,8 @@ class NowCast(AbstractCalculator):
         aqi_vec = []
         start_vec = []
         start_vec.append(timestamps[0])
-        current_hour = weeutil.weeutil.startOfInterval(timestamps[0], 3600)
         try:
-            concentration = self.calculate_concentration(current_hour,
+            concentration = self.calculate_concentration(timestamps[0],
                                                         min_concentration,
                                                         max_concentration,
                                                         timestamps,
@@ -382,9 +381,8 @@ class NowCast(AbstractCalculator):
                     max_concentration = record[1]
 
                 start_vec.append(timestamps[0])
-                current_hour = weeutil.weeutil.startOfInterval(timestamps[0], 3600)
                 try:
-                    concentration = self.calculate_concentration(current_hour,
+                    concentration = self.calculate_concentration(timestamps[0],
                                                                 min_concentration,
                                                                 max_concentration,
                                                                 timestamps,
