@@ -38,7 +38,6 @@ def populate_time_stamps(current_hour, count):
     return time_stamps
 
 class TestNowCastCalculate(unittest.TestCase):
-    @unittest.skip("done")
     def test_invalid_inputs_single(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
@@ -71,7 +70,6 @@ class TestNowCastCalculate(unittest.TestCase):
                     self.assertEqual(stop_vec, list(reversed([x+3600 for x in timestamps[0:vec_len]])))
                     self.assertEqual(aqi_vec, [None])
 
-    @unittest.skip("done")
     def test_valid_inputs_single(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
@@ -113,7 +111,6 @@ class TestNowCastCalculate(unittest.TestCase):
                     self.assertEqual(stop_vec, list(reversed([x+3600 for x in timestamps[0:vec_len]])))
                     self.assertEqual(aqi_vec, list(reversed(aqi_values)))
 
-    ##@unittest.skip("need to raise exception on third(?) call???")
     def test_invalid_inputs_multi(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
@@ -122,9 +119,9 @@ class TestNowCastCalculate(unittest.TestCase):
 
         with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval, return_value=current_hour):
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
-                with mock.patch.object(user.aqitype.NowCast, 'calculate_concentration'):
+                with mock.patch.object(user.aqitype.NowCast, 'calculate_concentration', side_effect=['foo', 'bar', weewx.CannotCalculate]):
 
-                    aqi_values = [random.randint(0, 500), random.randint(0,500), None]
+                    aqi_values = [random.randint(0, 500), random.randint(0,500)]
                     data = [random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700),
                             None, None, random.uniform(0, 700),
                             random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700),
@@ -149,9 +146,8 @@ class TestNowCastCalculate(unittest.TestCase):
                     vec_len = len(start_vec)
                     self.assertEqual(start_vec, list(reversed(timestamps[0:vec_len])))
                     self.assertEqual(stop_vec, list(reversed([x+3600 for x in timestamps[0:vec_len]])))
-                    self.assertEqual(aqi_vec, list(reversed(aqi_values)))
+                    self.assertEqual(aqi_vec, [None] + list(reversed(aqi_values)))
 
-    @unittest.skip("done")
     def test_valid_inputs_multi(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
@@ -188,7 +184,6 @@ class TestNowCastCalculate(unittest.TestCase):
                     self.assertEqual(stop_vec, list(reversed([x+3600 for x in timestamps[0:vec_len]])))
                     self.assertEqual(aqi_vec, list(reversed(aqi_values)))
 
-@unittest.skip("")
 class TestNowCastCalculateConcentration(unittest.TestCase):
     def test_incomplete_data(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
