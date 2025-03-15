@@ -71,7 +71,7 @@ class TestNowCastCalculate(unittest.TestCase):
                 self.assertEqual(stop_vec, [timestamps[0] + 3600])
                 self.assertEqual(aqi_vec, [None])
 
-    @unittest.skip("developing")
+    ##@unittest.skip("developing")
     def test_valid_inputs_single(self):
         # ToDo: For unit tests, calculate_concentration and sub_calculator should be mocks
         #       Not using mocks is a great functional test.
@@ -107,6 +107,7 @@ class TestNowCastCalculate(unittest.TestCase):
                 self.assertEqual(start_vec, [timestamps[0]])
                 self.assertEqual(stop_vec, [timestamps[0] + 3600])
                 self.assertEqual(aqi_vec, [240])
+
     @unittest.skip("done")
     def test_invalid_inputs_multi(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
@@ -140,11 +141,12 @@ class TestNowCastCalculate(unittest.TestCase):
 
                     start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 
-                    self.assertEqual(start_vec, list(reversed(timestamps[0:3])))
-                    self.assertEqual(stop_vec, list(reversed([x+3600 for x in timestamps[0:3]])))
+                    vec_len = len(start_vec)
+                    self.assertEqual(start_vec, list(reversed(timestamps[0:vec_len])))
+                    self.assertEqual(stop_vec, list(reversed([x+3600 for x in timestamps[0:vec_len]])))
                     self.assertEqual(aqi_vec, list(reversed(aqi_values)))
 
-    @unittest.skip("developing")
+    @unittest.skip("done")
     def test_valid_inputs_multi(self):
         # ToDo: For unit tests, calculate_concentration and sub_calculator should be mocks
         #       Not using mocks is a great functional test.
@@ -155,26 +157,33 @@ class TestNowCastCalculate(unittest.TestCase):
 
         with mock.patch('weeutil.weeutil.startOfInterval', spec=weeutil.weeutil.startOfInterval, return_value=current_hour):
             with mock.patch('weeutil.weeutil.TimeSpan', spec=weeutil.weeutil.TimeSpan):
-                data = [46.3, 27.4, 59.8, 129.2, 130.6, 215.4, 143.2, 93.7, 101.8, 49.3, 80.2, 123.3]
-                data.append(46.3)
-                timestamps = populate_time_stamps(current_hour, len(data))
+                with mock.patch.object(user.aqitype.NowCast, 'calculate_concentration'):
+                    aqi_values = [random.randint(0, 500), random.randint(0,500)]
+                    data = [random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700),
+                            random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700),
+                            random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700),
+                            random.uniform(0, 700), random.uniform(0, 700), random.uniform(0, 700),
+                            random.uniform(0, 700)]
+                    timestamps = populate_time_stamps(current_hour, len(data))
 
-                aqi_type = 'pm2_5'
-                # ToDo: optimize. Eliminate need _populate_time_stamps call (above)?
-                records = []
-                i = 0
-                for concentration in data:
-                    records.append((timestamps[i], concentration))
-                    i += 1
+                    aqi_type = random_string()
+                    # ToDo: optimize. Eliminate need _populate_time_stamps call (above)?
+                    records = []
+                    i = 0
+                    for concentration in data:
+                        records.append((timestamps[i], concentration))
+                        i += 1
 
-                sub_calculator = user.aqitype.EPAAQI(mock_logger, 0, None, None)
-                calculator = user.aqitype.NowCast(mock_logger, 0, sub_calculator, None)
+                    sub_calculator= mock.Mock()
+                    sub_calculator.calculate.side_effect = aqi_values
+                    calculator = user.aqitype.NowCast(mock_logger, 0, sub_calculator, None)
 
-                start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
+                    start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 
-                self.assertEqual(start_vec, [timestamps[1], timestamps[0]])
-                self.assertEqual(stop_vec, [timestamps[1] + 3600, timestamps[0] + 3600])
-                self.assertEqual(aqi_vec, [156, 149])
+                    vec_len = len(start_vec)
+                    self.assertEqual(start_vec, list(reversed(timestamps[0:vec_len])))
+                    self.assertEqual(stop_vec, list(reversed([x+3600 for x in timestamps[0:vec_len]])))
+                    self.assertEqual(aqi_vec, list(reversed(aqi_values)))
 
 @unittest.skip("")
 class TestNowCastCalculateConcentration(unittest.TestCase):
