@@ -55,8 +55,6 @@ class TestNowCastGetScalar(unittest.TestCase):
         self.mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
     def test_get_scalar_valid_inputs(self):
-        #mock_sql_executor = mock.Mock()
-
         algorithm = 'NowCast'
         aqi_type = 'pm2_5'
 

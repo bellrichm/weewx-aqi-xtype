@@ -5,9 +5,9 @@
 #    See the file LICENSE.txt for your full rights.
 #
 
-./devtools/test.sh
+./devtools/unittests.sh
 
-while inotifywait -e modify devtools/watchtests.sh devtools/test.sh bin/user/aqitype.py bin/user/tests/unit
+while inotifywait -e modify devtools/watchunittests.sh devtools/unittests.sh bin/user/aqitype.py bin/user/tests/unit
 do
-    ./devtools/test.sh $WEEWX $PY_VERSION
+    ./devtools/unittests.sh $WEEWX $PY_VERSION
 done
