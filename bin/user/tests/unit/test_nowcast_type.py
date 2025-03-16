@@ -77,6 +77,7 @@ class TestGetScalarNowCast(unittest.TestCase):
                 self.assertEqual(value_tuple[1], unit)
                 self.assertEqual(value_tuple[2], unit_group)
 
+class TestNowCastGetSeries(unittest.TestCase):
     def test_get_series_valid_inputs(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
         mock_sql_executor = mock.Mock()
