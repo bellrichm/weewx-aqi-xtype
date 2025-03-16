@@ -7,7 +7,7 @@
 
 ./devtools/test.sh
 
-while inotifywait -e modify devtools/watchtests.sh devtools/test.sh bin/user/aqitype.py bin/user/tests
+while inotifywait -e modify devtools/watchtests.sh devtools/test.sh bin/user/aqitype.py bin/user/tests/unit
 do
     ./devtools/test.sh $WEEWX $PY_VERSION
 done

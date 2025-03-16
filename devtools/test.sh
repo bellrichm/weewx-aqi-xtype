@@ -7,5 +7,5 @@
 source ./devtools/python_versions.sh
 
 export PYENV_VERSION=$weewx_default_python_version
-PYTHONPATH=bin:../weewx/src pytest bin/user/tests
+PYTHONPATH=bin:../weewx/src pytest bin/user/tests/unit
 

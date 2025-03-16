@@ -11,14 +11,19 @@ import unittest
 import mock
 
 import configobj
+import os
 import random
 import string
+import sys
 
 import weeutil
 
 import user.aqitype
 
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+# pylint: disable=import-error, wrong-import-position
 import utils.database
+# pylint: enable=import-error, wrong-import-position
 
 def random_string(length=32):
     return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(length)]) # pylint: disable=unused-variable

@@ -12,16 +12,24 @@ import unittest
 import mock
 
 import configobj
+import os
 import random
 import string
+import sys
 import time
 
 import weeutil.weeutil
 
 import user.aqitype
 
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+# pylint: disable=import-error, wrong-import-position
 import utils.database
 from utils import data
+# pylint: enable=import-error, wrong-import-position
+
 
 archive_intervals_in_day = 24 * 60 / utils.database.ARCHIVE_INTERVAL_MINUTES
 
