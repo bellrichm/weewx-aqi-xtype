@@ -295,17 +295,5 @@ class TestNowCastCalculateConcentration(unittest.TestCase):
                 concentration = calculator.calculate_concentration(current_hour, min(data), max(data), timestamps, data)
                 self.assertEqual(concentration, 54.8)
 
-    @unittest.skip("placeholder")
-    def test_calculate_series(self):
-        mock_logger = mock.Mock(spec=user.aqitype.Logger)
-
-        calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
-
-        result = calculator.calculate('foo', [])
-
-        print(result)
-
-        print("done")
-
 if __name__ == '__main__':
     unittest.main(exit=False)
