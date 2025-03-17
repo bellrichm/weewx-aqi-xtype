@@ -138,6 +138,44 @@ class TestEPAGetSeries(unittest.TestCase):
 
         self.assertEqual(data_vec_t, (expected_aqi, None, None))
 
+class TestEPAGetAggregate(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.input_field = utils.database.PM2_5_INPUT_FIELD
+        cls.db_manager = utils.database.get_db_manager(cls.input_field)
+
+        # Create a backup of the database used in these tests.
+        # This could be useful if there is a problem in the tests.
+        utils.database.backup(cls.db_manager, 'bin/user/tests/utils/test_nowcast_calculate.sdb')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.db_manager.close()
+        cls.db_manager = None
+
+    def setUp(self):
+        self.mock_logger = mock.Mock(spec=user.aqitype.Logger)
+
+    def test_get_aggregation_avg_valid_inputs(self):
+        algorithm = 'EPAAQI'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = utils.database.PM2_5_INPUT_FIELD
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+
+        SUT = user.aqitype.AQIType(self.mock_logger, user.aqitype.SQLExecutor(self.mock_logger), config)
+
+        value_tuple  = SUT.get_aggregate(calculated_field, utils.database.timespan, 'min', TestEPAGetAggregate.db_manager)
+
+        expected_aqi = 4
+
+        self.assertEqual(value_tuple[0], expected_aqi)
+        self.assertEqual(value_tuple[1], None)
+        self.assertEqual(value_tuple[2], None)
+
 if __name__ == '__main__':
     #test_suite = unittest.TestSuite()
     #test_suite.addTest(TestNowCastDevelopment('test_get_series_prototype02'))
