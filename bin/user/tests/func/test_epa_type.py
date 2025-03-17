@@ -15,7 +15,6 @@ import os
 import random
 import string
 import sys
-import time
 
 import user.aqitype
 
@@ -73,7 +72,7 @@ class TestEPAGetScalar(unittest.TestCase):
         record = {
             'usUnits': utils.database.US_UNITS,
             'interval': utils.database.ARCHIVE_INTERVAL_MINUTES,
-            'dateTime': time.time(),
+            'dateTime': random.randint(1, 1000),
             input_field: input_concentration,
         }
 
@@ -100,6 +99,44 @@ class TestEPAGetSeries(unittest.TestCase):
 
     def setUp(self):
         self.mock_logger = mock.Mock(spec=user.aqitype.Logger)
+
+    def test_get_series_valid_inputs(self):
+        algorithm = 'EPAAQI'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = utils.database.PM2_5_INPUT_FIELD
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+
+        SUT = user.aqitype.AQIType(self.mock_logger, user.aqitype.SQLExecutor(self.mock_logger), config)
+
+        start_vec_t, stop_vec_t, data_vec_t  = SUT.get_series(calculated_field, utils.database.timespan, TestEPAGetSeries.db_manager)
+
+        expected_aqi = [
+            6, 5, 6, 12, 8, 10, 11, 15, 14, 10, 9, 11, 4, 8, 8, 7, 8, 5, 6, 8, 7, 9, 9, 5,
+            5, 5, 10, 7, 5, 7, 10, 8, 6, 6, 8, 9, 9, 5, 9, 12, 7, 8, 9, 10, 7, 10, 8, 6,
+            8, 7, 7, 7, 6, 6, 7, 7, 6, 8, 8, 7, 5, 6, 7, 9, 8, 8, 7, 8, 7, 5, 6, 5,
+            8, 11, 8, 8, 11, 7, 9, 7, 6, 7, 6, 7, 6, 8, 8, 7, 10, 7, 10, 10, 9, 7, 5, 6,
+            13, 6, 9, 9, 6, 11, 10, 8, 6, 10, 9, 8, 10, 8,6, 6, 7, 9, 6, 10, 5, 9, 6, 7,
+            10, 9, 10, 9, 6, 6, 8, 8, 8, 12, 8, 8, 8, 11, 10, 7, 5, 8, 10, 8, 5, 7, 8, 7,
+            8, 9, 8, 10, 12, 10, 7, 12, 9, 9, 8, 12, 9, 8, 8, 6, 9, 9, 6, 8, 7, 8, 13, 10,
+            14, 11, 6, 8, 8, 4, 5, 10, 7, 8, 6, 8, 10, 10, 6, 7, 5, 6, 6, 12, 7, 7, 7, 9,
+            8, 7, 6, 5, 8, 7, 10, 8, 6, 8, 12, 7, 4, 6, 8, 5, 9, 9, 7, 4, 9, 6, 7, 9,
+            7, 12, 9, 9, 5, 8, 8, 6, 9, 8, 6, 5, 6, 5, 6, 8, 7, 7, 6, 5, 4, 5, 6, 4,
+            7, 9, 10, 9, 7, 5, 8, 5, 7, 7, 8, 9, 9, 7, 10, 6, 7, 5, 6, 6, 10, 8, 8, 13,
+            7, 6, 7, 6, 5, 8, 6, 8, 7, 10, 10, 9, 12, 9, 7, 7, 7, 10, 8, 10, 9, 10, 11, 9,
+        ]
+
+        self.assertEqual(start_vec_t,
+                        ([utils.data.db_20250221_timestamps[0] - utils.database.ARCHIVE_INTERVAL_SECONDS] +
+                          utils.data.db_20250221_timestamps[0:-1],
+                        'unix_epoch',
+                        'group_time'))
+        self.assertEqual(stop_vec_t, (utils.data.db_20250221_timestamps, 'unix_epoch', 'group_time'))
+
+        self.assertEqual(data_vec_t, (expected_aqi, None, None))
 
 if __name__ == '__main__':
     #test_suite = unittest.TestSuite()
