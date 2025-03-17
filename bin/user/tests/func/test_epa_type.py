@@ -138,6 +138,30 @@ class TestEPAGetSeries(unittest.TestCase):
 
         self.assertEqual(data_vec_t, (expected_aqi, None, None))
 
+    def test_get_aggregated_series_valid_inputs(self):
+        algorithm = 'EPAAQI'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = utils.database.PM2_5_INPUT_FIELD
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+
+        SUT = user.aqitype.AQIType(self.mock_logger, user.aqitype.SQLExecutor(self.mock_logger), config)
+
+        value_tuple  = SUT.get_series(calculated_field,
+                                    utils.database.timespan,
+                                    TestEPAGetSeries.db_manager,
+                                    'min',
+                                    3600)
+
+        expected_aqi = ([5, 4, 5, 5, 6, 5, 6, 5, 6, 5, 6, 5, 7, 6, 4, 5, 5, 4, 5, 4, 5, 5, 5, 7], None, None)
+
+        self.assertEqual(value_tuple[0], ([1740114000] + utils.data.db_20250221_timestamps[11:-1:12], 'unix_epoch', 'group_time'))
+        self.assertEqual(value_tuple[1], (utils.data.db_20250221_timestamps[11::12], 'unix_epoch', 'group_time'))
+        self.assertEqual(value_tuple[2], expected_aqi)
+
 class TestEPAGetAggregate(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
