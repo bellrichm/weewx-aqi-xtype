@@ -341,6 +341,8 @@ class NowCast(AbstractCalculator):
             has_data = False,
             count = 0,
             sum = 0,
+            first = None,
+            last = None,
         )
         i = 1
         timestamps = []
@@ -374,6 +376,9 @@ class NowCast(AbstractCalculator):
             stats.has_data = True
             stats.count += 1
             stats.sum += aqi
+            stats.first = aqi
+            if stats.last is None:
+                stats.last = aqi
         except weewx.CannotCalculate:
             aqi_vec.append(None)
 
@@ -401,6 +406,9 @@ class NowCast(AbstractCalculator):
                     stats.has_data = True
                     stats. count += 1
                     stats.sum += aqi
+                    stats.first = aqi
+                    if stats.last is None:
+                        stats.last = aqi
 
                 except weewx.CannotCalculate:
                     aqi_vec.append(None)
