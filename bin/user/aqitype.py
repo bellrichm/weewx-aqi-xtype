@@ -342,7 +342,9 @@ class NowCast(AbstractCalculator):
             count = 0,
             sum = 0,
             first = None,
+            first_time = None,
             last = None,
+            last_time = None,
         )
         i = 1
         timestamps = []
@@ -377,8 +379,11 @@ class NowCast(AbstractCalculator):
             stats.count += 1
             stats.sum += aqi
             stats.first = aqi
+            stats.first_time = timestamps[0]
             if stats.last is None:
                 stats.last = aqi
+                stats.last_time = timestamps[0]
+
         except weewx.CannotCalculate:
             aqi_vec.append(None)
 
@@ -407,8 +412,10 @@ class NowCast(AbstractCalculator):
                     stats. count += 1
                     stats.sum += aqi
                     stats.first = aqi
+                    stats.first_time = timestamps[0]
                     if stats.last is None:
                         stats.last = aqi
+                        stats.last_time = timestamps[0]
 
                 except weewx.CannotCalculate:
                     aqi_vec.append(None)
