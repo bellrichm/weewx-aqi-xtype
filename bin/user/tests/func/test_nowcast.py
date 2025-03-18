@@ -56,8 +56,9 @@ class TestNowCastCalculate(unittest.TestCase):
 
         SUT = user.aqitype.NowCast(self.mock_logger, 0, None, None)
 
-        start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
+        has_data, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
+        self.assertFalse(has_data)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [None])
@@ -82,8 +83,9 @@ class TestNowCastCalculate(unittest.TestCase):
 
         SUT = user.aqitype.NowCast(self.mock_logger, 0, None, None)
 
-        start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
+        has_data, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
+        self.assertFalse(has_data)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [None])
@@ -112,8 +114,9 @@ class TestNowCastCalculate(unittest.TestCase):
         sub_calculator = user.aqitype.EPAAQI(self.mock_logger, 0, None, None)
         SUT = user.aqitype.NowCast(self.mock_logger, 0, sub_calculator, None)
 
-        start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
+        has_data, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
+        self.assertTrue(has_data)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [240])
@@ -139,8 +142,9 @@ class TestNowCastCalculate(unittest.TestCase):
 
         SUT = user.aqitype.NowCast(self.mock_logger, 0, None, None)
 
-        start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
+        has_data, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
+        self.assertFalse(has_data)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [None])
@@ -163,8 +167,9 @@ class TestNowCastCalculate(unittest.TestCase):
         sub_calculator = user.aqitype.EPAAQI(self.mock_logger, 0, None, None)
         SUT = user.aqitype.NowCast(self.mock_logger, 0, sub_calculator, None)
 
-        start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
+        has_data, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
+        self.assertTrue(has_data)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [240])
@@ -187,8 +192,9 @@ class TestNowCastCalculate(unittest.TestCase):
         sub_calculator = user.aqitype.EPAAQI(self.mock_logger, 0, None, None)
         SUT = user.aqitype.NowCast(self.mock_logger, 0, sub_calculator, None)
 
-        start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
+        has_data, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
+        self.assertTrue(has_data)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [149])

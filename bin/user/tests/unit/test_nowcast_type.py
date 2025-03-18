@@ -56,7 +56,7 @@ class TestGetScalarNowCast(unittest.TestCase):
         config = configobj.ConfigObj(config_dict)
 
         aqi = random.randint(11, 100)
-        with mock.patch.object(calculator, 'calculate', return_value=([], [], [aqi])):
+        with mock.patch.object(calculator, 'calculate', return_value=(random_string(), [], [], [aqi])):
             SUT = user.aqitype.AQIType(mock_logger, mock_sql_executor, config)
 
             unit = random_string()
@@ -97,11 +97,12 @@ class TestNowCastGetSeries(unittest.TestCase):
         mock_stop_vec = []
         mock_aqi_vec = []
         for _ in range(random.randint(2, 11)):
+            mock_has_data = random_string()
             mock_start_vec.append(random.randint(101,200))
             mock_start_vec.append(random.randint(201,300))
             mock_aqi_vec.append(random.randint(1,100))
 
-        with mock.patch.object(calculator, 'calculate', return_value=(mock_start_vec, mock_stop_vec, mock_aqi_vec)):
+        with mock.patch.object(calculator, 'calculate', return_value=(mock_has_data, mock_start_vec, mock_stop_vec, mock_aqi_vec)):
             SUT = user.aqitype.AQIType(mock_logger, mock_sql_executor, config)
 
             unit = random_string()

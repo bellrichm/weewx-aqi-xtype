@@ -336,6 +336,7 @@ class NowCast(AbstractCalculator):
         self._logdbg(f"The type is '{aqi_type}'")
         records_iter = inputs
 
+        has_data = False
         i = 1
         timestamps = []
         concentrations = []
@@ -364,6 +365,7 @@ class NowCast(AbstractCalculator):
                                                         timestamps,
                                                         concentrations)
             aqi = self.sub_calculator.calculate(aqi_type, concentration)
+            has_data = True
             aqi_vec.append(aqi)
         except weewx.CannotCalculate:
             aqi_vec.append(None)
@@ -388,6 +390,7 @@ class NowCast(AbstractCalculator):
                                                                 timestamps,
                                                                 concentrations)
                     aqi = self.sub_calculator.calculate(aqi_type, concentration)
+                    has_data = True
                     aqi_vec.append(aqi)
 
                 except weewx.CannotCalculate:
@@ -398,7 +401,7 @@ class NowCast(AbstractCalculator):
         stop_vec.append(start_vec[-1] + 3600)
         aqi_vec.reverse()
 
-        return start_vec, stop_vec, aqi_vec
+        return has_data, start_vec, stop_vec, aqi_vec
 
 class EPAAQI(AbstractCalculator):
     """
@@ -670,7 +673,7 @@ class AQIType(weewx.xtypes.XType):
         start = stop - 43200
 
         records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop, start)
-        _start_list, _stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, records_iter)
+        _has_data, _start_list, _stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, records_iter)
         if aqi_list[0] is None:
             raise weewx.CannotCalculate(obs_type)
 
@@ -722,7 +725,7 @@ class AQIType(weewx.xtypes.XType):
         start_time = timespan.start - 43200 + 3600
         records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
 
-        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, records_iter)
+        _has_data, start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, records_iter)
 
         return (ValueTuple(start_list, 'unix_epoch', 'group_time'),
                 ValueTuple(stop_list, 'unix_epoch', 'group_time'),
@@ -875,7 +878,15 @@ class AQIType(weewx.xtypes.XType):
             aggregate_value = None
             # raise weewx.UnknownAggregation(aggregate_type)
         else:
+            aqi_type = self.aqi_fields[obs_type]['type']
             dependent_field = self.aqi_fields[obs_type]['input']
+            stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
+            # 'Need' 11 hours of data after current hour to compute nowcast qai
+            start_time = timespan.start - 43200 + 3600
+
+            records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
+            ret_value = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, records_iter)
+            return ret_value
 
             interpolation_dict = {
                 'start': timespan.start,
