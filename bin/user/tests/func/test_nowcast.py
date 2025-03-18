@@ -2,6 +2,7 @@
 #    See the file LICENSE.txt for your full rights.
 
 # pylint: disable=missing-docstring
+# pylint: disable=invalid-name
 
 import random
 import string
@@ -56,9 +57,10 @@ class TestNowCastCalculate(unittest.TestCase):
 
         SUT = user.aqitype.NowCast(self.mock_logger, 0, None, None)
 
-        has_data, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
+        stats, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
-        self.assertFalse(has_data)
+        self.assertFalse(stats.has_data)
+        self.assertEqual(stats.count, 0)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [None])
@@ -83,9 +85,10 @@ class TestNowCastCalculate(unittest.TestCase):
 
         SUT = user.aqitype.NowCast(self.mock_logger, 0, None, None)
 
-        has_data, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
+        stats, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
-        self.assertFalse(has_data)
+        self.assertFalse(stats.has_data)
+        self.assertEqual(stats.count, 0)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [None])
@@ -114,9 +117,10 @@ class TestNowCastCalculate(unittest.TestCase):
         sub_calculator = user.aqitype.EPAAQI(self.mock_logger, 0, None, None)
         SUT = user.aqitype.NowCast(self.mock_logger, 0, sub_calculator, None)
 
-        has_data, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
+        stats, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
-        self.assertTrue(has_data)
+        self.assertTrue(stats.has_data)
+        self.assertEqual(stats.count, 1)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [240])
@@ -142,9 +146,10 @@ class TestNowCastCalculate(unittest.TestCase):
 
         SUT = user.aqitype.NowCast(self.mock_logger, 0, None, None)
 
-        has_data, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
+        stats, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
-        self.assertFalse(has_data)
+        self.assertFalse(stats.has_data)
+        self.assertEqual(stats.count, 0)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [None])
@@ -167,9 +172,10 @@ class TestNowCastCalculate(unittest.TestCase):
         sub_calculator = user.aqitype.EPAAQI(self.mock_logger, 0, None, None)
         SUT = user.aqitype.NowCast(self.mock_logger, 0, sub_calculator, None)
 
-        has_data, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
+        stats, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
-        self.assertTrue(has_data)
+        self.assertTrue(stats.has_data)
+        self.assertEqual(stats.count, 1)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [240])
@@ -192,9 +198,10 @@ class TestNowCastCalculate(unittest.TestCase):
         sub_calculator = user.aqitype.EPAAQI(self.mock_logger, 0, None, None)
         SUT = user.aqitype.NowCast(self.mock_logger, 0, sub_calculator, None)
 
-        has_data, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
+        stats, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
-        self.assertTrue(has_data)
+        self.assertTrue(stats.has_data)
+        self.assertEqual(stats.count, 1)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [149])

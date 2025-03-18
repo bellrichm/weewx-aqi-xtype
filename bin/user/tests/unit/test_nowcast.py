@@ -63,10 +63,11 @@ class TestNowCastCalculate(unittest.TestCase):
 
                     calculator = user.aqitype.NowCast(mock_logger, 0, None, None)
 
-                    has_data, start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
+                    stats, start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 
                     vec_len = len(start_vec)
-                    self.assertFalse(has_data)
+                    self.assertFalse(stats.has_data)
+                    self.assertEqual(stats.count, 0)
                     self.assertEqual(start_vec, list(reversed(timestamps[0:vec_len])))
                     self.assertEqual(stop_vec, list(reversed([x+3600 for x in timestamps[0:vec_len]])))
                     self.assertEqual(aqi_vec, [None])
@@ -105,10 +106,11 @@ class TestNowCastCalculate(unittest.TestCase):
                     sub_calculator.calculate.side_effect = aqi_values
                     calculator = user.aqitype.NowCast(mock_logger, 0, sub_calculator, None)
 
-                    has_data, start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
+                    stats, start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 
                     vec_len = len(start_vec)
-                    self.assertTrue(has_data)
+                    self.assertTrue(stats.has_data)
+                    self.assertEqual(stats.count, 1)
                     self.assertEqual(start_vec, list(reversed(timestamps[0:vec_len])))
                     self.assertEqual(stop_vec, list(reversed([x+3600 for x in timestamps[0:vec_len]])))
                     self.assertEqual(aqi_vec, list(reversed(aqi_values)))
@@ -143,10 +145,11 @@ class TestNowCastCalculate(unittest.TestCase):
                     sub_calculator.calculate.side_effect = aqi_values
                     calculator = user.aqitype.NowCast(mock_logger, 0, sub_calculator, None)
 
-                    has_data, start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
+                    stats, start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 
                     vec_len = len(start_vec)
-                    self.assertTrue(has_data)
+                    self.assertTrue(stats.has_data)
+                    self.assertEqual(stats.count, 2)
                     self.assertEqual(start_vec, list(reversed(timestamps[0:vec_len])))
                     self.assertEqual(stop_vec, list(reversed([x+3600 for x in timestamps[0:vec_len]])))
                     self.assertEqual(aqi_vec, [None] + list(reversed(aqi_values)))
@@ -180,10 +183,11 @@ class TestNowCastCalculate(unittest.TestCase):
                     sub_calculator.calculate.side_effect = aqi_values
                     calculator = user.aqitype.NowCast(mock_logger, 0, sub_calculator, None)
 
-                    has_data, start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
+                    stats, start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 
                     vec_len = len(start_vec)
-                    self.assertTrue(has_data)
+                    self.assertTrue(stats.has_data)
+                    self.assertEqual(stats.count, 2)
                     self.assertEqual(start_vec, list(reversed(timestamps[0:vec_len])))
                     self.assertEqual(stop_vec, list(reversed([x+3600 for x in timestamps[0:vec_len]])))
                     self.assertEqual(aqi_vec, list(reversed(aqi_values)))
