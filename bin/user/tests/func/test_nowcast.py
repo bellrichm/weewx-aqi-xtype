@@ -26,7 +26,7 @@ def min_max(values):
                 max_value = value
     return min_value, max_value
 
-class TestNowCastCalculateConcentrate(unittest.TestCase):
+class TestNowCastCalculate(unittest.TestCase):
     def setUp(self):
         self.mock_logger = mock.Mock(spec=user.aqitype.Logger)
 
@@ -40,8 +40,6 @@ class TestNowCastCalculateConcentrate(unittest.TestCase):
         return time_stamps
 
     def test_incomplete_data(self):
-        # ToDo: For unit tests, calculate_concentration and sub_calculator should be mocks.abs
-        #       Not using mocks is a great functional test.
         now = time.time()
         current_hour =  int(now / 3600) * 3600
 
@@ -56,9 +54,9 @@ class TestNowCastCalculateConcentrate(unittest.TestCase):
             records.append((timestamps[i], concentration))
             i += 1
 
-        calculator = user.aqitype.NowCast(self.mock_logger, 0, None, None)
+        SUT = user.aqitype.NowCast(self.mock_logger, 0, None, None)
 
-        start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
+        start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
@@ -91,8 +89,6 @@ class TestNowCastCalculateConcentrate(unittest.TestCase):
         self.assertEqual(aqi_vec, [None])
 
     def test_missing_middle_data(self):
-        # ToDo: For unit tests, calculate_concentration and sub_calculator should be mocks.abs
-        #       Not using mocks is a great functional test.
         now = time.time()
         current_hour =  int(now / 3600) * 3600
 
@@ -114,17 +110,15 @@ class TestNowCastCalculateConcentrate(unittest.TestCase):
             i += 1
 
         sub_calculator = user.aqitype.EPAAQI(self.mock_logger, 0, None, None)
-        calculator = user.aqitype.NowCast(self.mock_logger, 0, sub_calculator, None)
+        SUT = user.aqitype.NowCast(self.mock_logger, 0, sub_calculator, None)
 
-        start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
+        start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [240])
 
     def test_beginning_none_data(self):
-        # ToDo: For unit tests, calculate_concentration and sub_calculator should be mocks.abs
-        #       Not using mocks is a great functional test.
         now = time.time()
         current_hour =  int(now / 3600) * 3600
 
@@ -143,17 +137,15 @@ class TestNowCastCalculateConcentrate(unittest.TestCase):
             records.append((timestamps[i], concentration))
             i += 1
 
-        calculator = user.aqitype.NowCast(self.mock_logger, 0, None, None)
+        SUT = user.aqitype.NowCast(self.mock_logger, 0, None, None)
 
-        start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
+        start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [None])
 
     def test_middle_none_data(self):
-        # ToDo: For unit tests, calculate_concentration and sub_calculator should be mocks.abs
-        #       Not using mocks is a great functional test.
         now = time.time()
         current_hour =  int(now / 3600) * 3600
 
@@ -169,17 +161,15 @@ class TestNowCastCalculateConcentrate(unittest.TestCase):
             i += 1
 
         sub_calculator = user.aqitype.EPAAQI(self.mock_logger, 0, None, None)
-        calculator = user.aqitype.NowCast(self.mock_logger, 0, sub_calculator, None)
+        SUT = user.aqitype.NowCast(self.mock_logger, 0, sub_calculator, None)
 
-        start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
+        start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [240])
 
     def test_calculate_concentration(self):
-        # ToDo: For unit tests, calculate_concentration and sub_calculator should be mocks.abs
-        #       Not using mocks is a great functional test.
         now = time.time()
         current_hour =  int(now / 3600) * 3600
 
@@ -195,9 +185,9 @@ class TestNowCastCalculateConcentrate(unittest.TestCase):
             i += 1
 
         sub_calculator = user.aqitype.EPAAQI(self.mock_logger, 0, None, None)
-        calculator = user.aqitype.NowCast(self.mock_logger, 0, sub_calculator, None)
+        SUT = user.aqitype.NowCast(self.mock_logger, 0, sub_calculator, None)
 
-        start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
+        start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
