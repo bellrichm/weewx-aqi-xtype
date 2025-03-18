@@ -16,8 +16,6 @@ import random
 import string
 import sys
 
-import weeutil
-
 import user.aqitype
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -58,7 +56,6 @@ class TestNowCastDevelopment(unittest.TestCase):
 
     def test_get_series_prototype02(self):
         # ToDo: This 'test' will be used to develop series support for the NowCast algorithm.
-        #  Using this one will allow 'test_get_series_prototype' to stay 'pristine'
 
         algorithm = 'NowCast'
         aqi_type = 'pm2_5'
@@ -68,13 +65,10 @@ class TestNowCastDevelopment(unittest.TestCase):
 
         config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
         config = configobj.ConfigObj(config_dict)
-        start = utils.data.db_20250219_timestamps[0] - utils.database.ARCHIVE_INTERVAL_SECONDS
-        stop = start + 3600
-        timespan = weeutil.weeutil.TimeSpan(start, stop)
 
         SUT = user.aqitype.AQIType(self.mock_logger, user.aqitype.SQLExecutor(self.mock_logger), config)
 
-        ret_value = SUT.get_series(calculated_field, timespan, TestNowCastDevelopment.db_manager)
+        ret_value = SUT.get_aggregate(calculated_field, utils.database.timespan, 'not_null', TestNowCastDevelopment.db_manager)
 
         print(ret_value)
 
