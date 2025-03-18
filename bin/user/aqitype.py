@@ -373,6 +373,7 @@ class NowCast(AbstractCalculator):
             aqi_vec.append(aqi)
             stats.has_data = True
             stats.count += 1
+            stats.sum += aqi
         except weewx.CannotCalculate:
             aqi_vec.append(None)
 
@@ -399,6 +400,7 @@ class NowCast(AbstractCalculator):
                     aqi_vec.append(aqi)
                     stats.has_data = True
                     stats. count += 1
+                    stats.sum += aqi
 
                 except weewx.CannotCalculate:
                     aqi_vec.append(None)

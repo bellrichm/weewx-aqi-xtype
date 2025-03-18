@@ -61,6 +61,7 @@ class TestNowCastCalculate(unittest.TestCase):
 
         self.assertFalse(stats.has_data)
         self.assertEqual(stats.count, 0)
+        self.assertEqual(stats.sum, 0)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [None])
@@ -89,6 +90,7 @@ class TestNowCastCalculate(unittest.TestCase):
 
         self.assertFalse(stats.has_data)
         self.assertEqual(stats.count, 0)
+        self.assertEqual(stats.sum, 0)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [None])
@@ -121,6 +123,7 @@ class TestNowCastCalculate(unittest.TestCase):
 
         self.assertTrue(stats.has_data)
         self.assertEqual(stats.count, 1)
+        self.assertEqual(stats.sum, 240)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [240])
@@ -150,6 +153,7 @@ class TestNowCastCalculate(unittest.TestCase):
 
         self.assertFalse(stats.has_data)
         self.assertEqual(stats.count, 0)
+        self.assertEqual(stats.sum, 0)       
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [None])
@@ -176,6 +180,7 @@ class TestNowCastCalculate(unittest.TestCase):
 
         self.assertTrue(stats.has_data)
         self.assertEqual(stats.count, 1)
+        self.assertEqual(stats.sum, 240)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [240])
@@ -202,6 +207,7 @@ class TestNowCastCalculate(unittest.TestCase):
 
         self.assertTrue(stats.has_data)
         self.assertEqual(stats.count, 1)
+        self.assertEqual(stats.sum, 149)
         self.assertEqual(start_vec, [timestamps[0]])
         self.assertEqual(stop_vec, [timestamps[0] + 3600])
         self.assertEqual(aqi_vec, [149])
