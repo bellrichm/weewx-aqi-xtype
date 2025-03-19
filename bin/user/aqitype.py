@@ -348,8 +348,8 @@ class NowCast(AbstractCalculator):
             last_time = None,
             min = float('inf'),
             max = -float('inf'),
-            min_time = None,
-            max_time = None,
+            mintime = None,
+            maxtime = None,
         )
         i = 1
         timestamps = []
@@ -390,10 +390,10 @@ class NowCast(AbstractCalculator):
                 stats.last_time = timestamps[0]
             if aqi < stats.min:
                 stats.min = aqi
-                stats.min_time = timestamps[0]
+                stats.mintime = timestamps[0]
             if aqi > stats.max:
                 stats.max = aqi
-                stats.max_time = timestamps[0]
+                stats.maxtime = timestamps[0]
 
         except weewx.CannotCalculate:
             aqi_vec.append(None)
@@ -429,10 +429,10 @@ class NowCast(AbstractCalculator):
                         stats.last_time = timestamps[0]
                     if aqi < stats.min:
                         stats.min = aqi
-                        stats.min_time = timestamps[0]
+                        stats.mintime = timestamps[0]
                     if aqi > stats.max:
                         stats.max = aqi
-                        stats.max_time = timestamps[0]
+                        stats.maxtime = timestamps[0]
                 except weewx.CannotCalculate:
                     aqi_vec.append(None)
 
@@ -443,9 +443,9 @@ class NowCast(AbstractCalculator):
 
         if stats.count:
             stats.avg = stats.sum / stats.count
-        if stats.min_time is None:
+        if stats.mintime is None:
             stats.min = None
-        if stats.max_time is None:
+        if stats.maxtime is None:
             stats.max = None
 
         return stats, start_vec, stop_vec, aqi_vec
