@@ -66,7 +66,7 @@ class TestNowCastCalculate(unittest.TestCase):
                     stats, start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 
                     vec_len = len(start_vec)
-                    self.assertFalse(stats.has_data)
+                    self.assertFalse(stats.not_null)
                     self.assertEqual(stats.count, 0)
                     self.assertEqual(stats.sum, 0)
                     self.assertIsNone(stats.first)
@@ -118,7 +118,7 @@ class TestNowCastCalculate(unittest.TestCase):
                     stats, start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 
                     vec_len = len(start_vec)
-                    self.assertTrue(stats.has_data)
+                    self.assertTrue(stats.not_null)
                     self.assertEqual(stats.count, 1)
                     self.assertEqual(stats.sum, sum(aqi_values))
                     self.assertEqual(stats.first, aqi_values[-1])
@@ -166,7 +166,7 @@ class TestNowCastCalculate(unittest.TestCase):
                     stats, start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 
                     vec_len = len(start_vec)
-                    self.assertTrue(stats.has_data)
+                    self.assertTrue(stats.not_null)
                     self.assertEqual(stats.count, 2)
                     self.assertEqual(stats.sum, sum(aqi_values))
                     self.assertEqual(stats.first, aqi_values[-1])
@@ -213,7 +213,7 @@ class TestNowCastCalculate(unittest.TestCase):
                     stats, start_vec, stop_vec, aqi_vec = calculator.calculate(aqi_type, iter(records))
 
                     vec_len = len(start_vec)
-                    self.assertTrue(stats.has_data)
+                    self.assertTrue(stats.not_null)
                     self.assertEqual(stats.count, 2)
                     self.assertEqual(stats.sum, sum(aqi_values))
                     self.assertEqual(stats.first, aqi_values[-1])

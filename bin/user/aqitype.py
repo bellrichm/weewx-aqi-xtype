@@ -338,7 +338,7 @@ class NowCast(AbstractCalculator):
         records_iter = inputs
 
         stats = types.SimpleNamespace(
-            has_data = False,
+            not_null = False,
             count = 0,
             sum = 0,
             first = None,
@@ -379,7 +379,7 @@ class NowCast(AbstractCalculator):
                                                         concentrations)
             aqi = self.sub_calculator.calculate(aqi_type, concentration)
             aqi_vec.append(aqi)
-            stats.has_data = True
+            stats.not_null = True
             stats.count += 1
             stats.sum += aqi
             stats.first = aqi
@@ -418,7 +418,7 @@ class NowCast(AbstractCalculator):
                                                                 concentrations)
                     aqi = self.sub_calculator.calculate(aqi_type, concentration)
                     aqi_vec.append(aqi)
-                    stats.has_data = True
+                    stats.not_null = True
                     stats. count += 1
                     stats.sum += aqi
                     stats.first = aqi
@@ -930,6 +930,9 @@ class AQIType(weewx.xtypes.XType):
 
             records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
             ret_value = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, records_iter)
+            stats, _1, _2, _3 = ret_value
+            stats_dict = vars(stats)
+            print(stats_dict['not_null'])
             return ret_value
 
             interpolation_dict = {

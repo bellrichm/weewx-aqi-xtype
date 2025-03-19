@@ -59,7 +59,7 @@ class TestNowCastCalculate(unittest.TestCase):
 
         stats, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
-        self.assertFalse(stats.has_data)
+        self.assertFalse(stats.not_null)
         self.assertEqual(stats.count, 0)
         self.assertEqual(stats.sum, 0)
         self.assertEqual(stats.first, None)
@@ -96,7 +96,7 @@ class TestNowCastCalculate(unittest.TestCase):
 
         stats, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
-        self.assertFalse(stats.has_data)
+        self.assertFalse(stats.not_null)
         self.assertEqual(stats.count, 0)
         self.assertEqual(stats.sum, 0)
         self.assertEqual(stats.first, None)
@@ -138,7 +138,7 @@ class TestNowCastCalculate(unittest.TestCase):
         stats, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
         aqi_values = [240]
-        self.assertTrue(stats.has_data)
+        self.assertTrue(stats.not_null)
         self.assertEqual(stats.count, 1)
         self.assertEqual(stats.sum, sum(aqi_values))
         self.assertEqual(stats.first, aqi_values[0])
@@ -176,7 +176,7 @@ class TestNowCastCalculate(unittest.TestCase):
 
         stats, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
-        self.assertFalse(stats.has_data)
+        self.assertFalse(stats.not_null)
         self.assertEqual(stats.count, 0)
         self.assertEqual(stats.sum, 0)
         self.assertEqual(stats.first, None)
@@ -212,7 +212,7 @@ class TestNowCastCalculate(unittest.TestCase):
         stats, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
         aqi_values = [240]
-        self.assertTrue(stats.has_data)
+        self.assertTrue(stats.not_null)
         self.assertEqual(stats.count, 1)
         self.assertEqual(stats.sum, sum(aqi_values))
         self.assertEqual(stats.first, aqi_values[0])
@@ -248,7 +248,7 @@ class TestNowCastCalculate(unittest.TestCase):
         stats, start_vec, stop_vec, aqi_vec = SUT.calculate(aqi_type, iter(records))
 
         aqi_values=[149]
-        self.assertTrue(stats.has_data)
+        self.assertTrue(stats.not_null)
         self.assertEqual(stats.count, 1)
         self.assertEqual(stats.sum, sum(aqi_values))
         self.assertEqual(stats.first, aqi_values[0])
