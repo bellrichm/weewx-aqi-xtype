@@ -388,10 +388,10 @@ class NowCast(AbstractCalculator):
             if stats.last is None:
                 stats.last = aqi
                 stats.lasttime = timestamps[0]
-            if aqi < stats.min:
+            if aqi <= stats.min:
                 stats.min = aqi
                 stats.mintime = timestamps[0]
-            if aqi > stats.max:
+            if aqi >= stats.max:
                 stats.max = aqi
                 stats.maxtime = timestamps[0]
 
@@ -427,10 +427,10 @@ class NowCast(AbstractCalculator):
                     if stats.last is None:
                         stats.last = aqi
                         stats.lasttime = timestamps[0]
-                    if aqi < stats.min:
+                    if aqi <= stats.min:
                         stats.min = aqi
                         stats.mintime = timestamps[0]
-                    if aqi > stats.max:
+                    if aqi >= stats.max:
                         stats.max = aqi
                         stats.maxtime = timestamps[0]
                 except weewx.CannotCalculate:
