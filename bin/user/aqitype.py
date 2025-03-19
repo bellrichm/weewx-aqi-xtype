@@ -736,7 +736,7 @@ class AQIType(weewx.xtypes.XType):
 
         return aqi
 
-    def _get_series_nowcast(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **_option_dict):
+    def _get_series_nowcast(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict):
         unit, unit_group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
 
         # Because other XTypes will also try, an empty 'set' of data is returned.
@@ -747,14 +747,32 @@ class AQIType(weewx.xtypes.XType):
                     ValueTuple([], 'unix_epoch', 'group_time'),
                     ValueTuple([], unit, unit_group))
 
-        # Because other XTypes will also try, an empty 'set' of data is returned.
-        # ToDo: placeholder, until series aggregation is supported
         if aggregate_type:
-            #raise weewx.UnknownAggregation
-            self._logerr(f"Agregate type '{aggregate_type}' is not supported.")
             start_list = []
             stop_list = []
             aqi_list = []
+
+            startstamp, stopstamp = timespan
+            for stamp in weeutil.weeutil.intervalgen(startstamp, stopstamp, aggregate_interval):
+                if db_manager.first_timestamp is None or stamp.stop <= db_manager.first_timestamp:
+                    continue
+                if db_manager.last_timestamp is None or stamp.start >= db_manager.last_timestamp:
+                    break
+
+                try:
+                    agg_vt = self.get_aggregate(obs_type, stamp, aggregate_type, db_manager, **option_dict)
+                except weewx.CannotCalculate:
+                    agg_vt = ValueTuple(None, unit, unit_group)
+
+                if unit:
+                    if agg_vt[1] is not None and (unit != agg_vt[1] or unit_group != agg_vt[2]):
+                        raise weewx.UnsupportedFeature("Cannot change units within a series.")
+                else:
+                    unit, unit_group = agg_vt[1], agg_vt[2]
+
+                start_list.append(stamp.start)
+                stop_list.append(stamp.stop)
+                aqi_list.append(agg_vt[0])
         else:
             aqi_type = self.aqi_fields[obs_type]['type']
             dependent_field = self.aqi_fields[obs_type]["input"]
@@ -831,7 +849,7 @@ class AQIType(weewx.xtypes.XType):
 
     def _get_aggregate_nowcast(self, obs_type, timespan, aggregate_type, db_manager, **_option_dict):
         # Because XTypeTable will also try, 'None' is returned.
-        if timespan.stop - timespan.start < 86400:
+        if timespan.stop - timespan.start < 3600:
             self._logerr("Aggregate intervals less than a day are not supported.")
             aggregate_value = None
             #raise weewx.UnknownAggregation
