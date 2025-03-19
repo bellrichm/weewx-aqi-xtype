@@ -916,11 +916,11 @@ class AQIType(weewx.xtypes.XType):
                 ValueTuple(data_vec, unit, unit_group))
 
     def _get_aggregate_nowcast(self, obs_type, timespan, aggregate_type, db_manager, **_option_dict):
-       # For now the NowCast algorithm does not support 'aggregation'
         # Because XTypeTable will also try, 'None' is returned.
-        if aggregate_type != 'not_null':
+        if timespan.stop - timespan.start < 86400:
+            self._logerr("Aggregate intervals less than a day are not supported.")
             aggregate_value = None
-            # raise weewx.UnknownAggregation(aggregate_type)
+            #raise weewx.UnknownAggregation
         else:
             aqi_type = self.aqi_fields[obs_type]['type']
             dependent_field = self.aqi_fields[obs_type]['input']
@@ -929,51 +929,15 @@ class AQIType(weewx.xtypes.XType):
             start_time = timespan.start - 43200 + 3600
 
             records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
-            ret_value = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, records_iter)
-            stats, _1, _2, _3 = ret_value
+            stats, _start_vec, _stop_vec, _data_vec = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, records_iter)
             stats_dict = vars(stats)
-            print(stats_dict['not_null'])
-            return ret_value
-
-            interpolation_dict = {
-                'start': timespan.start,
-                'stop': timespan.stop,
-                'table_name': db_manager.table_name,
-                'input': dependent_field
-            }
-
-            # This is not accurate
-            # Just because there is one concentration reading does not mean NowCast can be computed
-            simple_sql_stmts = {
-            'count': "SELECT COUNT(dateTime) FROM {table_name} "
-                    "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL",
-            'firsttime': "SELECT MIN(dateTime) FROM {table_name} "
-                "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-                "ORDER BY dateTime ASC LIMIT 1;",
-            'lasttime': "SELECT MAX(dateTime) FROM {table_name} "
-                "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-                "ORDER BY dateTime DESC LIMIT 1;",                 
-            'maxtime': "SELECT dateTime FROM {table_name} "
-                    "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-                    "ORDER BY {input} DESC LIMIT 1", 
-            'mintime': "SELECT dateTime FROM {table_name} "
-                    "WHERE dateTime > {start} AND dateTime <= {stop} AND {input} IS NOT NULL "
-                    "ORDER BY {input} ASC LIMIT 1",
-            'not_null': "SELECT 1 FROM {table_name} "
-                        "WHERE dateTime > {start} AND dateTime <= {stop} "
-                        "AND {input} IS NOT NULL LIMIT 1",                   
-            }
-            sql_stmt = simple_sql_stmts[aggregate_type].format(**interpolation_dict)
-
             try:
-                row = db_manager.getSql(sql_stmt)
-            except weedb.NoColumnError:
-                raise weewx.UnknownType(obs_type) from weedb.NoColumnError
-
-            if not row or None in row:
+                aggregate_value = stats_dict[aggregate_type]
+            except KeyError:
+                # Because XTypeTable will also try, 'None' is returned.
+                self._logerr(f"Agregate type '{aggregate_type}' is not supported.")
                 aggregate_value = None
-            else:
-                aggregate_value = row[0]
+                # raise weewx.UnknownAggregation(aggregate_type)
 
         unit_type, group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
         return weewx.units.ValueTuple(aggregate_value, unit_type, group)
@@ -1142,7 +1106,3 @@ class AQISearchList(weewx.cheetahgenerator.SearchList):
             index =  len(breakpoints) - 1
 
         return index
-
-# The following is to develop series support for nowcast
-#AQIType._get_series_nowcast = AQIType._get_series_nowcast_prototype # pylint: disable=protected-access
-#AQIType._get_aggregate_nowcast = AQIType._get_aggregate_nowcast_prototype # pylint: disable=protected-access
