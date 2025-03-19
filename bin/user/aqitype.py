@@ -343,9 +343,9 @@ class NowCast(AbstractCalculator):
             sum = 0,
             avg = None,
             first = None,
-            first_time = None,
+            firsttime = None,
             last = None,
-            last_time = None,
+            lasttime = None,
             min = float('inf'),
             max = -float('inf'),
             mintime = None,
@@ -384,10 +384,10 @@ class NowCast(AbstractCalculator):
             stats.count += 1
             stats.sum += aqi
             stats.first = aqi
-            stats.first_time = timestamps[0]
+            stats.firsttime = timestamps[0]
             if stats.last is None:
                 stats.last = aqi
-                stats.last_time = timestamps[0]
+                stats.lasttime = timestamps[0]
             if aqi < stats.min:
                 stats.min = aqi
                 stats.mintime = timestamps[0]
@@ -423,10 +423,10 @@ class NowCast(AbstractCalculator):
                     stats. count += 1
                     stats.sum += aqi
                     stats.first = aqi
-                    stats.first_time = timestamps[0]
+                    stats.firsttime = timestamps[0]
                     if stats.last is None:
                         stats.last = aqi
-                        stats.last_time = timestamps[0]
+                        stats.lasttime = timestamps[0]
                     if aqi < stats.min:
                         stats.min = aqi
                         stats.mintime = timestamps[0]
