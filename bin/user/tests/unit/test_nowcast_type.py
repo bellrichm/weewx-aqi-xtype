@@ -174,6 +174,7 @@ class TestNowCastGetSeries(unittest.TestCase):
             self.assertEqual(stop_vec, ([], 'unix_epoch', 'group_time'))
             self.assertEqual(aqi_vec, ([], unit, unit_group))
 
+    @unittest.skip("not valid test")
     def test_get_series_aggregate_interval_specified(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
         mock_sql_executor = mock.Mock()

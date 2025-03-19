@@ -748,111 +748,22 @@ class AQIType(weewx.xtypes.XType):
                     ValueTuple([], unit, unit_group))
 
         # Because other XTypes will also try, an empty 'set' of data is returned.
-        # ToDo: placeholder
+        # ToDo: placeholder, until series aggregation is supported
         if aggregate_type:
             #raise weewx.UnknownAggregation
             self._logerr(f"Agregate type '{aggregate_type}' is not supported.")
-            return (ValueTuple([], 'unix_epoch', 'group_time'),
-                    ValueTuple([], 'unix_epoch', 'group_time'),
-                    ValueTuple([], unit, unit_group))
+            start_list = []
+            stop_list = []
+            aqi_list = []
+        else:
+            aqi_type = self.aqi_fields[obs_type]['type']
+            dependent_field = self.aqi_fields[obs_type]["input"]
+            stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
+            # 'Need' 11 hours of data after current hour to compute nowcast qai
+            start_time = timespan.start - 43200 + 3600
+            records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
 
-        # Because other XTypes will also try, an empty 'set' of data is returned.
-        # ToDo: what is valid? (possibly divisible by an hour, 3600 seconds)
-        if aggregate_interval:
-            #raise weewx.UnknownAggregation
-            self._logerr(f"Agregate interval '{aggregate_interval}' is not supported.")
-            return (ValueTuple([], 'unix_epoch', 'group_time'),
-                    ValueTuple([], 'unix_epoch', 'group_time'),
-                    ValueTuple([], unit, unit_group))
-
-        aqi_type = self.aqi_fields[obs_type]['type']
-        dependent_field = self.aqi_fields[obs_type]["input"]
-        stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
-        # 'Need' 11 hours of data after current hour to compute nowcast qai
-        start_time = timespan.start - 43200 + 3600
-        records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
-
-        _stats, start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, records_iter)
-
-        return (ValueTuple(start_list, 'unix_epoch', 'group_time'),
-                ValueTuple(stop_list, 'unix_epoch', 'group_time'),
-                ValueTuple(aqi_list, unit, unit_group))
-
-    def _get_series_nowcast_prototype(self, obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **_option_dict):
-        aggregate_interval_seconds = weeutil.weeutil.nominal_spans(aggregate_interval)
-        unit, unit_group = weewx.units.getStandardUnitType(db_manager.std_unit_system, obs_type, aggregate_type)
-
-        # Because other XTypes will also try, an empty 'set' of data is returned.
-        if timespan.stop - timespan.start < 3600:
-            self._logerr("Series less than a hour are not supported.")
-            return (ValueTuple([], 'unix_epoch', 'group_time'),
-                    ValueTuple([], 'unix_epoch', 'group_time'),
-                    ValueTuple([], unit, unit_group))
-            #raise weewx.UnknownAggregation
-
-        # Because other XTypes will also try, an empty 'set' of data is returned.
-        # ToDo: placeholder
-        if aggregate_type and aggregate_type not in ['min']:
-            #raise weewx.UnknownAggregation
-            self._logerr(f"Agregate type '{aggregate_type}' is not supported.")
-            return (ValueTuple([], 'unix_epoch', 'group_time'),
-                    ValueTuple([], 'unix_epoch', 'group_time'),
-                    ValueTuple([], unit, unit_group))
-
-        # Because other XTypes will also try, an empty 'set' of data is returned.
-        # ToDo: what is valid? (possibly divisible by an hour, 3600 seconds)
-        if aggregate_interval_seconds and aggregate_interval_seconds != 3600:
-            #raise weewx.UnknownAggregation
-            self._logerr(f"Agregate interval '{aggregate_interval}' is not supported.")
-            #return (ValueTuple([], 'unix_epoch', 'group_time'),
-            #        ValueTuple([], 'unix_epoch', 'group_time'),
-            #        ValueTuple([], unit, unit_group))
-
-        aqi_type = self.aqi_fields[obs_type]['type']
-        dependent_field = self.aqi_fields[obs_type]["input"]
-        stop = min(weeutil.weeutil.startOfInterval(time.time(), 3600), timespan.stop)
-        # 'Need' 11 hours of data after current hour to compute nowcast qai
-        start_time = timespan.start - 43200 + 3600
-        records_iter = self.sql_executor.get_concentration_data_nowcast(db_manager, dependent_field, stop , start_time)
-
-        start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, records_iter)
-
-        # ToDo: placeholder
-        if aggregate_type in ['min']:
-            print("This is not supported")
-            i = 0
-            print(len(stop_list))
-
-            list1 = []
-            new_start_list = []
-            new_stop_list = []
-            new_concentration_list = []
-            while i < len(stop_list):
-                list1 = []
-                start = stop_list[i]
-                value_min = None
-                value_min_time = None
-                value_sum = 0
-                while stop_list[i] < start + aggregate_interval_seconds:
-                    value_sum += aqi_list[i]
-                    if value_min is None:
-                        value_min = aqi_list[i]
-                        value_min_time = [start_list[i], stop_list[i]]
-                    elif value_min < aqi_list[i]:
-                        value_min = aqi_list[i]
-                        value_min_time = (start_list[i], stop_list[i])
-
-                    list1.append(stop_list[i])
-                    i += 1
-                    if len(stop_list) -1  < i:
-                        break
-
-                print(f" {i} {list1}")
-                if aggregate_type == 'min':
-                    new_start_list.append(value_min_time[0])
-                    new_stop_list.append(value_min_time[1])
-                    new_concentration_list.append(value_min)
-
+            _stats, start_list, stop_list, aqi_list = self.aqi_fields[obs_type]['calculator'].calculate(aqi_type, records_iter)
 
         return (ValueTuple(start_list, 'unix_epoch', 'group_time'),
                 ValueTuple(stop_list, 'unix_epoch', 'group_time'),
