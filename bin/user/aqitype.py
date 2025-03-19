@@ -341,6 +341,7 @@ class NowCast(AbstractCalculator):
             not_null = False,
             count = 0,
             sum = 0,
+            avg = None,
             first = None,
             first_time = None,
             last = None,
@@ -440,6 +441,8 @@ class NowCast(AbstractCalculator):
         stop_vec.append(start_vec[-1] + 3600)
         aqi_vec.reverse()
 
+        if stats.count:
+            stats.avg = stats.sum / stats.count
         if stats.min_time is None:
             stats.min = None
         if stats.max_time is None:
