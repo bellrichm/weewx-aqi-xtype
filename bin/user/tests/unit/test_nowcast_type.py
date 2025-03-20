@@ -145,7 +145,6 @@ class TestNowCastGetSeries(unittest.TestCase):
             self.assertEqual(stop_vec, ([], 'unix_epoch', 'group_time'))
             self.assertEqual(aqi_vec, ([], unit, unit_group))
 
-    @unittest.skip("need to update now that series aggregation is 'supported'")
     def test_get_series_aggregate(self):
         mock_logger = mock.Mock(spec=user.aqitype.Logger)
         mock_sql_executor = mock.Mock()
@@ -165,16 +164,45 @@ class TestNowCastGetSeries(unittest.TestCase):
         unit = random_string()
         unit_group = random_string()
 
+        aggregate_interval = 3600
+
+        now = int(time.time() + 0.5)
+        end_timestamp = (int(now / utils.database.ARCHIVE_INTERVAL_SECONDS) + 1) * utils.database.ARCHIVE_INTERVAL_SECONDS
+        start_timestamp = end_timestamp - 10800
+
+        timespan = weeutil.weeutil.TimeSpan(start_timestamp, end_timestamp)
+
+        timespans = []
+        timestamp = start_timestamp
+        while timestamp < end_timestamp:
+            timespans.append(weeutil.weeutil.TimeSpan(timestamp, timestamp + aggregate_interval))
+            timestamp += aggregate_interval
+
+        mock_db_manager.first_timestamp = start_timestamp
+        mock_db_manager.last_timestamp = end_timestamp
+
+        aqi_tuples = [(random.randint(11, 100), unit, unit_group),
+                      (random.randint(11, 100), unit, unit_group),
+                      (random.randint(11, 100), unit, unit_group)]
+
         with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
-            start_vec, stop_vec, aqi_vec = SUT.get_series(calculated_field,
-                                                          utils.database.timespan,
-                                                          mock_db_manager,
-                                                          aggregate_type=random_string())
+            with mock.patch('weeutil.weeutil.intervalgen', return_value=timespans):
+                with mock.patch.object(user.aqitype.AQIType, 'get_aggregate', side_effect=aqi_tuples):
+                    value_tuple = SUT.get_series(calculated_field,
+                                                timespan,
+                                                mock_db_manager,
+                                                aggregate_type=random_string(),
+                                                aggregate_interval='hour') # ToDo: temp until mocking done
 
-            self.assertEqual(start_vec, ([], 'unix_epoch', 'group_time'))
-            self.assertEqual(stop_vec, ([], 'unix_epoch', 'group_time'))
-            self.assertEqual(aqi_vec, ([], unit, unit_group))
-
+                self.assertEqual(value_tuple[0], \
+                                ([start_timestamp, start_timestamp + aggregate_interval, start_timestamp + 2*aggregate_interval], \
+                                'unix_epoch', \
+                                'group_time'))
+                self.assertEqual(value_tuple[1], \
+                                ([end_timestamp - 2*aggregate_interval, end_timestamp - aggregate_interval, end_timestamp], \
+                                'unix_epoch', \
+                                'group_time'))
+                self.assertEqual(value_tuple[2], ([aqi_tuples[0][0], aqi_tuples[1][0], aqi_tuples[2][0]], unit, unit_group))
 
 if __name__ == '__main__':
     #test_suite = unittest.TestSuite()
