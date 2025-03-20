@@ -126,6 +126,41 @@ class TestNowCastGetSeries(unittest.TestCase):
                          ([9, 8, 7, 8, 7, 7,7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 8],
                           None, None))
 
+class TestNowCastGetAggregate(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.input_field = utils.database.PM2_5_INPUT_FIELD
+        cls.db_manager = utils.database.get_db_manager(cls.input_field)
+
+        # Create a backup of the database used in these tests.
+        # This could be useful if there is a problem in the tests.
+        utils.database.backup(cls.db_manager, 'bin/user/tests/utils/test_nowcast_calculate.sdb')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.db_manager.close()
+        cls.db_manager = None
+
+    def setUp(self):
+        self.mock_logger = mock.Mock(spec=user.aqitype.Logger)
+
+
+    def test_get_aggregate_type_not_null(self):
+        algorithm = 'NowCast'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = utils.database.PM2_5_INPUT_FIELD
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+
+        SUT = user.aqitype.AQIType(self.mock_logger, user.aqitype.SQLExecutor(self.mock_logger), config)
+
+        aggregate_value = SUT.get_aggregate(calculated_field, utils.database.timespan, 'not_null', TestNowCastGetAggregate.db_manager)
+
+        self.assertEqual(aggregate_value, (True, 'boolean', 'group_boolean'))
+
 if __name__ == '__main__':
     #test_suite = unittest.TestSuite()
     #test_suite.addTest(TestNowCastDevelopment('test_get_series_prototype02'))
