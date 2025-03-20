@@ -677,7 +677,7 @@ class AQIType(weewx.xtypes.XType):
         aqi = self.aqi_fields[obs_type]['get_scalar'](obs_type, db_manager, record['dateTime'], record[dependent_field])
         end_timestamp = time.time()
         running_timestamp = end_timestamp - start_timestamp
-        self._loginf(f"(performance) {running_timestamp:0.10f} scalar for {obs_type}")
+        #self._loginf(f"(performance) {running_timestamp:0.10f} scalar for {obs_type}")
 
         unit_type, group = weewx.units.getStandardUnitType(record['usUnits'], obs_type)
         return weewx.units.ValueTuple(aqi, unit_type, group)
@@ -691,7 +691,7 @@ class AQIType(weewx.xtypes.XType):
         return_value = self.aqi_fields[obs_type]['get_series'](obs_type, timespan, db_manager, aggregate_type, aggregate_interval, **option_dict)
         end_timestamp = time.time()
         running_timestamp = end_timestamp - start_timestamp
-        self._loginf(f"(performance) {running_timestamp:0.10f} series {aggregate_type} {aggregate_interval} for {obs_type} {timespan}")
+        #self._loginf(f"(performance) {running_timestamp:0.10f} series {aggregate_type} {aggregate_interval} for {obs_type} {timespan}")
 
         return return_value
 
@@ -704,7 +704,7 @@ class AQIType(weewx.xtypes.XType):
         return_value = self.aqi_fields[obs_type]['get_aggregate'](obs_type, timespan, aggregate_type, db_manager, **option_dict)
         end_timestamp = time.time()
         running_timestamp = end_timestamp - start_timestamp
-        self._loginf(f"(performance) {running_timestamp:0.10f} aggregate {aggregate_type} for {obs_type} {timespan}")
+        #self._loginf(f"(performance) {running_timestamp:0.10f} aggregate {aggregate_type} for {obs_type} {timespan}")
 
         return return_value
 
