@@ -16,6 +16,7 @@ import random
 import string
 import sys
 import time
+import types
 
 import weeutil
 
@@ -203,6 +204,40 @@ class TestNowCastGetSeries(unittest.TestCase):
                                 'unix_epoch', \
                                 'group_time'))
                 self.assertEqual(value_tuple[2], ([aqi_tuples[0][0], aqi_tuples[1][0], aqi_tuples[2][0]], unit, unit_group))
+
+class TestNowCastGetAggregate(unittest.TestCase):
+    def test_get_aggregate_type_not_null(self):
+        mock_logger = mock.Mock(spec=user.aqitype.Logger)
+        mock_sql_executor = mock.Mock()
+        mock_db_manager = mock.Mock()
+
+        calculator = user.aqitype.NowCast
+        algorithm = 'NowCast'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = utils.database.PM2_5_INPUT_FIELD
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+
+        mock_value = (
+            types.SimpleNamespace(not_null=True),
+            random_string(),
+            random_string(),
+            random_string()
+        )
+
+        with mock.patch.object(calculator, 'calculate', return_value=mock_value):
+            SUT = user.aqitype.AQIType(mock_logger, mock_sql_executor, config)
+
+            unit = random_string()
+            unit_group = random_string()
+
+            with mock.patch('weewx.units.getStandardUnitType', return_value=[unit, unit_group]):
+                aggregate_value = SUT.get_aggregate(calculated_field, utils.database.timespan, 'not_null', mock_db_manager)
+
+                self.assertEqual(aggregate_value, (True, unit, unit_group))
 
 if __name__ == '__main__':
     #test_suite = unittest.TestSuite()
