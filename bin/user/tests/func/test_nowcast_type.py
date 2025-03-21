@@ -138,7 +138,7 @@ class TestNowCastGetSeries(unittest.TestCase):
 
         SUT = user.aqitype.AQIType(self.mock_logger, user.aqitype.SQLExecutor(self.mock_logger), config)
         start_vec, stop_vec, aqi_vec = SUT.get_series(calculated_field,
-                                                      utils.database.timespan, 
+                                                      utils.database.timespan,
                                                       TestNowCastGetSeries.db_manager,
                                                       aggregate_type='max',
                                                       aggregate_interval=10800)
@@ -172,7 +172,6 @@ class TestNowCastGetAggregate(unittest.TestCase):
 
     def setUp(self):
         self.mock_logger = mock.Mock(spec=user.aqitype.Logger)
-
 
     def test_get_aggregate_type_not_null(self):
         algorithm = 'NowCast'
