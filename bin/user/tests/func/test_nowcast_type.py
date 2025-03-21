@@ -126,6 +126,35 @@ class TestNowCastGetSeries(unittest.TestCase):
                          ([9, 8, 7, 8, 7, 7,7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 8],
                           None, None))
 
+    def test_get_series_aggregation_valid_inputs(self):
+        algorithm = 'NowCast'
+        aqi_type = 'pm2_5'
+
+        calculated_field = random_string()
+        input_field = utils.database.PM2_5_INPUT_FIELD
+
+        config_dict = setup_config(calculated_field, input_field, algorithm, aqi_type)
+        config = configobj.ConfigObj(config_dict)
+
+        SUT = user.aqitype.AQIType(self.mock_logger, user.aqitype.SQLExecutor(self.mock_logger), config)
+        start_vec, stop_vec, aqi_vec = SUT.get_series(calculated_field,
+                                                      utils.database.timespan, 
+                                                      TestNowCastGetSeries.db_manager,
+                                                      aggregate_type='max',
+                                                      aggregate_interval=10800)
+
+        self.assertEqual(start_vec,
+                         ([1740114000, 1740124800, 1740135600, 1740146400, 1740157200, 1740168000,
+                           1740178800, 1740189600],
+                          'unix_epoch', 'group_time'))
+        self.assertEqual(stop_vec,
+                         ([1740124800, 1740135600, 1740146400, 1740157200, 1740168000, 1740178800,
+                           1740189600, 1740200400],
+                          'unix_epoch', 'group_time'))
+        self.assertEqual(aqi_vec,
+                        ([8, 8, 8, 8, 8, 8, 7, 8],
+                         None, None))
+
 class TestNowCastGetAggregate(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
