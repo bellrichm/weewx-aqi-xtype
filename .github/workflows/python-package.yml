@@ -39,3 +39,4 @@ jobs:
       run: |
         export PYTHONPATH=bin:$PYTHONPATH
         pytest bin/user/tests/unit
+        pytest bin/user/tests/func
