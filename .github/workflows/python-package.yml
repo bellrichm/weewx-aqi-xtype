@@ -28,7 +28,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install configobj flake8 mock pytest weewx==5.1.0
+        python -m pip install configobj flake8 mock pytest weewx==${{ matrix.weewx-version }}
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
