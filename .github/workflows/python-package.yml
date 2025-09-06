@@ -39,5 +39,5 @@ jobs:
     - name: Test with pytest
       run: |
         export PYTHONPATH=bin:$PYTHONPATH
-        pytest bin/user/tests/unit --html=unit-tests.html --self-containted-html
+        pytest bin/user/tests/unit --html=unit-tests.html --self-contained-html
         pytest bin/user/tests/func
