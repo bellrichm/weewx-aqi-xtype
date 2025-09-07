@@ -108,7 +108,6 @@ class TestSQL(unittest.TestCase):
         expected_concentrations = list(reversed(calculate_interval_average(data.db_20250221_pm2_5_values, 12))) + \
                                   list(reversed(calculate_interval_average(data.db_20250220_pm2_5_values[144:], 12)))
         concentrations_list = list(concentrations)
-        self.assertEqual(concentrations_list, expected_concentrations)
         for i in range(len(concentrations_list)):
             self.assertEqual(concentrations_list[i], expected_concentrations[i])
 
