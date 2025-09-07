@@ -88,7 +88,6 @@ class TestSQL(unittest.TestCase):
                                    TestSQL.aqi_type)
         self.config = configobj.ConfigObj(config_dict)
 
-    @unittest.skip("Skip until while getting tests to run")
     def test_get_concentration_data_nowcast(self):
         SUT = user.aqitype.SQLExecutor(self.mock_logger)
 
