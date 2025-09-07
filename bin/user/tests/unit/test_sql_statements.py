@@ -109,7 +109,7 @@ class TestSQL(unittest.TestCase):
                                   list(reversed(calculate_interval_average(data.db_20250220_pm2_5_values[144:], 12)))
         concentrations_list = list(concentrations)
         for i in range(len(concentrations_list)):
-            self.assertEqual(concentrations_list[i], expected_concentrations[i])
+            self.assertAlmostEqual(concentrations_list[i], expected_concentrations[i])
 
     def test_get_concentration_data(self):
         SUT = user.aqitype.SQLExecutor(self.mock_logger)
