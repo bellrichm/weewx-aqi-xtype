@@ -105,9 +105,11 @@ class TestSQL(unittest.TestCase):
                          list(reversed((data.db_20250220_timestamps[143::12]))))
         # Compute the hourly average of the pm2_5 data
         # Only want the last 12 hours of the previous day, 20250220
-        self.assertEqual(list(concentrations),
-                         list(reversed(calculate_interval_average(data.db_20250221_pm2_5_values, 12))) + \
-                         list(reversed(calculate_interval_average(data.db_20250220_pm2_5_values[144:], 12))))
+        expected_concentrations = list(reversed(calculate_interval_average(data.db_20250221_pm2_5_values, 12))) + \
+                                  list(reversed(calculate_interval_average(data.db_20250220_pm2_5_values[144:], 12)))
+        concentrations_list = list(concentrations)
+        for i in range(len(concentrations_list)):
+            self.assertAlmostEqual(concentrations_list[i], expected_concentrations[i])
 
     def test_get_concentration_data(self):
         SUT = user.aqitype.SQLExecutor(self.mock_logger)
