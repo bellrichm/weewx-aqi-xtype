@@ -1,5 +1,7 @@
 # weewx-aqi-xtype
 
+This repository has a new home at, https://github.com/weewx-extensions/aqi-xtype
+
 ## Description
 
 This extension uses WeeWX [Xtypes](http://www.weewx.com/docs/latest/customizing.htm#Adding_new,_derived_types) capability to dynamically calculate AQI.
